@@ -2,14 +2,14 @@
 
 namespace Lyn.Types.Bitcoin
 {
-   /// <summary>
-   /// Network address (net_addr).
-   /// </summary>
-   public class NetworkAddress : NetworkAddressNoTime
-   {
-      /// <summary>
-      /// The Time (version >= 31402). Not present in version message (use <see cref="NetworkAddressNoTime"/> in Version message).
-      /// </summary>
-      public DateTimeOffset Time { get; set; }
-   }
+    /// <summary>
+    /// Network address (net_addr).
+    /// </summary>
+    public class NetworkAddress : NetworkAddressNoTime
+    {
+        /// <summary>
+        /// The Time (version >= 31402). Not present in version message (use <see cref="NetworkAddressNoTime"/> in Version message).
+        /// </summary>
+        public DateTimeOffset Time { get; set; }
+    }
 }

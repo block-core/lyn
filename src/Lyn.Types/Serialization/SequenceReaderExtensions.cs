@@ -5,240 +5,240 @@ using System.Text;
 
 namespace Lyn.Types.Serialization
 {
-   public static class SequenceReaderExtensions
-   {
-      private const string NOT_ENOUGH_BYTES_LEFT = "Cannot read data, not enough bytes left.";
+    public static class SequenceReaderExtensions
+    {
+        private const string NOT_ENOUGH_BYTES_LEFT = "Cannot read data, not enough bytes left.";
 
-      [MethodImpl(MethodImplOptions.AggressiveInlining)]
-      public static bool ReadBool(ref this SequenceReader<byte> reader)
-      {
-         if (!reader.TryRead(out byte value)) ThrowHelper.ThrowMessageSerializationException(NOT_ENOUGH_BYTES_LEFT);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool ReadBool(ref this SequenceReader<byte> reader)
+        {
+            if (!reader.TryRead(out byte value)) ThrowHelper.ThrowMessageSerializationException(NOT_ENOUGH_BYTES_LEFT);
 
-         return value > 0;
-      }
+            return value > 0;
+        }
 
-      [MethodImpl(MethodImplOptions.AggressiveInlining)]
-      public static byte ReadByte(ref this SequenceReader<byte> reader)
-      {
-         if (!reader.TryRead(out byte value)) ThrowHelper.ThrowMessageSerializationException(NOT_ENOUGH_BYTES_LEFT);
-
-         return value;
-      }
-
-      [MethodImpl(MethodImplOptions.AggressiveInlining)]
-      public static short ReadShort(ref this SequenceReader<byte> reader, bool isBigEndian = false)
-      {
-         if (isBigEndian)
-         {
-            if (!reader.TryReadBigEndian(out short value)) ThrowHelper.ThrowMessageSerializationException(NOT_ENOUGH_BYTES_LEFT);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static byte ReadByte(ref this SequenceReader<byte> reader)
+        {
+            if (!reader.TryRead(out byte value)) ThrowHelper.ThrowMessageSerializationException(NOT_ENOUGH_BYTES_LEFT);
 
             return value;
-         }
-         else
-         {
-            if (!reader.TryReadLittleEndian(out short value)) ThrowHelper.ThrowMessageSerializationException(NOT_ENOUGH_BYTES_LEFT);
+        }
 
-            return value;
-         }
-      }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static short ReadShort(ref this SequenceReader<byte> reader, bool isBigEndian = false)
+        {
+            if (isBigEndian)
+            {
+                if (!reader.TryReadBigEndian(out short value)) ThrowHelper.ThrowMessageSerializationException(NOT_ENOUGH_BYTES_LEFT);
 
-      [MethodImpl(MethodImplOptions.AggressiveInlining)]
-      public static ushort ReadUShort(ref this SequenceReader<byte> reader, bool isBigEndian = false)
-      {
-         if (isBigEndian)
-         {
-            if (!reader.TryReadBigEndian(out short value)) ThrowHelper.ThrowMessageSerializationException(NOT_ENOUGH_BYTES_LEFT);
+                return value;
+            }
+            else
+            {
+                if (!reader.TryReadLittleEndian(out short value)) ThrowHelper.ThrowMessageSerializationException(NOT_ENOUGH_BYTES_LEFT);
 
-            return (ushort)value;
-         }
-         else
-         {
-            if (!reader.TryReadLittleEndian(out short value)) ThrowHelper.ThrowMessageSerializationException(NOT_ENOUGH_BYTES_LEFT);
+                return value;
+            }
+        }
 
-            return (ushort)value;
-         }
-      }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ushort ReadUShort(ref this SequenceReader<byte> reader, bool isBigEndian = false)
+        {
+            if (isBigEndian)
+            {
+                if (!reader.TryReadBigEndian(out short value)) ThrowHelper.ThrowMessageSerializationException(NOT_ENOUGH_BYTES_LEFT);
 
-      [MethodImpl(MethodImplOptions.AggressiveInlining)]
-      public static int ReadInt(ref this SequenceReader<byte> reader, bool isBigEndian = false)
-      {
-         if (isBigEndian)
-         {
-            if (!reader.TryReadBigEndian(out int value)) ThrowHelper.ThrowMessageSerializationException(NOT_ENOUGH_BYTES_LEFT);
+                return (ushort)value;
+            }
+            else
+            {
+                if (!reader.TryReadLittleEndian(out short value)) ThrowHelper.ThrowMessageSerializationException(NOT_ENOUGH_BYTES_LEFT);
 
-            return value;
-         }
-         else
-         {
-            if (!reader.TryReadLittleEndian(out int value)) ThrowHelper.ThrowMessageSerializationException(NOT_ENOUGH_BYTES_LEFT);
+                return (ushort)value;
+            }
+        }
 
-            return value;
-         }
-      }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int ReadInt(ref this SequenceReader<byte> reader, bool isBigEndian = false)
+        {
+            if (isBigEndian)
+            {
+                if (!reader.TryReadBigEndian(out int value)) ThrowHelper.ThrowMessageSerializationException(NOT_ENOUGH_BYTES_LEFT);
 
-      [MethodImpl(MethodImplOptions.AggressiveInlining)]
-      public static uint ReadUInt(ref this SequenceReader<byte> reader, bool isBigEndian = false)
-      {
-         if (isBigEndian)
-         {
-            if (!reader.TryReadBigEndian(out int value)) ThrowHelper.ThrowMessageSerializationException(NOT_ENOUGH_BYTES_LEFT);
+                return value;
+            }
+            else
+            {
+                if (!reader.TryReadLittleEndian(out int value)) ThrowHelper.ThrowMessageSerializationException(NOT_ENOUGH_BYTES_LEFT);
 
-            return (uint)value;
-         }
-         else
-         {
-            if (!reader.TryReadLittleEndian(out int value)) ThrowHelper.ThrowMessageSerializationException(NOT_ENOUGH_BYTES_LEFT);
+                return value;
+            }
+        }
 
-            return (uint)value;
-         }
-      }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static uint ReadUInt(ref this SequenceReader<byte> reader, bool isBigEndian = false)
+        {
+            if (isBigEndian)
+            {
+                if (!reader.TryReadBigEndian(out int value)) ThrowHelper.ThrowMessageSerializationException(NOT_ENOUGH_BYTES_LEFT);
 
-      [MethodImpl(MethodImplOptions.AggressiveInlining)]
-      public static long ReadLong(ref this SequenceReader<byte> reader, bool isBigEndian = false)
-      {
-         if (isBigEndian)
-         {
-            if (!reader.TryReadBigEndian(out long value)) ThrowHelper.ThrowMessageSerializationException(NOT_ENOUGH_BYTES_LEFT);
+                return (uint)value;
+            }
+            else
+            {
+                if (!reader.TryReadLittleEndian(out int value)) ThrowHelper.ThrowMessageSerializationException(NOT_ENOUGH_BYTES_LEFT);
 
-            return value;
-         }
-         else
-         {
-            if (!reader.TryReadLittleEndian(out long value)) ThrowHelper.ThrowMessageSerializationException(NOT_ENOUGH_BYTES_LEFT);
+                return (uint)value;
+            }
+        }
 
-            return value;
-         }
-      }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static long ReadLong(ref this SequenceReader<byte> reader, bool isBigEndian = false)
+        {
+            if (isBigEndian)
+            {
+                if (!reader.TryReadBigEndian(out long value)) ThrowHelper.ThrowMessageSerializationException(NOT_ENOUGH_BYTES_LEFT);
 
-      [MethodImpl(MethodImplOptions.AggressiveInlining)]
-      public static ulong ReadULong(ref this SequenceReader<byte> reader, bool isBigEndian = false)
-      {
-         if (isBigEndian)
-         {
-            if (!reader.TryReadBigEndian(out long value)) ThrowHelper.ThrowMessageSerializationException(NOT_ENOUGH_BYTES_LEFT);
+                return value;
+            }
+            else
+            {
+                if (!reader.TryReadLittleEndian(out long value)) ThrowHelper.ThrowMessageSerializationException(NOT_ENOUGH_BYTES_LEFT);
 
-            return (ulong)value;
-         }
-         else
-         {
-            if (!reader.TryReadLittleEndian(out long value)) ThrowHelper.ThrowMessageSerializationException(NOT_ENOUGH_BYTES_LEFT);
+                return value;
+            }
+        }
 
-            return (ulong)value;
-         }
-      }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ulong ReadULong(ref this SequenceReader<byte> reader, bool isBigEndian = false)
+        {
+            if (isBigEndian)
+            {
+                if (!reader.TryReadBigEndian(out long value)) ThrowHelper.ThrowMessageSerializationException(NOT_ENOUGH_BYTES_LEFT);
 
-      [MethodImpl(MethodImplOptions.AggressiveInlining)]
-      public static string ReadVarString(ref this SequenceReader<byte> reader)
-      {
-         ulong stringLength = ReadVarInt(ref reader);
-         ReadOnlySequence<byte> result = reader.Sequence.Slice(reader.Position, (int)stringLength);
-         reader.Advance((long)stringLength);
+                return (ulong)value;
+            }
+            else
+            {
+                if (!reader.TryReadLittleEndian(out long value)) ThrowHelper.ThrowMessageSerializationException(NOT_ENOUGH_BYTES_LEFT);
 
-         // in case the string lies in a single span we can save a copy to a byte array
-         return Encoding.ASCII.GetString(result.IsSingleSegment ? result.FirstSpan : result.ToArray());
-      }
+                return (ulong)value;
+            }
+        }
 
-      [MethodImpl(MethodImplOptions.AggressiveInlining)]
-      public static ReadOnlySpan<byte> ReadBytes(ref this SequenceReader<byte> reader, int length)
-      {
-         ReadOnlySequence<byte> sequence = reader.Sequence.Slice(reader.Position, length);
-         reader.Advance(length);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static string ReadVarString(ref this SequenceReader<byte> reader)
+        {
+            ulong stringLength = ReadVarInt(ref reader);
+            ReadOnlySequence<byte> result = reader.Sequence.Slice(reader.Position, (int)stringLength);
+            reader.Advance((long)stringLength);
 
-         if (sequence.IsSingleSegment)
-         {
-            return sequence.FirstSpan;
-         }
-         else
-         {
-            return sequence.ToArray();
-         }
-      }
+            // in case the string lies in a single span we can save a copy to a byte array
+            return Encoding.ASCII.GetString(result.IsSingleSegment ? result.FirstSpan : result.ToArray());
+        }
 
-      /// <summary>
-      /// Reads the byte array, reading first a VarInt of the size of the array, followed by the full array data.
-      /// </summary>
-      /// <param name="reader">The reader.</param>
-      /// <param name="length">The length.</param>
-      /// <returns></returns>
-      [MethodImpl(MethodImplOptions.AggressiveInlining)]
-      public static byte[]? ReadByteArray(ref this SequenceReader<byte> reader)
-      {
-         int arraySize = (int)ReadVarInt(ref reader);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ReadOnlySpan<byte> ReadBytes(ref this SequenceReader<byte> reader, int length)
+        {
+            ReadOnlySequence<byte> sequence = reader.Sequence.Slice(reader.Position, length);
+            reader.Advance(length);
 
-         if (arraySize == 0) return null;
+            if (sequence.IsSingleSegment)
+            {
+                return sequence.FirstSpan;
+            }
+            else
+            {
+                return sequence.ToArray();
+            }
+        }
 
-         ReadOnlySequence<byte> sequence = reader.Sequence.Slice(reader.Position, arraySize);
-         reader.Advance(arraySize);
+        /// <summary>
+        /// Reads the byte array, reading first a VarInt of the size of the array, followed by the full array data.
+        /// </summary>
+        /// <param name="reader">The reader.</param>
+        /// <param name="length">The length.</param>
+        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static byte[]? ReadByteArray(ref this SequenceReader<byte> reader)
+        {
+            int arraySize = (int)ReadVarInt(ref reader);
 
-         if (sequence.IsSingleSegment)
-         {
-            return sequence.FirstSpan.ToArray();
-         }
-         else
-         {
-            return sequence.ToArray();
-         }
-      }
+            if (arraySize == 0) return new byte[0];
 
-      [MethodImpl(MethodImplOptions.AggressiveInlining)]
-      public static ulong ReadVarInt(ref this SequenceReader<byte> reader)
-      {
-         reader.TryRead(out byte firstByte);
-         if (firstByte < 0xFD)
-         {
-            return firstByte;
-         }
-         else if (firstByte == 0xFD)
-         {
-            return reader.ReadUShort();
-         }
-         else if (firstByte == 0xFE)
-         {
-            return reader.ReadUInt();
-         }
-         // == 0xFF
-         else
-         {
-            return reader.ReadULong();
-         }
-      }
+            ReadOnlySequence<byte> sequence = reader.Sequence.Slice(reader.Position, arraySize);
+            reader.Advance(arraySize);
 
-      /// <summary>
-      /// Reads an array of <typeparamref name="TSerializableType" /> types.
-      /// Internally it expects a VarInt that specifies the length of items to read.
-      /// </summary>
-      /// <typeparam name="TSerializableType">The type of the serializable type.</typeparam>
-      /// <param name="reader">The reader.</param>
-      /// <param name="protocolVersion">The protocol version.</param>
-      /// <param name="serializer">The serializer.</param>
-      /// <returns></returns>
-      [MethodImpl(MethodImplOptions.AggressiveInlining)]
-      public static TSerializableType[] ReadArray<TSerializableType>(ref this SequenceReader<byte> reader, int protocolVersion, IProtocolTypeSerializer<TSerializableType> serializer, ProtocolTypeSerializerOptions? options = null)
-      {
-         ulong itemsCount = reader.ReadVarInt();
+            if (sequence.IsSingleSegment)
+            {
+                return sequence.FirstSpan.ToArray();
+            }
+            else
+            {
+                return sequence.ToArray();
+            }
+        }
 
-         var result = new TSerializableType[itemsCount];
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ulong ReadVarInt(ref this SequenceReader<byte> reader)
+        {
+            reader.TryRead(out byte firstByte);
+            if (firstByte < 0xFD)
+            {
+                return firstByte;
+            }
+            else if (firstByte == 0xFD)
+            {
+                return reader.ReadUShort();
+            }
+            else if (firstByte == 0xFE)
+            {
+                return reader.ReadUInt();
+            }
+            // == 0xFF
+            else
+            {
+                return reader.ReadULong();
+            }
+        }
 
-         for (ulong i = 0; i < itemsCount; i++)
-         {
-            result[i] = serializer.Deserialize(ref reader, protocolVersion, options);
-         }
+        /// <summary>
+        /// Reads an array of <typeparamref name="TSerializableType" /> types.
+        /// Internally it expects a VarInt that specifies the length of items to read.
+        /// </summary>
+        /// <typeparam name="TSerializableType">The type of the serializable type.</typeparam>
+        /// <param name="reader">The reader.</param>
+        /// <param name="protocolVersion">The protocol version.</param>
+        /// <param name="serializer">The serializer.</param>
+        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static TSerializableType[] ReadArray<TSerializableType>(ref this SequenceReader<byte> reader, int protocolVersion, IProtocolTypeSerializer<TSerializableType> serializer, ProtocolTypeSerializerOptions? options = null)
+        {
+            ulong itemsCount = reader.ReadVarInt();
 
-         return result;
-      }
+            var result = new TSerializableType[itemsCount];
 
-      /// <summary>
-      /// Reads an item of <typeparamref name="TSerializableType" /> type using the passed typed serializer.
-      /// </summary>
-      /// <typeparam name="TSerializableType">The type of the serializable type.</typeparam>
-      /// <param name="reader">The reader.</param>
-      /// <param name="protocolVersion">The protocol version.</param>
-      /// <param name="serializer">The serializer.</param>
-      /// <returns></returns>
-      [MethodImpl(MethodImplOptions.AggressiveInlining)]
-      public static TSerializableType ReadWithSerializer<TSerializableType>(ref this SequenceReader<byte> reader, int protocolVersion, IProtocolTypeSerializer<TSerializableType> serializer, ProtocolTypeSerializerOptions? options = null)
-      {
-         return serializer.Deserialize(ref reader, protocolVersion, options);
-      }
-   }
+            for (ulong i = 0; i < itemsCount; i++)
+            {
+                result[i] = serializer.Deserialize(ref reader, protocolVersion, options);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Reads an item of <typeparamref name="TSerializableType" /> type using the passed typed serializer.
+        /// </summary>
+        /// <typeparam name="TSerializableType">The type of the serializable type.</typeparam>
+        /// <param name="reader">The reader.</param>
+        /// <param name="protocolVersion">The protocol version.</param>
+        /// <param name="serializer">The serializer.</param>
+        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static TSerializableType ReadWithSerializer<TSerializableType>(ref this SequenceReader<byte> reader, int protocolVersion, IProtocolTypeSerializer<TSerializableType> serializer, ProtocolTypeSerializerOptions? options = null)
+        {
+            return serializer.Deserialize(ref reader, protocolVersion, options);
+        }
+    }
 }

@@ -1,25 +1,19 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <TargetFramework>net5.0</TargetFramework>
-        <Nullable>enable</Nullable>
-        <RootNamespace>Lyn.Protocol</RootNamespace>
-    </PropertyGroup>
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Lyn.Protocol</RootNamespace>
+  </PropertyGroup>
 
-    <ItemGroup>
-      <Folder Include="Bolt1" />
-      <Folder Include="Bolt2" />
-      <Folder Include="Bolt8" />
-    </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="5.0.0" />
+    <PackageReference Include="NaCl.Core" Version="2.0.2" />
+    <PackageReference Include="NBitcoin" Version="5.0.81" />
+    <PackageReference Include="NBitcoin.Secp256k1" Version="1.0.8" />
+  </ItemGroup>
 
-    <ItemGroup>
-      <PackageReference Include="Microsoft.Extensions.Logging" Version="5.0.0" />
-      <PackageReference Include="NaCl.Core" Version="2.0.2" />
-      <PackageReference Include="NBitcoin" Version="5.0.81" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="..\Lyn.Types\Lyn.Types.csproj" />
-    </ItemGroup>
-
+  <ItemGroup>
+    <ProjectReference Include="..\Lyn.Types\Lyn.Types.csproj" />
+  </ItemGroup>
 </Project>
