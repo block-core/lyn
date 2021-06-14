@@ -267,30 +267,31 @@ namespace Lyn.Protocol.Tests.Bolt3
         public static (List<Htlc>, List<Htlc>) Setup_htlcs_1_5_and_6()
         {
             List<Htlc> htlcs = new List<Htlc>
-         {
-            new Htlc
-            {
-               State = HtlcState.RcvdAddAckRevocation,
-               AmountMsat = 2000000,
-               Expirylocktime = 501,
-               R = new Preimage(Hex.FromString("0101010101010101010101010101010101010101010101010101010101010101")),
-            },
+             {
+                new Htlc
+                {
+                   State = HtlcState.RcvdAddAckRevocation,
+                   AmountMsat = 2000000,
+                   Expirylocktime = 501,
+                   R = new Preimage(Hex.FromString("0101010101010101010101010101010101010101010101010101010101010101")),
+                },
 
-            new Htlc
-            {
-               State = HtlcState.SentAddAckRevocation,
-               AmountMsat = 5000000,
-               Expirylocktime = 505,
-               R = new Preimage(Hex.FromString("0505050505050505050505050505050505050505050505050505050505050505")),
-            },
-            new Htlc
-            {
-               State = HtlcState.SentAddAckRevocation,
-               AmountMsat = 5000000,
-               Expirylocktime = 506,
-               R = new Preimage(Hex.FromString("0505050505050505050505050505050505050505050505050505050505050505")),
-            },
-         };
+                new Htlc
+                {
+                   State = HtlcState.SentAddAckRevocation,
+                   AmountMsat = 5000000,
+                   Expirylocktime = 506,
+                   R = new Preimage(Hex.FromString("0505050505050505050505050505050505050505050505050505050505050505")),
+                },
+
+                new Htlc
+                {
+                    State = HtlcState.SentAddAckRevocation,
+                    AmountMsat = 5000001,
+                    Expirylocktime = 505,
+                    R = new Preimage(Hex.FromString("0505050505050505050505050505050505050505050505050505050505050505")),
+                },
+             };
 
             foreach (Htlc htlc in htlcs)
             {

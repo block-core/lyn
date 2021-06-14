@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Lyn.Protocol.Bolt3.Types
 {
@@ -11,7 +12,7 @@ namespace Lyn.Protocol.Bolt3.Types
             _lexicographicByteComparer = lexicographicByteComparer;
         }
 
-        public int Compare(HtlcToOutputMaping x, HtlcToOutputMaping y)
+        public int Compare(HtlcToOutputMaping? x, HtlcToOutputMaping? y)
         {
             if (x?.TransactionOutput?.PublicKeyScript == null) return 1;
             if (y?.TransactionOutput?.PublicKeyScript == null) return -1;
@@ -26,12 +27,14 @@ namespace Lyn.Protocol.Bolt3.Types
                 return -1;
             }
 
-            if (x.TransactionOutput.PublicKeyScript != y.TransactionOutput.PublicKeyScript)
+            var byteCompare = _lexicographicByteComparer.Compare(x.TransactionOutput.PublicKeyScript, y.TransactionOutput.PublicKeyScript);
+
+            if (byteCompare != 0)
             {
-                return _lexicographicByteComparer.Compare(x.TransactionOutput.PublicKeyScript, y.TransactionOutput.PublicKeyScript);
+                return byteCompare;
             }
 
-            return x.CltvExpirey < y.CltvExpirey ? 1 : -1;
+            return x.CltvExpirey > y.CltvExpirey ? 1 : -1;
         }
     }
 }
