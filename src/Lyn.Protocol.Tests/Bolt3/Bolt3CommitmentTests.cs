@@ -109,25 +109,25 @@ namespace Lyn.Protocol.Tests.Bolt3
             Assert.Equal(localTransaction.Hash, remoteTransaction.Hash);
 
             // == helper code==
-            var expectedCommitTx = TransactionHelper.SeriaizeTransaction(Context.TransactionSerializer, Hex.FromString(vectors.OutputCommitTx));
+            var expectedCommitTx = Context.SerializationFactory.Deserialize<Transaction>(Hex.FromString(vectors.OutputCommitTx));
             var newtrx = TransactionHelper.ParseToString(localTransaction);
             var exptrx = TransactionHelper.ParseToString(expectedCommitTx);
 
             byte[]? fundingWscript = Context.LightningScripts.FundingRedeemScript(Context.LocalFundingPubkey, Context.RemoteFundingPubkey);
 
-            var remoteSignature = Context.LightningTransactions.SignInput(Context.TransactionSerializer, localTransaction, Context.RemoteFundingPrivkey, inputIndex: 0, redeemScript: fundingWscript, Context.FundingAmount);
+            var remoteSignature = Context.LightningTransactions.SignInput(localTransaction, Context.RemoteFundingPrivkey, inputIndex: 0, redeemScript: fundingWscript, Context.FundingAmount);
             var expectedRemoteSignature = Hex.ToString(expectedCommitTx.Inputs[0].ScriptWitness.Components[2].RawData.AsSpan());
             var actualRemoteSignature = Hex.ToString(remoteSignature.GetSpan());
             Assert.Equal(expectedRemoteSignature, actualRemoteSignature);
 
-            var localSignature = Context.LightningTransactions.SignInput(Context.TransactionSerializer, localTransaction, Context.LocalFundingPrivkey, inputIndex: 0, redeemScript: fundingWscript, Context.FundingAmount);
+            var localSignature = Context.LightningTransactions.SignInput(localTransaction, Context.LocalFundingPrivkey, inputIndex: 0, redeemScript: fundingWscript, Context.FundingAmount);
             var expectedLocalSignature = Hex.ToString(expectedCommitTx.Inputs[0].ScriptWitness.Components[1].RawData.AsSpan());
             var actualLocalSignature = Hex.ToString(localSignature.GetSpan());
             Assert.Equal(expectedLocalSignature, actualLocalSignature);
 
             Context.LightningScripts.SetCommitmentInputWitness(localTransaction.Inputs[0], localSignature, remoteSignature, fundingWscript);
 
-            byte[] localTransactionBytes = TransactionHelper.DeseriaizeTransaction(Context.TransactionSerializer, localTransaction);
+            byte[] localTransactionBytes = Context.SerializationFactory.Serialize(localTransaction);
 
             Assert.Equal(vectors.OutputCommitTx, Hex.ToString(localTransactionBytes.AsSpan()).Substring(2));
 
@@ -204,7 +204,7 @@ namespace Lyn.Protocol.Tests.Bolt3
                 }
 
                 string expectedHtlcHex = vectors.HtlcTx[htlcOutputIndex++];
-                var expectedHtlcOutput = TransactionHelper.SeriaizeTransaction(Context.TransactionSerializer, Hex.FromString(expectedHtlcHex));
+                var expectedHtlcOutput = Context.SerializationFactory.Deserialize<Transaction>(Hex.FromString(expectedHtlcHex));
 
                 var newhtlctrx = TransactionHelper.ParseToString(htlcTransaction);
                 var exphtlctrx = TransactionHelper.ParseToString(expectedHtlcOutput);
@@ -213,7 +213,6 @@ namespace Lyn.Protocol.Tests.Bolt3
                 trx.FromBytes(Hex.FromString(expectedHtlcHex));
 
                 var htlcRemoteSignature = Context.LightningTransactions.SignInput(
-                   Context.TransactionSerializer,
                    htlcTransaction,
                    Context.RemoteHtlcsecretkey,
                    inputIndex: 0,
@@ -226,7 +225,6 @@ namespace Lyn.Protocol.Tests.Bolt3
                 Assert.Equal(expectedHtlcRemoteSignature, actualHtlcRemoteSignature);
 
                 var htlcLocalSignature = Context.LightningTransactions.SignInput(
-                   Context.TransactionSerializer,
                    htlcTransaction,
                    Context.LocalHtlcsecretkey,
                    inputIndex: 0,
@@ -247,7 +245,7 @@ namespace Lyn.Protocol.Tests.Bolt3
                     Context.LightningScripts.SetHtlcSuccessInputWitness(htlcTransaction.Inputs[0], htlcLocalSignature, htlcRemoteSignature, htlc.Htlc.R, redeemScript);
                 }
 
-                byte[] htlcTransactionBytes = TransactionHelper.DeseriaizeTransaction(Context.TransactionSerializer, htlcTransaction);
+                byte[] htlcTransactionBytes = Context.SerializationFactory.Serialize(htlcTransaction);
 
                 Assert.Equal(expectedHtlcHex, Hex.ToString(htlcTransactionBytes.AsSpan()).Substring(2));
             }

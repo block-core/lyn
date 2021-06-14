@@ -14,7 +14,7 @@ namespace Lyn.Protocol.Tests.Bolt7
         private Mock<IGossipRepository> _gossipRepository;
         private Mock<ISerializationFactory> _serializationFactory;
         private Mock<IValidationHelper> _validationHelper;
-        
+
         public AnnouncementSignaturesValidatorTests()
         {
             _gossipRepository = new Mock<IGossipRepository>();
@@ -25,19 +25,17 @@ namespace Lyn.Protocol.Tests.Bolt7
                 _serializationFactory.Object, _validationHelper.Object);
         }
 
-        
-
         private Span<byte> WithSerializedChannelAnnouncement(ChannelAnnouncement channelAnnouncement)
         {
             var bytes = RandomMessages.GetRandomByteArray(256 + 174);
 
-            _serializationFactory.Setup(_ => _.Serialize<ChannelAnnouncement>(channelAnnouncement))
+            _serializationFactory.Setup(_ => _.Serialize<ChannelAnnouncement>(channelAnnouncement, null))
                 .Returns(bytes)
                 .Verifiable();
 
             return bytes;
         }
-        
+
         [Fact]
         public void WhenChannelNotFoundReturnsFalse()
         {
@@ -45,15 +43,15 @@ namespace Lyn.Protocol.Tests.Bolt7
 
             ThanTheMessageFailedWithNoError(result);
         }
-        
+
         [Fact]
         public void WhenChannelFoundButNotForLocalNodeReturnsFalse()
         {
             var message = NewAnnouncementSignatures();
 
             _gossipRepository.Setup(_ => _.GetGossipChannel(message.ShortChannelId))
-                .Returns(new GossipChannel(NewChannelAnnouncement(),null));
-            
+                .Returns(new GossipChannel(NewChannelAnnouncement(), null));
+
             var result = _sut.ValidateMessage(message);
 
             ThanTheMessageFailedWithNoError(result);
@@ -63,29 +61,29 @@ namespace Lyn.Protocol.Tests.Bolt7
         public void WhenTheNodeSignatureIsNotValidReturnsFalse()
         {
             var message = NewAnnouncementSignatures();
-            var gossipChannel = new GossipChannel(NewChannelAnnouncement(), GossipChannel.LocalNode.Node2); 
-            
+            var gossipChannel = new GossipChannel(NewChannelAnnouncement(), GossipChannel.LocalNode.Node2);
+
             _gossipRepository.Setup(_ => _.GetGossipChannel(message.ShortChannelId))
                 .Returns(gossipChannel);
 
             WithSerializedChannelAnnouncement(gossipChannel.ChannelAnnouncement);
-            
+
             _validationHelper.SetupSequence(_ => _.VerifySignature(gossipChannel.GetRemoteNodeId(),
                     message.NodeSignature,
                     It.IsAny<byte[]>()))
                 .Returns(false);
-            
+
             var result = _sut.ValidateMessage(message);
 
             ThanTheMessageFailedWithNoError(result);
         }
-        
+
         [Fact]
         public void WhenTheBitcoinAddressSignatureIsNotValidReturnsFalse()
         {
             var message = NewAnnouncementSignatures();
-            var gossipChannel = new GossipChannel(NewChannelAnnouncement(), GossipChannel.LocalNode.Node1); 
-            
+            var gossipChannel = new GossipChannel(NewChannelAnnouncement(), GossipChannel.LocalNode.Node1);
+
             _gossipRepository.Setup(_ => _.GetGossipChannel(message.ShortChannelId))
                 .Returns(gossipChannel);
 
@@ -95,19 +93,18 @@ namespace Lyn.Protocol.Tests.Bolt7
                     message.BitcoinSignature,
                     It.IsAny<byte[]>()))
                 .Returns(false);
-                
-            
+
             var result = _sut.ValidateMessage(message);
 
             ThanTheMessageFailedWithNoError(result);
         }
-        
+
         [Fact]
         public void ReturnsTrueIfMessageIsValid()
         {
             var message = NewAnnouncementSignatures();
-            var gossipChannel = new GossipChannel(NewChannelAnnouncement(), GossipChannel.LocalNode.Node1); 
-            
+            var gossipChannel = new GossipChannel(NewChannelAnnouncement(), GossipChannel.LocalNode.Node1);
+
             _gossipRepository.Setup(_ => _.GetGossipChannel(message.ShortChannelId))
                 .Returns(gossipChannel);
 
@@ -117,19 +114,18 @@ namespace Lyn.Protocol.Tests.Bolt7
                     message.NodeSignature,
                     It.IsAny<byte[]>()))
                 .Returns(true);
-                
+
             _validationHelper.Setup(_ => _.VerifySignature(gossipChannel.GetRemoteBitcoinAddress(),
                     message.BitcoinSignature,
                     It.IsAny<byte[]>()))
                 .Returns(true);
-            
+
             var result = _sut.ValidateMessage(message);
 
             Assert.True(result.Item1);
             Assert.Null(result.Item2);
         }
-            
-        
+
         private static void ThanTheMessageFailedWithNoError((bool, ErrorMessage?) result)
         {
             Assert.False(result.Item1);

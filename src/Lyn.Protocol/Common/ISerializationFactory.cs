@@ -1,14 +1,13 @@
 using System.Buffers;
 using Lyn.Types.Bolt.Messages;
+using Lyn.Types.Serialization;
 
 namespace Lyn.Protocol.Common
 {
     public interface ISerializationFactory
     {
-        byte[] Serialize<TMessage>(TMessage message) where TMessage : NetworkMessageBase;
-        
-        //TMessage Deserialize<TMessage>(ref SequenceReader<byte> reader) where TMessage : NetworkMessageBase;
+        byte[] Serialize<TMessage>(TMessage message, ProtocolTypeSerializerOptions? options = null);
 
-        NetworkMessageBase Deserialize(SequenceReader<byte> reader, string command);
+        TMessage Deserialize<TMessage>(byte[] bytes, ProtocolTypeSerializerOptions? options = null);
     }
 }

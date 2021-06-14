@@ -20,7 +20,8 @@ namespace Lyn.Types.Serialization.Serializers
 
         public Transaction Deserialize(ref SequenceReader<byte> reader, int protocolVersion, ProtocolTypeSerializerOptions? options = null)
         {
-            bool allowWitness = options?.Get(SerializerOptions.SERIALIZE_WITNESS, false) ?? false;
+            bool defaultAllowWitness = true; // all our trx use witness we enable it by default
+            bool allowWitness = options?.Get(SerializerOptions.SERIALIZE_WITNESS, defaultAllowWitness) ?? defaultAllowWitness;
             byte flags = 0;
 
             var tx = new Transaction { Version = reader.ReadInt() };
@@ -74,7 +75,8 @@ namespace Lyn.Types.Serialization.Serializers
 
         public int Serialize(Transaction tx, int protocolVersion, IBufferWriter<byte> writer, ProtocolTypeSerializerOptions? options = null)
         {
-            bool allowWitness = options?.Get(SerializerOptions.SERIALIZE_WITNESS, false) ?? false;
+            bool defaultAllowWitness = true; // all our trx use witness we enable it by default
+            bool allowWitness = options?.Get(SerializerOptions.SERIALIZE_WITNESS, defaultAllowWitness) ?? defaultAllowWitness;
             byte flags = 0;
             int size = 0;
 

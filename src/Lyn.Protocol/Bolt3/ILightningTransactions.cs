@@ -1,8 +1,6 @@
 ﻿using Lyn.Protocol.Bolt3.Types;
+using Lyn.Types.Bitcoin;
 using Lyn.Types.Fundamental;
-using Lyn.Types.Serialization.Serializers;
-using NBitcoin;
-using Transaction = Lyn.Types.Bitcoin.Transaction;
 
 namespace Lyn.Protocol.Bolt3
 {
@@ -10,7 +8,7 @@ namespace Lyn.Protocol.Bolt3
     {
         CommitmenTransactionOut CommitmentTransaction(CommitmentTransactionIn commitmentTransactionIn);
 
-        BitcoinSignature SignInput(TransactionSerializer serializer, Transaction transaction, PrivateKey privateKey, uint inputIndex, byte[] redeemScript, Satoshis amountSats, bool anchorOutputs = false);
+        BitcoinSignature SignInput(Transaction transaction, PrivateKey privateKey, uint inputIndex, byte[] redeemScript, Satoshis amountSats, bool anchorOutputs = false);
 
         Transaction CreateHtlcSuccessTransaction(CreateHtlcTransactionIn createHtlcTransactionIn);
 

@@ -1,11 +1,14 @@
 using System;
+using System.Buffers;
 using System.Linq;
 using Lyn.Protocol.Bolt3;
 using Lyn.Protocol.Bolt3.Types;
 using Lyn.Protocol.Common;
 using Lyn.Types.Bitcoin;
 using Lyn.Types.Fundamental;
+using Lyn.Types.Serialization;
 using Lyn.Types.Serialization.Serializers;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -57,17 +60,19 @@ namespace Lyn.Protocol.Tests.Bolt3
         public LightningTransactions LightningTransactions;
         public LightningScripts LightningScripts;
         public LightningKeyDerivation KeyDerivation;
-        public TransactionSerializer TransactionSerializer;
         public TransactionHashCalculator TransactionHashCalculator;
+        public ISerializationFactory SerializationFactory;
 
         public Bolt3CommitmentTestContext()
         {
+            var provider = new ServiceCollection().AddSerializationComponents().BuildServiceProvider();
+            SerializationFactory = new SerializationFactory(provider);
+
             LightningScripts = new LightningScripts();
-            LightningTransactions = new LightningTransactions(new Mock<ILogger<LightningTransactions>>().Object, LightningScripts);
+            LightningTransactions = new LightningTransactions(new Mock<ILogger<LightningTransactions>>().Object, SerializationFactory, LightningScripts);
             KeyDerivation = new LightningKeyDerivation(new Mock<ILogger<LightningKeyDerivation>>().Object);
 
-            TransactionSerializer = new TransactionSerializer(new TransactionInputSerializer(new OutPointSerializer(new UInt256Serializer())), new TransactionOutputSerializer(), new TransactionWitnessSerializer(new TransactionWitnessComponentSerializer()));
-            TransactionHashCalculator = new TransactionHashCalculator(TransactionSerializer);
+            TransactionHashCalculator = new TransactionHashCalculator(provider.GetService<IProtocolTypeSerializer<Transaction>>());
 
             OptionAnchorOutputs = false;
 

@@ -3,6 +3,7 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using Lyn.Protocol.Bolt3.Types;
+using Lyn.Protocol.Common;
 using Lyn.Types.Bitcoin;
 using Lyn.Types.Fundamental;
 using Lyn.Types.Serialization;
@@ -16,11 +17,13 @@ namespace Lyn.Protocol.Bolt3
     public class LightningTransactions : ILightningTransactions
     {
         private readonly ILogger<LightningTransactions> _logger;
-        private readonly LightningScripts _lightningScripts;
+        private readonly ISerializationFactory _serializationFactory;
+        private readonly ILightningScripts _lightningScripts;
 
-        public LightningTransactions(ILogger<LightningTransactions> logger, LightningScripts lightningScripts)
+        public LightningTransactions(ILogger<LightningTransactions> logger, ISerializationFactory serializationFactory, ILightningScripts lightningScripts)
         {
             _logger = logger;
+            _serializationFactory = serializationFactory;
             _lightningScripts = lightningScripts;
         }
 
@@ -424,20 +427,17 @@ namespace Lyn.Protocol.Bolt3
             return result;
         }
 
-        public BitcoinSignature SignInput(TransactionSerializer serializer, Transaction transaction, PrivateKey privateKey, uint inputIndex, byte[] redeemScript, Satoshis amountSats, bool anchorOutputs = false)
+        public BitcoinSignature SignInput(Transaction transaction, PrivateKey privateKey, uint inputIndex, byte[] redeemScript, Satoshis amountSats, bool anchorOutputs = false)
         {
-            // todo: dan move the trx serializer to the constructor
-
             // Currently we use NBitcoin to create the transaction hash to be signed,
             // the extra serialization to NBitcoin Transaction is costly so later
             // we will move to generating the hash to sign and signatures directly in code.
 
             var key = new NBitcoin.Key(privateKey);
 
-            var buffer = new ArrayBufferWriter<byte>();
-            serializer.Serialize(transaction, 1, buffer, new ProtocolTypeSerializerOptions((SerializerOptions.SERIALIZE_WITNESS, true)));
+            byte[] transactionbytes = _serializationFactory.Serialize(transaction);
             NBitcoin.Transaction? trx = NBitcoin.Network.Main.CreateTransaction();
-            trx.FromBytes(buffer.WrittenSpan.ToArray());
+            trx.FromBytes(transactionbytes);
 
             // Create the P2WSH redeem script
             var wscript = new Script(redeemScript);
