@@ -5,11 +5,14 @@ namespace Lyn.Protocol.Bolt3.Types
 {
     public class LexicographicByteComparer : IComparer<byte[]>
     {
-        public int Compare(byte[] x, byte[] y)
+        public int Compare(byte[]? x, byte[]? y)
         {
             int lenRet = x.Length.CompareTo(y.Length);
 
-            if (lenRet != 0) return lenRet;
+            if (lenRet != 0)
+            {
+                return lenRet;
+            }
 
             int len = Math.Min(x.Length, y.Length);
             for (int i = 0; i < len; i++)
