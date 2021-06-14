@@ -7,18 +7,18 @@ using Xunit;
 
 namespace Lyn.Protocol.Tests.Bolt8
 {
-   public class HandshakeProcessorTests
+   public class HandshakeServiceTests
    {
       const string MESSAGE = "0x68656c6c6f";
       
-      static HandshakeProcessor NewNoiseProtocol() =>
-         new HandshakeProcessor(new EllipticCurveActions(), new Hkdf(new HashWithState()), 
+      static HandshakeService NewNoiseProtocol() =>
+         new HandshakeService(new EllipticCurveActions(), new Hkdf(new HashWithState()), 
             new ChaCha20Poly1305CipherFunction(new Mock<ILogger<ChaCha20Poly1305CipherFunction>>().Object)
             , new KeyGenerator(), new Sha256(new Mock<ILogger<Sha256>>().Object),
             new NoiseMessageTransformer(new Hkdf(new HashWithState()),
                new ChaCha20Poly1305CipherFunction(new Mock<ILogger<ChaCha20Poly1305CipherFunction>>().Object),
                new ChaCha20Poly1305CipherFunction(new Mock<ILogger<ChaCha20Poly1305CipherFunction>>().Object),
-               new Mock<ILogger<NoiseMessageTransformer>>().Object),new Mock<ILogger<HandshakeProcessor>>().Object);
+               new Mock<ILogger<NoiseMessageTransformer>>().Object),new Mock<ILogger<HandshakeService>>().Object);
       
       [Fact]
       public void FullHandshakeAndSendingMessageTest()
@@ -56,12 +56,12 @@ namespace Lyn.Protocol.Tests.Bolt8
          // sending a message across initiator to responder
          input = new ReadOnlySequence<byte>(message);
          output = new ArrayBufferWriter<byte>();
-         initiatorTransformer.WriteMessage(input, output);
+         initiatorTransformer.WriteEncryptedMessage(input, output);
 
          // responder receives the message
          input = new ReadOnlySequence<byte>(output.WrittenMemory.ToArray());
          output = new ArrayBufferWriter<byte>();
-         responderTransformer.ReadMessage(input, output);
+         responderTransformer.ReadEncryptedMessage(input, output);
          
          // check message decrypted are correctly
          Assert.Equal(output.WrittenSpan.ToArray(), message);
@@ -69,12 +69,12 @@ namespace Lyn.Protocol.Tests.Bolt8
          // sending a message across responder to initiator
          input = new ReadOnlySequence<byte>(message);
          output = new ArrayBufferWriter<byte>();
-         responderTransformer.WriteMessage(input, output);
+         responderTransformer.WriteEncryptedMessage(input, output);
 
          // initiator receives the message
          input = new ReadOnlySequence<byte>(output.WrittenMemory.ToArray());
          output = new ArrayBufferWriter<byte>();
-         initiatorTransformer.ReadMessage(input, output);
+         initiatorTransformer.ReadEncryptedMessage(input, output);
 
          // check message decrypted are correctly
          Assert.Equal(output.WrittenSpan.ToArray(), message);

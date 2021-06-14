@@ -4,9 +4,9 @@ using Microsoft.Extensions.Logging;
 
 namespace Lyn.Protocol.Bolt8
 {
-   public class HandshakeProcessor : IHandshakeProcessor
+   public class HandshakeService : IHandshakeService
    {
-      private readonly ILogger<HandshakeProcessor> _logger;
+      private readonly ILogger<HandshakeService> _logger;
       
       private readonly IEllipticCurveActions _curveActions;
       private readonly IHkdf _hkdf;
@@ -19,9 +19,9 @@ namespace Lyn.Protocol.Bolt8
 
       private int _sessionId;
 
-      public HandshakeProcessor(IEllipticCurveActions curveActions, IHkdf hkdf, 
+      public HandshakeService(IEllipticCurveActions curveActions, IHkdf hkdf, 
          ICipherFunction aeadConstruction, IKeyGenerator keyGenerator, INoiseHashFunction hasher,
-         INoiseMessageTransformer messageTransformer, ILogger<HandshakeProcessor> logger)
+         INoiseMessageTransformer messageTransformer, ILogger<HandshakeService> logger)
       {
          _curveActions = curveActions;
          _hkdf = hkdf;

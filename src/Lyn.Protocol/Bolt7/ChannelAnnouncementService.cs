@@ -7,12 +7,12 @@ using Lyn.Types.Bolt.Messages;
 
 namespace Lyn.Protocol.Bolt7
 {
-   public class ChannelAnnouncementProcessor : IGossipMessageProcessor<ChannelAnnouncement>
+   public class ChannelAnnouncementService : IGossipMessageService<ChannelAnnouncement>
    {
       readonly IMessageValidator<ChannelAnnouncement> _messageValidator;
       readonly IGossipRepository _gossipRepository;
       
-      public ChannelAnnouncementProcessor(IMessageValidator<ChannelAnnouncement> messageValidator, IGossipRepository gossipRepository)
+      public ChannelAnnouncementService(IMessageValidator<ChannelAnnouncement> messageValidator, IGossipRepository gossipRepository)
       {
          _messageValidator = messageValidator;
          _gossipRepository = gossipRepository;

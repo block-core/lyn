@@ -43,7 +43,7 @@ namespace Lyn.Protocol.Common
         {
             // Discovers and registers all message serializer in this assembly.
             // It is possible to add them manually to have full control of protocol serializers we are interested into.
-            Type protocolSerializerInterface = typeof(IGossipMessageProcessor<>);
+            Type protocolSerializerInterface = typeof(IGossipMessageService<>);
             var implementations = from type in typeof(DefaultIoCRegistrations).Assembly.GetTypes()
                 from typeInterface in type.GetInterfaces()
                 where typeInterface.IsGenericType &&
@@ -96,7 +96,7 @@ namespace Lyn.Protocol.Common
             services.AddSingleton<INoiseHashFunction, Sha256>();
             services.AddTransient<INoiseMessageTransformer, NoiseMessageTransformer>();
             services.AddSingleton<IKeyGenerator, KeyGenerator>();
-            services.AddSingleton<IHandshakeProcessor, HandshakeProcessor>();
+            services.AddSingleton<IHandshakeService, HandshakeService>();
             return services;
         }
         

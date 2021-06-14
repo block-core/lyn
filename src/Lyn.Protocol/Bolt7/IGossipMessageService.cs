@@ -5,7 +5,7 @@ using Lyn.Types.Bolt.Messages;
 
 namespace Lyn.Protocol.Bolt7
 {
-    public interface IGossipMessageProcessor<in T> where T : GossipBaseMessage
+    public interface IGossipMessageService<in T> where T : GossipBaseMessage
     {
         MessageProcessingOutput ProcessMessage(T message);
         

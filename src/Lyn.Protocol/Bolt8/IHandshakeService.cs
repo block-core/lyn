@@ -2,7 +2,7 @@
 
 namespace Lyn.Protocol.Bolt8
 {
-   public interface IHandshakeProcessor
+   public interface IHandshakeService
    {
       void InitiateHandShake(byte[] privateKey);
 
