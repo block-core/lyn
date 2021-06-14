@@ -219,7 +219,7 @@ namespace Lyn.Protocol.Tests.Bolt3
                    inputIndex: 0,
                    redeemScript: redeemScript,
                    htlc.Htlc.AmountMsat,
-                   vectors.RemoteAnchorOutputs ? (SigHash.Single | SigHash.AnyoneCanPay) : SigHash.All);
+                   vectors.RemoteAnchorOutputs);
 
                 var expectedHtlcRemoteSignature = Hex.ToString(expectedHtlcOutput.Inputs[0].ScriptWitness.Components[1].RawData.AsSpan());
                 var actualHtlcRemoteSignature = Hex.ToString(htlcRemoteSignature.GetSpan());
@@ -232,7 +232,7 @@ namespace Lyn.Protocol.Tests.Bolt3
                    inputIndex: 0,
                    redeemScript: redeemScript,
                    htlc.Htlc.AmountMsat,
-                   vectors.LocalAnchorOutputs ? (SigHash.Single | SigHash.AnyoneCanPay) : SigHash.All);
+                   vectors.LocalAnchorOutputs);
 
                 var expectedHtlcLocalSignature = Hex.ToString(expectedHtlcOutput.Inputs[0].ScriptWitness.Components[2].RawData.AsSpan());
                 var actualHtlcLocalSignature = Hex.ToString(htlcLocalSignature.GetSpan());

@@ -9,7 +9,7 @@ using NBitcoin;
 
 namespace Lyn.Protocol.Bolt3
 {
-    public class LightningScripts
+    public class LightningScripts : ILightningScripts
     {
         public byte[] CreaateFundingTransactionScript(PublicKey pubkey1, PublicKey pubkey2)
         {

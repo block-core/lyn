@@ -13,7 +13,7 @@ using Transaction = Lyn.Types.Bitcoin.Transaction;
 
 namespace Lyn.Protocol.Bolt3
 {
-    public class LightningTransactions
+    public class LightningTransactions : ILightningTransactions
     {
         private readonly ILogger<LightningTransactions> _logger;
         private readonly LightningScripts _lightningScripts;
@@ -424,7 +424,7 @@ namespace Lyn.Protocol.Bolt3
             return result;
         }
 
-        public BitcoinSignature SignInput(TransactionSerializer serializer, Transaction transaction, PrivateKey privateKey, uint inputIndex, byte[] redeemScript, Satoshis amountSats, SigHash sigHash = SigHash.All)
+        public BitcoinSignature SignInput(TransactionSerializer serializer, Transaction transaction, PrivateKey privateKey, uint inputIndex, byte[] redeemScript, Satoshis amountSats, bool anchorOutputs = false)
         {
             // todo: dan move the trx serializer to the constructor
 
@@ -444,6 +444,8 @@ namespace Lyn.Protocol.Bolt3
             var utxo = new NBitcoin.TxOut(Money.Satoshis((long)amountSats), wscript.WitHash);
             var outpoint = new NBitcoin.OutPoint(trx.Inputs[inputIndex].PrevOut);
             ScriptCoin witnessCoin = new ScriptCoin(new Coin(outpoint, utxo), wscript);
+
+            SigHash sigHash = anchorOutputs ? (SigHash.Single | SigHash.AnyoneCanPay) : SigHash.All;
 
             uint256? hashToSign = trx.GetSignatureHash(witnessCoin.GetScriptCode(), (int)inputIndex, sigHash, utxo, HashVersion.WitnessV0);
             TransactionSignature? sig = key.Sign(hashToSign, sigHash, useLowR: false);

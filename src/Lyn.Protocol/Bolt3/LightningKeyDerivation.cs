@@ -5,7 +5,7 @@ using NBitcoin.Secp256k1;
 
 namespace Lyn.Protocol.Bolt3
 {
-    public class LightningKeyDerivation
+    public class LightningKeyDerivation : ILightningKeyDerivation
     {
         private readonly ILogger<LightningKeyDerivation> _logger;
 

@@ -35,8 +35,6 @@ namespace Lyn.Protocol.Common
                                                  new ProtocolTypeSerializerOptions((SerializerOptions.SERIALIZE_WITNESS, transaction.HasWitness())));
 
             return HashGenerator.DoubleSha256AsUInt256(buffer.WrittenSpan);
-
-            throw new NotImplementedException();
         }
     }
 }
