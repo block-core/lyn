@@ -256,11 +256,11 @@ namespace Lyn.Protocol.Tests.Bolt3
         /* BOLT #3:
    *    htlc 5 direction: local->remote
    *    htlc 5 amount_msat: 5000000
-   *    htlc 5 expiry: 505
+   *    htlc 5 expiry: 506
    *    htlc 5 payment_preimage: 0505050505050505050505050505050505050505050505050505050505050505
    *    htlc 6 direction: local->remote
-   *    htlc 6 amount_msat: 5000000
-   *    htlc 6 expiry: 506
+   *    htlc 6 amount_msat: 5000001
+   *    htlc 6 expiry: 505
    *    htlc 6 payment_preimage: 0505050505050505050505050505050505050505050505050505050505050505
   */
 
