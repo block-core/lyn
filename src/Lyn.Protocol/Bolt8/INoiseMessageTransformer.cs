@@ -9,8 +9,8 @@ namespace Lyn.Protocol.Bolt8
 
       bool CanProcessMessages();
       
-      int WriteMessage(ReadOnlySequence<byte> message, IBufferWriter<byte> output);
+      int WriteEncryptedMessage(ReadOnlySequence<byte> message, IBufferWriter<byte> output);
       
-      int ReadMessage(ReadOnlySequence<byte> message, IBufferWriter<byte> output);
+      int ReadEncryptedMessage(ReadOnlySequence<byte> message, IBufferWriter<byte> output);
    }
 }

@@ -10,8 +10,8 @@ namespace Lyn.Protocol.Tests.Bolt8
 {
    public class MessageEncryptionTests : Bolt8InitiatedNoiseProtocolTests
    {
-      private HandshakeProcessor? _initiatorHandshakeState;
-      private HandshakeProcessor? _responderHandshakeState;
+      private HandshakeService? _initiatorHandshakeState;
+      private HandshakeService? _responderHandshakeState;
       
 
       private new void WithInitiatorHandshakeInitiatedToKnownLocalAndRemoteKeys()
@@ -102,9 +102,9 @@ namespace Lyn.Protocol.Tests.Bolt8
          var l = BitConverter.GetBytes(Convert.ToInt16(m.Length))
              .Reverse().ToArray(); //from little endian
 
-         transport.WriteMessage(new ReadOnlySequence<byte>(l), outputBuffer);
+         transport.WriteEncryptedMessage(new ReadOnlySequence<byte>(l), outputBuffer);
 
-         transport.WriteMessage(m, outputBuffer);
+         transport.WriteEncryptedMessage(m, outputBuffer);
 
          return outputBuffer.WrittenSpan.ToArray();
       }
@@ -115,9 +115,9 @@ namespace Lyn.Protocol.Tests.Bolt8
          var l = BitConverter.GetBytes(Convert.ToInt16(m.Length))
              .Reverse().ToArray(); //from little endian
 
-         transport.WriteMessage(new ReadOnlySequence<byte>(l), outputBuffer);
+         transport.WriteEncryptedMessage(new ReadOnlySequence<byte>(l), outputBuffer);
 
-         transport.WriteMessage(m, outputBuffer);
+         transport.WriteEncryptedMessage(m, outputBuffer);
       }
 
       private static ReadOnlySpan<byte> DecryptAndValidateMessage(ReadOnlySequence<byte> message, 
@@ -125,11 +125,11 @@ namespace Lyn.Protocol.Tests.Bolt8
       {
          var header = GetArray(2);
 
-         transport.ReadMessage(message.Slice(0, 18), header);
+         transport.ReadEncryptedMessage(message.Slice(0, 18), header);
 
          var body = GetArray(BinaryPrimitives.ReadUInt16BigEndian(header.WrittenSpan));
 
-         int bodyLength = transport.ReadMessage(message.Slice(18), body);
+         int bodyLength = transport.ReadEncryptedMessage(message.Slice(18), body);
 
          return body.WrittenSpan.Slice(0, bodyLength);
       }

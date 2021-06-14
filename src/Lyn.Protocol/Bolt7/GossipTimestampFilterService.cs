@@ -8,11 +8,11 @@ using Lyn.Types.Bolt.Messages;
 
 namespace Lyn.Protocol.Bolt7
 {
-   public class GossipTimestampFilterProcessor : IGossipMessageProcessor<GossipTimestampFilter>
+   public class GossipTimestampFilterService : IGossipMessageService<GossipTimestampFilter>
    {
       readonly IGossipRepository _gossipRepository;
       
-      public GossipTimestampFilterProcessor(IGossipRepository gossipRepository)
+      public GossipTimestampFilterService(IGossipRepository gossipRepository)
       {
          _gossipRepository = gossipRepository;
       }

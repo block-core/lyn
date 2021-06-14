@@ -6,13 +6,13 @@ using Lyn.Types.Bolt.Messages;
 
 namespace Lyn.Protocol.Bolt7
 {
-   public class NodeAnnouncementMessageProcessor : IGossipMessageProcessor<NodeAnnouncement>
+   public class NodeAnnouncementMessageService : IGossipMessageService<NodeAnnouncement>
    {
       readonly IMessageValidator<NodeAnnouncement> _messageValidator;
 
       readonly IGossipRepository _gossipRepository;
 
-      public NodeAnnouncementMessageProcessor(IMessageValidator<NodeAnnouncement> messageValidator, IGossipRepository gossipRepository)
+      public NodeAnnouncementMessageService(IMessageValidator<NodeAnnouncement> messageValidator, IGossipRepository gossipRepository)
       {
          _messageValidator = messageValidator;
          _gossipRepository = gossipRepository;

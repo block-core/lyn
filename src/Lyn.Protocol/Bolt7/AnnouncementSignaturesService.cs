@@ -6,12 +6,12 @@ using Lyn.Types.Bolt.Messages;
 
 namespace Lyn.Protocol.Bolt7
 {
-   public class AnnouncementSignaturesProcessor : IGossipMessageProcessor<AnnouncementSignatures>
+   public class AnnouncementSignaturesService : IGossipMessageService<AnnouncementSignatures>
    {
       readonly IMessageValidator<AnnouncementSignatures> _messageValidator;
       private readonly IGossipRepository _repository;
 
-      public AnnouncementSignaturesProcessor(IMessageValidator<AnnouncementSignatures> messageValidator, 
+      public AnnouncementSignaturesService(IMessageValidator<AnnouncementSignatures> messageValidator, 
          IGossipRepository repository)
       {
          _messageValidator = messageValidator;

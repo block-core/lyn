@@ -35,7 +35,7 @@ namespace Lyn.Protocol.Bolt8
 
       public bool CanProcessMessages() => _keysSet;
 
-      public int WriteMessage(ReadOnlySequence<byte> message, IBufferWriter<byte> output)
+      public int WriteEncryptedMessage(ReadOnlySequence<byte> message, IBufferWriter<byte> output)
       {
          if (message.Length + Aead.TAG_SIZE > LightningNetworkConfig.MAX_MESSAGE_LENGTH)
             throw new ArgumentException($"Noise message must be less than or equal to {LightningNetworkConfig.MAX_MESSAGE_LENGTH} bytes in length.");
@@ -52,7 +52,7 @@ namespace Lyn.Protocol.Bolt8
          return numOfBytesRead;
       }
 
-      public int ReadMessage(ReadOnlySequence<byte> message, IBufferWriter<byte> output)
+      public int ReadEncryptedMessage(ReadOnlySequence<byte> message, IBufferWriter<byte> output)
       {
          _logger.LogDebug($"Transforming lightning input to message");
          
