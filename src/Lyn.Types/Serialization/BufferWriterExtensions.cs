@@ -220,11 +220,11 @@ namespace Lyn.Types.Serialization
         /// <typeparam name="TSerializableType">The type of the serializable type.</typeparam>
         /// <param name="writer">The writer.</param>
         /// <param name="items">The items.</param>
-        /// <param name="protocolVersion">The protocol version.</param>
         /// <param name="serializer">The serializer.</param>
+        /// <param name="options"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int WriteArray<TSerializableType>(this IBufferWriter<byte> writer, TSerializableType[]? items, int protocolVersion, IProtocolTypeSerializer<TSerializableType> serializer, ProtocolTypeSerializerOptions? options = null)
+        public static int WriteArray<TSerializableType>(this IBufferWriter<byte> writer, TSerializableType[]? items, IProtocolTypeSerializer<TSerializableType> serializer, ProtocolTypeSerializerOptions? options = null)
         {
             if ((items?.Length ?? 0) == 0)
             {
@@ -235,7 +235,7 @@ namespace Lyn.Types.Serialization
 
             for (int i = 0; i < items.Length; i++)
             {
-                size += serializer.Serialize(items[i], protocolVersion, writer, options);
+                size += serializer.Serialize(items[i], writer, options);
             }
 
             return size;
@@ -247,13 +247,13 @@ namespace Lyn.Types.Serialization
         /// <typeparam name="TSerializableType">The type of the serializable type.</typeparam>
         /// <param name="writer">The writer.</param>
         /// <param name="item">The item to serialize.</param>
-        /// <param name="protocolVersion">The protocol version.</param>
         /// <param name="serializer">The serializer.</param>
+        /// <param name="options"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int WriteWithSerializer<TSerializableType>(this IBufferWriter<byte> writer, TSerializableType item, int protocolVersion, IProtocolTypeSerializer<TSerializableType> serializer, ProtocolTypeSerializerOptions? options = null)
+        public static int WriteWithSerializer<TSerializableType>(this IBufferWriter<byte> writer, TSerializableType item, IProtocolTypeSerializer<TSerializableType> serializer, ProtocolTypeSerializerOptions? options = null)
         {
-            return serializer.Serialize(item, protocolVersion, writer, options);
+            return serializer.Serialize(item, writer, options);
         }
     }
 }

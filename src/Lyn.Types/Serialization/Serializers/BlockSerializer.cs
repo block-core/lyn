@@ -14,26 +14,26 @@ namespace Lyn.Types.Serialization.Serializers
             _transactionSerializer = transactionSerializer;
         }
 
-        public Block Deserialize(ref SequenceReader<byte> reader, int protocolVersion, ProtocolTypeSerializerOptions? options = null)
+        public Block Deserialize(ref SequenceReader<byte> reader, ProtocolTypeSerializerOptions? options = null)
         {
             options = (options ?? new ProtocolTypeSerializerOptions())
                .Set(SerializerOptions.HEADER_IN_BLOCK, false);
 
             return new Block
             {
-                Header = reader.ReadWithSerializer(protocolVersion, _blockHeaderSerializer, options),
-                Transactions = reader.ReadArray(protocolVersion, _transactionSerializer, options)
+                Header = reader.ReadWithSerializer(_blockHeaderSerializer, options),
+                Transactions = reader.ReadArray(_transactionSerializer, options)
             };
         }
 
-        public int Serialize(Block typeInstance, int protocolVersion, IBufferWriter<byte> writer, ProtocolTypeSerializerOptions? options = null)
+        public int Serialize(Block typeInstance, IBufferWriter<byte> writer, ProtocolTypeSerializerOptions? options = null)
         {
             options = (options ?? new ProtocolTypeSerializerOptions())
                .Set(SerializerOptions.HEADER_IN_BLOCK, false);
 
             int size = 0;
-            size += writer.WriteWithSerializer(typeInstance.Header!, protocolVersion, _blockHeaderSerializer, options);
-            size += writer.WriteArray(typeInstance.Transactions!, protocolVersion, _transactionSerializer, options);
+            size += writer.WriteWithSerializer(typeInstance.Header!, _blockHeaderSerializer, options);
+            size += writer.WriteArray(typeInstance.Transactions!, _transactionSerializer, options);
 
             return size;
         }

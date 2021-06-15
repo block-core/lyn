@@ -5,7 +5,7 @@ namespace Lyn.Types.Serialization.Serializers
 {
     public class InitMessageSerializer : IProtocolTypeSerializer<InitMessage>
     {
-        public int Serialize(InitMessage typeInstance, int protocolVersion, IBufferWriter<byte> writer,
+        public int Serialize(InitMessage typeInstance, IBufferWriter<byte> writer,
             ProtocolTypeSerializerOptions? options = null)
         {
             var size = 0;
@@ -13,16 +13,16 @@ namespace Lyn.Types.Serialization.Serializers
             writer.WriteBytes(typeInstance.GlobalFeatures);
 
             size += typeInstance.GlobalFeatures.Length;
-            
+
             size += writer.WriteUShort((ushort)typeInstance.Features.Length, true);
             writer.WriteBytes(typeInstance.Features);
 
             size += typeInstance.Features.Length;
-            
+
             return size;
         }
 
-        public InitMessage Deserialize(ref SequenceReader<byte> reader, int protocolVersion, ProtocolTypeSerializerOptions? options = null)
+        public InitMessage Deserialize(ref SequenceReader<byte> reader, ProtocolTypeSerializerOptions? options = null)
         {
             var message = new InitMessage();
 

@@ -103,8 +103,8 @@ namespace Lyn.Protocol.Tests.Bolt3
             Transaction? localTransaction = localCommitmenTransactionOut.Transaction;
             Transaction? remoteTransaction = remoteCommitmenTransactionOut.Transaction;
 
-            localTransaction.Hash = Context.TransactionHashCalculator.ComputeHash(localTransaction, 1);
-            remoteTransaction.Hash = Context.TransactionHashCalculator.ComputeHash(remoteTransaction, 1);
+            localTransaction.Hash = Context.TransactionHashCalculator.ComputeHash(localTransaction);
+            remoteTransaction.Hash = Context.TransactionHashCalculator.ComputeHash(remoteTransaction);
 
             Assert.Equal(localTransaction.Hash, remoteTransaction.Hash);
 

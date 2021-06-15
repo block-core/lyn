@@ -18,7 +18,7 @@ namespace Lyn.Types.Serialization.Serializers
             _transactionWitnessSerializer = transactionWitnessSerializer;
         }
 
-        public Transaction Deserialize(ref SequenceReader<byte> reader, int protocolVersion, ProtocolTypeSerializerOptions? options = null)
+        public Transaction Deserialize(ref SequenceReader<byte> reader, ProtocolTypeSerializerOptions? options = null)
         {
             bool defaultAllowWitness = true; // all our trx use witness we enable it by default
             bool allowWitness = options?.Get(SerializerOptions.SERIALIZE_WITNESS, defaultAllowWitness) ?? defaultAllowWitness;
@@ -27,7 +27,7 @@ namespace Lyn.Types.Serialization.Serializers
             var tx = new Transaction { Version = reader.ReadInt() };
 
             /// Try to read the inputs. In case the dummy byte is, this will be read as an empty list of transaction inputs.
-            TransactionInput[] inputs = reader.ReadArray(protocolVersion, _transactionInputSerializer);
+            TransactionInput[] inputs = reader.ReadArray(_transactionInputSerializer);
 
             if (inputs.Length == 0)
             {
@@ -35,14 +35,14 @@ namespace Lyn.Types.Serialization.Serializers
                 flags = reader.ReadByte();
                 if (flags != 0 && allowWitness)
                 {
-                    tx.Inputs = reader.ReadArray(protocolVersion, _transactionInputSerializer);
-                    tx.Outputs = reader.ReadArray(protocolVersion, _transactionOutputSerializer);
+                    tx.Inputs = reader.ReadArray(_transactionInputSerializer);
+                    tx.Outputs = reader.ReadArray(_transactionOutputSerializer);
                 }
             }
             else
             {
                 // otherwise we read valid inputs, now we have to read outputs
-                tx.Outputs = reader.ReadArray(protocolVersion, _transactionOutputSerializer);
+                tx.Outputs = reader.ReadArray(_transactionOutputSerializer);
             }
 
             if ((flags & 1) != 0 && allowWitness)
@@ -52,7 +52,7 @@ namespace Lyn.Types.Serialization.Serializers
 
                 for (int i = 0; i < tx.Inputs!.Length; i++)
                 {
-                    tx.Inputs[i].ScriptWitness = reader.ReadWithSerializer(protocolVersion, _transactionWitnessSerializer);
+                    tx.Inputs[i].ScriptWitness = reader.ReadWithSerializer(_transactionWitnessSerializer);
                 }
 
                 if (!tx.HasWitness())
@@ -73,7 +73,7 @@ namespace Lyn.Types.Serialization.Serializers
             return tx;
         }
 
-        public int Serialize(Transaction tx, int protocolVersion, IBufferWriter<byte> writer, ProtocolTypeSerializerOptions? options = null)
+        public int Serialize(Transaction tx, IBufferWriter<byte> writer, ProtocolTypeSerializerOptions? options = null)
         {
             bool defaultAllowWitness = true; // all our trx use witness we enable it by default
             bool allowWitness = options?.Get(SerializerOptions.SERIALIZE_WITNESS, defaultAllowWitness) ?? defaultAllowWitness;
@@ -99,8 +99,8 @@ namespace Lyn.Types.Serialization.Serializers
                 size += writer.WriteByte(flags);
             }
 
-            size += writer.WriteArray(tx.Inputs, protocolVersion, _transactionInputSerializer);
-            size += writer.WriteArray(tx.Outputs, protocolVersion, _transactionOutputSerializer);
+            size += writer.WriteArray(tx.Inputs, _transactionInputSerializer);
+            size += writer.WriteArray(tx.Outputs, _transactionOutputSerializer);
 
             if ((flags & 1) != 0)
             {
@@ -108,7 +108,7 @@ namespace Lyn.Types.Serialization.Serializers
                 {
                     for (int i = 0; i < tx.Inputs.Length; i++)
                     {
-                        size += writer.WriteWithSerializer(tx.Inputs[i].ScriptWitness!, protocolVersion, _transactionWitnessSerializer);
+                        size += writer.WriteWithSerializer(tx.Inputs[i].ScriptWitness!, _transactionWitnessSerializer);
                     }
                 }
             }

@@ -8,7 +8,7 @@ namespace Lyn.Types.Serialization.Serializers
 {
     public class AnnouncementSignaturesSerializer : IProtocolTypeSerializer<AnnouncementSignatures>
     {
-        public int Serialize(AnnouncementSignatures message, int protocolVersion, IBufferWriter<byte> writer,
+        public int Serialize(AnnouncementSignatures message, IBufferWriter<byte> writer,
             ProtocolTypeSerializerOptions? options = null)
         {
             var size = 0;
@@ -20,7 +20,7 @@ namespace Lyn.Types.Serialization.Serializers
             return size;
         }
 
-        public AnnouncementSignatures Deserialize(ref SequenceReader<byte> reader, int protocolVersion,
+        public AnnouncementSignatures Deserialize(ref SequenceReader<byte> reader,
             ProtocolTypeSerializerOptions? options = null)
         {
             return new AnnouncementSignatures

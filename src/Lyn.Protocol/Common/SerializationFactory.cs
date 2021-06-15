@@ -11,13 +11,10 @@ namespace Lyn.Protocol.Common
     public class SerializationFactory : ISerializationFactory
     {
         private readonly IServiceProvider _serviceProvider;
-        private readonly List<IProtocolTypeSerializer<Object>> _messageSerializers;
 
         public SerializationFactory(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider;
-            _messageSerializers = serviceProvider.GetServices(typeof(IProtocolTypeSerializer<Object>)).Cast<IProtocolTypeSerializer<Object>>()
-                .ToList();
         }
 
         public byte[] Serialize<TMessage>(TMessage message, ProtocolTypeSerializerOptions? options = null)
@@ -28,7 +25,7 @@ namespace Lyn.Protocol.Common
 
             var buffer = new ArrayBufferWriter<byte>();
 
-            serializer.Serialize(message, 0, buffer, options);
+            serializer.Serialize(message, buffer, options);
 
             return buffer.WrittenMemory.ToArray();
         }
@@ -41,7 +38,7 @@ namespace Lyn.Protocol.Common
 
             var reader = new SequenceReader<byte>(new ReadOnlySequence<byte>(bytes));
 
-            return serializer.Deserialize(ref reader, 0, options);
+            return serializer.Deserialize(ref reader, options);
         }
     }
 }

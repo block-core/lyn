@@ -24,7 +24,7 @@ namespace Lyn.Types.Serialization
 
         public NetworkMessageBase Deserialize(ref SequenceReader<byte> reader)
         {
-            return _serializer.Deserialize(ref reader,0);
+            return _serializer.Deserialize(ref reader);
         }
 
         public byte[] Serialize(NetworkMessageBase message)
@@ -34,7 +34,7 @@ namespace Lyn.Types.Serialization
 
             var buffer = new ArrayBufferWriter<byte>();
 
-            _serializer.Serialize(messageBase, 0, buffer);
+            _serializer.Serialize(messageBase, buffer);
 
             return buffer.WrittenMemory.ToArray();
         }

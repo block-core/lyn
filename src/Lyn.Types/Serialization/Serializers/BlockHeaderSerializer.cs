@@ -12,15 +12,15 @@ namespace Lyn.Types.Serialization.Serializers
             _uInt256Serializator = uInt256Serializator;
         }
 
-        public BlockHeader Deserialize(ref SequenceReader<byte> reader, int protocolVersion, ProtocolTypeSerializerOptions? options = null)
+        public BlockHeader Deserialize(ref SequenceReader<byte> reader, ProtocolTypeSerializerOptions? options = null)
         {
             bool headerInBlock = options?.HasOption(SerializerOptions.HEADER_IN_BLOCK) ?? false;
 
             var header = new BlockHeader
             {
                 Version = reader.ReadInt(),
-                PreviousBlockHash = reader.ReadWithSerializer(protocolVersion, _uInt256Serializator),
-                MerkleRoot = reader.ReadWithSerializer(protocolVersion, _uInt256Serializator),
+                PreviousBlockHash = reader.ReadWithSerializer(_uInt256Serializator),
+                MerkleRoot = reader.ReadWithSerializer(_uInt256Serializator),
                 TimeStamp = reader.ReadUInt(),
                 Bits = reader.ReadUInt(),
                 Nonce = reader.ReadUInt(),
@@ -35,14 +35,14 @@ namespace Lyn.Types.Serialization.Serializers
             return header;
         }
 
-        public int Serialize(BlockHeader typeInstance, int protocolVersion, IBufferWriter<byte> writer, ProtocolTypeSerializerOptions? options = null)
+        public int Serialize(BlockHeader typeInstance, IBufferWriter<byte> writer, ProtocolTypeSerializerOptions? options = null)
         {
             bool headerInBlock = options?.HasOption(SerializerOptions.HEADER_IN_BLOCK) ?? false;
 
             int size = 0;
             size += writer.WriteInt(typeInstance.Version);
-            size += writer.WriteWithSerializer(typeInstance.PreviousBlockHash!, protocolVersion, _uInt256Serializator);
-            size += writer.WriteWithSerializer(typeInstance.MerkleRoot!, protocolVersion, _uInt256Serializator);
+            size += writer.WriteWithSerializer(typeInstance.PreviousBlockHash!, _uInt256Serializator);
+            size += writer.WriteWithSerializer(typeInstance.MerkleRoot!, _uInt256Serializator);
             size += writer.WriteUInt(typeInstance.TimeStamp);
             size += writer.WriteUInt(typeInstance.Bits);
             size += writer.WriteUInt(typeInstance.Nonce);

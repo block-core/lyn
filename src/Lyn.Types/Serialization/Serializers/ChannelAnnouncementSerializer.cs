@@ -7,7 +7,7 @@ namespace Lyn.Types.Serialization.Serializers
 {
     public class ChannelAnnouncementSerializer : IProtocolTypeSerializer<ChannelAnnouncement>
     {
-        public int Serialize(ChannelAnnouncement typeInstance, int protocolVersion, IBufferWriter<byte> writer,
+        public int Serialize(ChannelAnnouncement typeInstance, IBufferWriter<byte> writer,
             ProtocolTypeSerializerOptions? options = null)
         {
             var size = 0;
@@ -27,7 +27,7 @@ namespace Lyn.Types.Serialization.Serializers
             return size;
         }
 
-        public ChannelAnnouncement Deserialize(ref SequenceReader<byte> reader, int protocolVersion,
+        public ChannelAnnouncement Deserialize(ref SequenceReader<byte> reader,
             ProtocolTypeSerializerOptions? options = null)
         {
             var message = new ChannelAnnouncement
@@ -40,13 +40,13 @@ namespace Lyn.Types.Serialization.Serializers
 
             message.Len = reader.ReadUShort();
             message.Features = reader.ReadBytes(message.Len).ToArray();
-            message.ChainHash = (ChainHash) reader.ReadBytes(32);
+            message.ChainHash = (ChainHash)reader.ReadBytes(32);
             message.ShortChannelId = (ShortChannelId)reader.ReadBytes(8).ToArray();
             message.NodeId1 = (PublicKey)reader.ReadBytes(PublicKey.LENGTH);
             message.NodeId2 = (PublicKey)reader.ReadBytes(PublicKey.LENGTH);
             message.BitcoinKey1 = (PublicKey)reader.ReadBytes(PublicKey.LENGTH);
             message.BitcoinKey2 = (PublicKey)reader.ReadBytes(PublicKey.LENGTH);
-         
+
             return message;
         }
     }
