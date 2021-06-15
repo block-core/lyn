@@ -453,55 +453,55 @@ namespace Lyn.Protocol.Bolt3
             return new BitcoinSignature(sig.ToBytes());
         }
 
-        public Transaction CreateHtlcSuccessTransaction(CreateHtlcTransactionIn createHtlcTransactionIn)
+        public Transaction HtlcSuccessTransaction(HtlcTransactionIn htlcTransactionIn)
         {
-            createHtlcTransactionIn.HtlcFee = HtlcSuccessFee(createHtlcTransactionIn.OptionAnchorOutputs, createHtlcTransactionIn.FeeratePerKw);
-            createHtlcTransactionIn.Locktime = 0;
-            createHtlcTransactionIn.Sequence = (uint)(createHtlcTransactionIn.OptionAnchorOutputs ? 1 : 0);
+            htlcTransactionIn.HtlcFee = HtlcSuccessFee(htlcTransactionIn.OptionAnchorOutputs, htlcTransactionIn.FeeratePerKw);
+            htlcTransactionIn.Locktime = 0;
+            htlcTransactionIn.Sequence = (uint)(htlcTransactionIn.OptionAnchorOutputs ? 1 : 0);
 
-            return CreateHtlcTransaction(createHtlcTransactionIn);
+            return CreateHtlcTransaction(htlcTransactionIn);
         }
 
-        public Transaction CreateHtlcTimeoutTransaction(CreateHtlcTransactionIn createHtlcTransactionIn)
+        public Transaction HtlcTimeoutTransaction(HtlcTransactionIn htlcTransactionIn)
         {
-            createHtlcTransactionIn.HtlcFee = HtlcTimeoutFee(createHtlcTransactionIn.OptionAnchorOutputs, createHtlcTransactionIn.FeeratePerKw);
-            createHtlcTransactionIn.Locktime = createHtlcTransactionIn.CltvExpiry;
-            createHtlcTransactionIn.Sequence = (uint)(createHtlcTransactionIn.OptionAnchorOutputs ? 1 : 0);
+            htlcTransactionIn.HtlcFee = HtlcTimeoutFee(htlcTransactionIn.OptionAnchorOutputs, htlcTransactionIn.FeeratePerKw);
+            htlcTransactionIn.Locktime = htlcTransactionIn.CltvExpiry;
+            htlcTransactionIn.Sequence = (uint)(htlcTransactionIn.OptionAnchorOutputs ? 1 : 0);
 
-            return CreateHtlcTransaction(createHtlcTransactionIn);
+            return CreateHtlcTransaction(htlcTransactionIn);
         }
 
-        private Transaction CreateHtlcTransaction(CreateHtlcTransactionIn createHtlcTransactionIn)
+        private Transaction CreateHtlcTransaction(HtlcTransactionIn htlcTransactionIn)
         {
             var transaction = new Transaction
             {
                 Version = 2,
-                LockTime = (uint)createHtlcTransactionIn.Locktime,
+                LockTime = (uint)htlcTransactionIn.Locktime,
                 Inputs = new[]
-               {
-               new TransactionInput
-               {
-                  PreviousOutput = createHtlcTransactionIn.CommitOutPoint,
-                  Sequence = createHtlcTransactionIn.Sequence ,
-               }
-            }
+                {
+                    new TransactionInput
+                    {
+                        PreviousOutput = htlcTransactionIn.CommitOutPoint,
+                        Sequence = htlcTransactionIn.Sequence,
+                    }
+                }
             };
 
-            byte[]? wscript = _lightningScripts.GetRevokeableRedeemscript(createHtlcTransactionIn.RevocationPubkey, createHtlcTransactionIn.ToSelfDelay, createHtlcTransactionIn.LocalDelayedkey);
+            byte[]? wscript = _lightningScripts.GetRevokeableRedeemscript(htlcTransactionIn.RevocationPubkey, htlcTransactionIn.ToSelfDelay, htlcTransactionIn.LocalDelayedkey);
             var wscriptinst = new Script(wscript);
             Script? p2Wsh = PayToWitScriptHashTemplate.Instance.GenerateScriptPubKey(new WitScriptId(wscriptinst)); // todo: dan - move this to interface
 
-            Satoshis amountSat = createHtlcTransactionIn.AmountMsat;
-            if (createHtlcTransactionIn.HtlcFee > amountSat) throw new Exception();
-            amountSat -= createHtlcTransactionIn.HtlcFee;
+            Satoshis amountSat = htlcTransactionIn.AmountMsat;
+            if (htlcTransactionIn.HtlcFee > amountSat) throw new Exception();
+            amountSat -= htlcTransactionIn.HtlcFee;
 
             transaction.Outputs = new TransactionOutput[]
             {
-            new TransactionOutput
-            {
-               Value = (long)amountSat,
-               PublicKeyScript = p2Wsh.ToBytes()
-            },
+                new TransactionOutput
+                {
+                    Value = (long) amountSat,
+                    PublicKeyScript = p2Wsh.ToBytes()
+                },
             };
 
             return transaction;
@@ -535,6 +535,11 @@ namespace Lyn.Protocol.Bolt3
             ulong baseSuccessFee = optionAnchorOutputs ? (ulong)706 : (ulong)703;
             Satoshis htlcFeeSuccessFee = feeratePerKw * baseSuccessFee / 1000;
             return htlcFeeSuccessFee;
+        }
+
+        public Transaction ClosingTransaction(ClosingTransactionIn closingTransactionIn)
+        {
+            throw new NotImplementedException();
         }
     }
 }

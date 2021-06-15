@@ -167,8 +167,8 @@ namespace Lyn.Protocol.Tests.Bolt3
                                    Context.RemoteRevocationKey,
                                    Context.OptionAnchorOutputs);
 
-                    htlcTransaction = Context.LightningTransactions.CreateHtlcTimeoutTransaction(
-                       new CreateHtlcTransactionIn
+                    htlcTransaction = Context.LightningTransactions.HtlcTimeoutTransaction(
+                       new HtlcTransactionIn
                        {
                            OptionAnchorOutputs = Context.OptionAnchorOutputs,
                            FeeratePerKw = vectors.FeeratePerKw,
@@ -190,8 +190,8 @@ namespace Lyn.Protocol.Tests.Bolt3
                                    Context.RemoteRevocationKey,
                                    Context.OptionAnchorOutputs);
 
-                    htlcTransaction = Context.LightningTransactions.CreateHtlcSuccessTransaction(
-                       new CreateHtlcTransactionIn
+                    htlcTransaction = Context.LightningTransactions.HtlcSuccessTransaction(
+                       new HtlcTransactionIn
                        {
                            OptionAnchorOutputs = Context.OptionAnchorOutputs,
                            FeeratePerKw = vectors.FeeratePerKw,

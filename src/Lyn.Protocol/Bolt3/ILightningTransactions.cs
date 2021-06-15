@@ -10,12 +10,14 @@ namespace Lyn.Protocol.Bolt3
 
         BitcoinSignature SignInput(Transaction transaction, PrivateKey privateKey, uint inputIndex, byte[] redeemScript, Satoshis amountSats, bool anchorOutputs = false);
 
-        Transaction CreateHtlcSuccessTransaction(CreateHtlcTransactionIn createHtlcTransactionIn);
+        Transaction HtlcSuccessTransaction(HtlcTransactionIn htlcTransactionIn);
 
-        Transaction CreateHtlcTimeoutTransaction(CreateHtlcTransactionIn createHtlcTransactionIn);
+        Transaction HtlcTimeoutTransaction(HtlcTransactionIn htlcTransactionIn);
 
         Satoshis HtlcTimeoutFee(bool optionAnchorOutputs, Satoshis feeratePerKw);
 
         Satoshis HtlcSuccessFee(bool optionAnchorOutputs, Satoshis feeratePerKw);
+
+        Transaction ClosingTransaction(ClosingTransactionIn closingTransactionIn);
     }
 }
