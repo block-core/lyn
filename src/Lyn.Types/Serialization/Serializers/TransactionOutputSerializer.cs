@@ -5,7 +5,7 @@ namespace Lyn.Types.Serialization.Serializers
 {
     public class TransactionOutputSerializer : IProtocolTypeSerializer<TransactionOutput>
     {
-        public TransactionOutput Deserialize(ref SequenceReader<byte> reader, int protocolVersion, ProtocolTypeSerializerOptions? options = null)
+        public TransactionOutput Deserialize(ref SequenceReader<byte> reader, ProtocolTypeSerializerOptions? options = null)
         {
             return new TransactionOutput
             {
@@ -14,7 +14,7 @@ namespace Lyn.Types.Serialization.Serializers
             };
         }
 
-        public int Serialize(TransactionOutput typeInstance, int protocolVersion, IBufferWriter<byte> writer, ProtocolTypeSerializerOptions? options = null)
+        public int Serialize(TransactionOutput typeInstance, IBufferWriter<byte> writer, ProtocolTypeSerializerOptions? options = null)
         {
             int size = writer.WriteLong(typeInstance.Value);
             size += writer.WriteByteArray(typeInstance.PublicKeyScript);

@@ -8,45 +8,37 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Lyn.Protocol.Common
 {
-    internal class SerializationFactory : ISerializationFactory
+    public class SerializationFactory : ISerializationFactory
     {
-        private readonly List<INetworkMessageSerializer> _messageSerializers;
+        private readonly IServiceProvider _serviceProvider;
 
-        public SerializationFactory(IServiceProvider serviceProvider, IEnumerable<INetworkMessageSerializer> serializers)
+        public SerializationFactory(IServiceProvider serviceProvider)
         {
-            _messageSerializers = serviceProvider.GetServices<INetworkMessageSerializer>()
-                .ToList();
+            _serviceProvider = serviceProvider;
         }
 
-        public byte[] Serialize<TMessage>(TMessage message) where TMessage : NetworkMessageBase
+        public byte[] Serialize<TMessage>(TMessage message, ProtocolTypeSerializerOptions? options = null)
         {
-            // var buffer = new ArrayBufferWriter<byte>();
-            //
-            // if (_serviceProvider.GetService(typeof(IProtocolTypeSerializer<TMessage>)) 
-            //     is not IProtocolTypeSerializer<TMessage> serializer)
-            //     throw new ArgumentException(typeof(TMessage).FullName);
-            //
-            // serializer.Serialize(message, 0, buffer);
-            //
-            // return buffer.WrittenMemory.ToArray();
+            if (_serviceProvider.GetService(typeof(IProtocolTypeSerializer<TMessage>))
+                is not IProtocolTypeSerializer<TMessage> serializer)
+                throw new ArgumentException(typeof(TMessage).FullName);
 
-            return _messageSerializers.First(_ => _.CanSerialize(message.Command))
-                .Serialize(message);
+            var buffer = new ArrayBufferWriter<byte>();
+
+            serializer.Serialize(message, buffer, options);
+
+            return buffer.WrittenMemory.ToArray();
         }
-        //
-        // public TMessage Deserialize<TMessage>(ref SequenceReader<byte> reader) where TMessage : NetworkMessageBase
-        // {
-        //     if (_serviceProvider.GetService(typeof(IProtocolTypeSerializer<TMessage>)) 
-        //         is not IProtocolTypeSerializer<TMessage> serializer)
-        //         throw new ArgumentException(typeof(TMessage).FullName);
-        //
-        //     return serializer.Deserialize(ref reader, 0);
-        // }
 
-        public NetworkMessageBase Deserialize(SequenceReader<byte> reader, string command)
+        public TMessage Deserialize<TMessage>(byte[] bytes, ProtocolTypeSerializerOptions? options = null)
         {
-            return _messageSerializers.First(_ => _.CanSerialize(command))
-                .Deserialize(ref reader);
+            if (_serviceProvider.GetService(typeof(IProtocolTypeSerializer<TMessage>))
+                is not IProtocolTypeSerializer<TMessage> serializer)
+                throw new ArgumentException(typeof(TMessage).FullName);
+
+            var reader = new SequenceReader<byte>(new ReadOnlySequence<byte>(bytes));
+
+            return serializer.Deserialize(ref reader, options);
         }
     }
 }

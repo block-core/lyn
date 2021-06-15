@@ -3,7 +3,7 @@ using Lyn.Types.Fundamental;
 
 namespace Lyn.Protocol.Bolt3.Types
 {
-    public class CreateHtlcTransactionIn
+    public class HtlcTransactionIn
     {
         public Satoshis FeeratePerKw { get; set; }
         public bool OptionAnchorOutputs { get; set; }

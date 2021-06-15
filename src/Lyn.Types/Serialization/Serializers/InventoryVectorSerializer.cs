@@ -12,20 +12,20 @@ namespace Lyn.Types.Serialization.Serializers
             _uInt256Serializator = uInt256Serializator;
         }
 
-        public InventoryVector Deserialize(ref SequenceReader<byte> reader, int protocolVersion, ProtocolTypeSerializerOptions? options = null)
+        public InventoryVector Deserialize(ref SequenceReader<byte> reader, ProtocolTypeSerializerOptions? options = null)
         {
             return new InventoryVector
             {
                 Type = reader.ReadUInt(),
-                Hash = reader.ReadWithSerializer(protocolVersion, _uInt256Serializator),
+                Hash = reader.ReadWithSerializer(_uInt256Serializator),
             };
         }
 
-        public int Serialize(InventoryVector typeInstance, int protocolVersion, IBufferWriter<byte> writer, ProtocolTypeSerializerOptions? options = null)
+        public int Serialize(InventoryVector typeInstance, IBufferWriter<byte> writer, ProtocolTypeSerializerOptions? options = null)
         {
             int size = 0;
             size += writer.WriteUInt(typeInstance.Type);
-            size += writer.WriteWithSerializer(typeInstance.Hash, protocolVersion, _uInt256Serializator);
+            size += writer.WriteWithSerializer(typeInstance.Hash, _uInt256Serializator);
 
             return size;
         }

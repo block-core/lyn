@@ -5,7 +5,7 @@ namespace Lyn.Types.Serialization.Serializers
 {
     public class TransactionWitnessComponentSerializer : IProtocolTypeSerializer<TransactionWitnessComponent>
     {
-        public TransactionWitnessComponent Deserialize(ref SequenceReader<byte> reader, int protocolVersion, ProtocolTypeSerializerOptions? options = null)
+        public TransactionWitnessComponent Deserialize(ref SequenceReader<byte> reader, ProtocolTypeSerializerOptions? options = null)
         {
             return new TransactionWitnessComponent
             {
@@ -13,7 +13,7 @@ namespace Lyn.Types.Serialization.Serializers
             };
         }
 
-        public int Serialize(TransactionWitnessComponent typeInstance, int protocolVersion, IBufferWriter<byte> writer, ProtocolTypeSerializerOptions? options = null)
+        public int Serialize(TransactionWitnessComponent typeInstance, IBufferWriter<byte> writer, ProtocolTypeSerializerOptions? options = null)
         {
             return writer.WriteByteArray(typeInstance.RawData);
         }

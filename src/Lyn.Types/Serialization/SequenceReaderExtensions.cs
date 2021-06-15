@@ -209,11 +209,11 @@ namespace Lyn.Types.Serialization
         /// </summary>
         /// <typeparam name="TSerializableType">The type of the serializable type.</typeparam>
         /// <param name="reader">The reader.</param>
-        /// <param name="protocolVersion">The protocol version.</param>
         /// <param name="serializer">The serializer.</param>
+        /// <param name="options"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static TSerializableType[] ReadArray<TSerializableType>(ref this SequenceReader<byte> reader, int protocolVersion, IProtocolTypeSerializer<TSerializableType> serializer, ProtocolTypeSerializerOptions? options = null)
+        public static TSerializableType[] ReadArray<TSerializableType>(this ref SequenceReader<byte> reader, IProtocolTypeSerializer<TSerializableType> serializer, ProtocolTypeSerializerOptions? options = null)
         {
             ulong itemsCount = reader.ReadVarInt();
 
@@ -221,7 +221,7 @@ namespace Lyn.Types.Serialization
 
             for (ulong i = 0; i < itemsCount; i++)
             {
-                result[i] = serializer.Deserialize(ref reader, protocolVersion, options);
+                result[i] = serializer.Deserialize(ref reader, options);
             }
 
             return result;
@@ -232,13 +232,13 @@ namespace Lyn.Types.Serialization
         /// </summary>
         /// <typeparam name="TSerializableType">The type of the serializable type.</typeparam>
         /// <param name="reader">The reader.</param>
-        /// <param name="protocolVersion">The protocol version.</param>
         /// <param name="serializer">The serializer.</param>
+        /// <param name="options"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static TSerializableType ReadWithSerializer<TSerializableType>(ref this SequenceReader<byte> reader, int protocolVersion, IProtocolTypeSerializer<TSerializableType> serializer, ProtocolTypeSerializerOptions? options = null)
+        public static TSerializableType ReadWithSerializer<TSerializableType>(this ref SequenceReader<byte> reader, IProtocolTypeSerializer<TSerializableType> serializer, ProtocolTypeSerializerOptions? options = null)
         {
-            return serializer.Deserialize(ref reader, protocolVersion, options);
+            return serializer.Deserialize(ref reader, options);
         }
     }
 }

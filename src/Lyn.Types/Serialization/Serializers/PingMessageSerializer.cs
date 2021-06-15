@@ -5,7 +5,7 @@ namespace Lyn.Types.Serialization.Serializers
 {
     public class PingMessageSerializer : IProtocolTypeSerializer<PingMessage>
     {
-        public int Serialize(PingMessage typeInstance, int protocolVersion, IBufferWriter<byte> writer,
+        public int Serialize(PingMessage typeInstance, IBufferWriter<byte> writer,
             ProtocolTypeSerializerOptions? options = null)
         {
             var size = 0;
@@ -16,7 +16,7 @@ namespace Lyn.Types.Serialization.Serializers
             return size;
         }
 
-        public PingMessage Deserialize(ref SequenceReader<byte> reader, int protocolVersion, ProtocolTypeSerializerOptions? options = null)
+        public PingMessage Deserialize(ref SequenceReader<byte> reader, ProtocolTypeSerializerOptions? options = null)
         {
             var numPongBytes = reader.ReadUShort(true);
             var bytesLen = reader.ReadUShort(true);

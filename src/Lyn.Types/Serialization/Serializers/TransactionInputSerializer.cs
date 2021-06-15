@@ -12,19 +12,19 @@ namespace Lyn.Types.Serialization.Serializers
             _outPointSerializator = outPointSerializator;
         }
 
-        public TransactionInput Deserialize(ref SequenceReader<byte> reader, int protocolVersion, ProtocolTypeSerializerOptions? options = null)
+        public TransactionInput Deserialize(ref SequenceReader<byte> reader, ProtocolTypeSerializerOptions? options = null)
         {
             return new TransactionInput
             {
-                PreviousOutput = reader.ReadWithSerializer(protocolVersion, _outPointSerializator),
+                PreviousOutput = reader.ReadWithSerializer(_outPointSerializator),
                 SignatureScript = reader.ReadByteArray(),
                 Sequence = reader.ReadUInt()
             };
         }
 
-        public int Serialize(TransactionInput typeInstance, int protocolVersion, IBufferWriter<byte> writer, ProtocolTypeSerializerOptions? options = null)
+        public int Serialize(TransactionInput typeInstance, IBufferWriter<byte> writer, ProtocolTypeSerializerOptions? options = null)
         {
-            int size = writer.WriteWithSerializer(typeInstance.PreviousOutput!, protocolVersion, _outPointSerializator);
+            int size = writer.WriteWithSerializer(typeInstance.PreviousOutput!, _outPointSerializator);
             size += writer.WriteByteArray(typeInstance.SignatureScript);
             size += writer.WriteUInt(typeInstance.Sequence);
 

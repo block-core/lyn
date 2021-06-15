@@ -12,18 +12,18 @@ namespace Lyn.Types.Serialization.Serializers
             _uInt256Serializator = uInt256Serializator;
         }
 
-        public OutPoint Deserialize(ref SequenceReader<byte> reader, int protocolVersion, ProtocolTypeSerializerOptions? options = null)
+        public OutPoint Deserialize(ref SequenceReader<byte> reader, ProtocolTypeSerializerOptions? options = null)
         {
             return new OutPoint
             {
-                Hash = reader.ReadWithSerializer(protocolVersion, _uInt256Serializator),
+                Hash = reader.ReadWithSerializer(_uInt256Serializator),
                 Index = reader.ReadUInt()
             };
         }
 
-        public int Serialize(OutPoint typeInstance, int protocolVersion, IBufferWriter<byte> writer, ProtocolTypeSerializerOptions? options = null)
+        public int Serialize(OutPoint typeInstance, IBufferWriter<byte> writer, ProtocolTypeSerializerOptions? options = null)
         {
-            int size = writer.WriteWithSerializer(typeInstance.Hash!, protocolVersion, _uInt256Serializator);
+            int size = writer.WriteWithSerializer(typeInstance.Hash!, _uInt256Serializator);
             size += writer.WriteUInt(typeInstance.Index);
 
             return size;

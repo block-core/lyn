@@ -6,7 +6,7 @@ namespace Lyn.Types.Serialization.Serializers
 {
     public class NetworkAddressSerializer : IProtocolTypeSerializer<NetworkAddress>
     {
-        public NetworkAddress Deserialize(ref SequenceReader<byte> reader, int protocolVersion, ProtocolTypeSerializerOptions? options = null)
+        public NetworkAddress Deserialize(ref SequenceReader<byte> reader, ProtocolTypeSerializerOptions? options = null)
         {
             return new NetworkAddress
             {
@@ -19,7 +19,7 @@ namespace Lyn.Types.Serialization.Serializers
             };
         }
 
-        public int Serialize(NetworkAddress typeInstance, int protocolVersion, IBufferWriter<byte> writer, ProtocolTypeSerializerOptions? options = null)
+        public int Serialize(NetworkAddress typeInstance, IBufferWriter<byte> writer, ProtocolTypeSerializerOptions? options = null)
         {
             int size = 0;
             // https://bitcoin.org/en/developer-reference#version
