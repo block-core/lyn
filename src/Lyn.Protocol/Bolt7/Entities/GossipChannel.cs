@@ -2,7 +2,7 @@ using System;
 using Lyn.Types.Bolt.Messages;
 using Lyn.Types.Fundamental;
 
-namespace Lyn.Protocol.Bolt7
+namespace Lyn.Protocol.Bolt7.Entities
 {
    public class GossipChannel
    {

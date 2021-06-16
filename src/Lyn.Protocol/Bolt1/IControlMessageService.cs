@@ -1,0 +1,14 @@
+using System.Threading;
+using System.Threading.Tasks;
+using Lyn.Types;
+using Lyn.Types.Bolt.Messages;
+
+namespace Lyn.Protocol.Bolt1
+{
+    public interface IControlMessageService<T> where T : NetworkMessageBase
+    {
+        ValueTask<MessageProcessingOutput> ProcessMessageAsync(T message, CancellationToken cancellation);
+
+        ValueTask<T> CreateNewMessageAsync();
+    }
+}
