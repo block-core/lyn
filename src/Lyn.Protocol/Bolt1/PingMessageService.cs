@@ -9,7 +9,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Lyn.Protocol.Bolt1
 {
-    internal class PingMessageService : IControlMessageService<PingMessage>
+    public class PingMessageService : IControlMessageService<PingMessage>
     {
         private readonly ILogger<PingMessageService> _logger;
 

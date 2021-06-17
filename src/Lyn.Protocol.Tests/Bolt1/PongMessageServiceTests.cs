@@ -1,8 +1,7 @@
-using System.Security.Cryptography;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Lyn.Protocol.Bolt1;
-using Lyn.Protocol.Common;
 using Lyn.Types.Bolt.Messages;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -16,15 +15,13 @@ namespace Lyn.Protocol.Tests.Bolt1
 
         private readonly Mock<ILogger<PongMessageService>> _logger;
         private readonly Mock<IPingPongMessageRepository> _messageRepository;
-        private readonly Mock<IDateTimeProvider> _dateTimeProvider;
-        
+
         public PongMessageServiceTests()
         {
             _logger = new Mock<ILogger<PongMessageService>>();
             _messageRepository = new Mock<IPingPongMessageRepository>();
-            _dateTimeProvider = new Mock<IDateTimeProvider>();
 
-            _sut = new PongMessageService(_logger.Object, _messageRepository.Object, _dateTimeProvider.Object);
+            _sut = new PongMessageService(_logger.Object, _messageRepository.Object);
         }
 
         [Fact]
@@ -61,6 +58,13 @@ namespace Lyn.Protocol.Tests.Bolt1
             _logger.VerifyAll();
             
             Assert.True(response.Success);
+        }
+
+        [Fact]
+        public async Task CreateNewMessageAsyncThrowsWhenCalled()
+        {
+            await Assert.ThrowsAsync<InvalidOperationException>(() 
+                => _sut.CreateNewMessageAsync().AsTask());
         }
     }
 }

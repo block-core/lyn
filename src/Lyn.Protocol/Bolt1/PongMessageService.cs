@@ -1,7 +1,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Lyn.Protocol.Common;
 using Lyn.Types;
 using Lyn.Types.Bolt.Messages;
 using Microsoft.Extensions.Logging;
@@ -12,14 +11,11 @@ namespace Lyn.Protocol.Bolt1
     {
         private readonly ILogger<PongMessageService> _logger;
         private readonly IPingPongMessageRepository _messageRepository;
-        private readonly IDateTimeProvider _dateTimeProvider;
-        
-        public PongMessageService(ILogger<PongMessageService> logger, IPingPongMessageRepository messageRepository, 
-            IDateTimeProvider dateTimeProvider)
+
+        public PongMessageService(ILogger<PongMessageService> logger, IPingPongMessageRepository messageRepository)
         {
             _logger = logger;
             _messageRepository = messageRepository;
-            _dateTimeProvider = dateTimeProvider;
         }
 
         public async ValueTask<MessageProcessingOutput> ProcessMessageAsync(PongMessage message, CancellationToken cancellation)

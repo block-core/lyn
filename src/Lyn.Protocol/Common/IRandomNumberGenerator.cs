@@ -2,7 +2,7 @@ using System;
 
 namespace Lyn.Protocol.Common
 {
-    internal interface IRandomNumberGenerator
+    public interface IRandomNumberGenerator
     {
         void GetBytes(Span<byte> data);
 
