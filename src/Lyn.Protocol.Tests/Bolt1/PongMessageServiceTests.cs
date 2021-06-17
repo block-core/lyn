@@ -47,12 +47,12 @@ namespace Lyn.Protocol.Tests.Bolt1
                 Ignored = RandomMessages.GetRandomByteArray(PingMessage.MAX_BYTES_LEN)
             };
 
-            _messageRepository.Setup(_ => _.PendingPingWithIdExistsAsync(pong.PingId))
+            _messageRepository.Setup(_ => _.PendingPingWithIdExistsAsync(pong.Id))
                 .Returns(() => new ValueTask<bool>(true));
             
             var response = await _sut.ProcessMessageAsync(pong, CancellationToken.None);
             
-            _messageRepository.Verify(_ => _.MarkPongReplyForPingAsync(pong.PingId));
+            _messageRepository.Verify(_ => _.MarkPongReplyForPingAsync(pong.Id));
             
             Assert.True(response.Success);
         }

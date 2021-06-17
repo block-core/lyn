@@ -13,7 +13,7 @@ namespace Lyn.Protocol.Bolt1
         
         public ValueTask AddPingMessageAsync(DateTime dateTimeGenerated, PingMessage pingMessage)
         {
-            _dictionary.TryAdd(pingMessage.BytesLen, new TrackedPingPong
+            _dictionary.TryAdd(pingMessage.PongId, new TrackedPingPong
             {
                 Received = dateTimeGenerated,
                 PingMessage = pingMessage

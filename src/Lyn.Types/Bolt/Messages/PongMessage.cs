@@ -5,10 +5,10 @@ namespace Lyn.Types.Bolt.Messages
         private const string COMMAND = "19";
         public override string Command => COMMAND;
 
-        public ushort BytesLen { get; set; }
+      public ushort BytesLen { get; set; }
 
-        public byte[]? Ignored { get; set; }
-        
-      public ushort PingId => (ushort) (PingMessage.MAX_BYTES_LEN - BytesLen);
+      public byte[]? Ignored { get; set; }
+
+      public ushort Id => BytesLen;
    }
 }
