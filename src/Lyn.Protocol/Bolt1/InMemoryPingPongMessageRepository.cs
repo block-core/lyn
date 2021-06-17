@@ -22,19 +22,12 @@ namespace Lyn.Protocol.Bolt1
             return new ValueTask();
         }
 
-        public ValueTask<bool> PendingPingWithIdExistsAsync(ushort pingId)
+        public ValueTask<bool> PendingPingExistsForIdAsync(ushort pingId)
         {
             var result = _dictionary.ContainsKey(pingId) &&
                          _dictionary[pingId].PongReceived;
 
             return new ValueTask<bool>(result);
-        }
-
-        public ValueTask<TrackedPingPong?> GetPingMessageAsync(ushort pingId)
-        {
-            var result = _dictionary.ContainsKey(pingId) ? _dictionary[pingId] : (TrackedPingPong?)null;
-
-            return new ValueTask<TrackedPingPong?>(result);
         }
 
         public ValueTask<bool> MarkPongReplyForPingAsync(ushort pingId)

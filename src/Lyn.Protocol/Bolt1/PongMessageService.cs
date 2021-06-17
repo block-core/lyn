@@ -22,7 +22,7 @@ namespace Lyn.Protocol.Bolt1
         {
             _logger.LogDebug($"Processing pong from with length {message.BytesLen}");
 
-            var pingExists = await _messageRepository.PendingPingWithIdExistsAsync(message.Id); 
+            var pingExists = await _messageRepository.PendingPingExistsForIdAsync(message.Id); 
             
             if(!pingExists)
                 return new MessageProcessingOutput();

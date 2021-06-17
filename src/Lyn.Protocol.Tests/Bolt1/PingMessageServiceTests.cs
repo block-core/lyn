@@ -95,7 +95,7 @@ namespace Lyn.Protocol.Tests.Bolt1
             _uint16 = 100;
 
             _messageRepository.SetupSequence(_ 
-                    => _.PendingPingWithIdExistsAsync((ushort)(_uint16 % PingMessage.MAX_BYTES_LEN)))
+                    => _.PendingPingExistsForIdAsync((ushort)(_uint16 % PingMessage.MAX_BYTES_LEN)))
                 .Returns(() => new ValueTask<bool>(true))
                 .Returns(() => new ValueTask<bool>(false));
             

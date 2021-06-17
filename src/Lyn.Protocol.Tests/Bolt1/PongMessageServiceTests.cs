@@ -47,7 +47,7 @@ namespace Lyn.Protocol.Tests.Bolt1
                 Ignored = RandomMessages.GetRandomByteArray(PingMessage.MAX_BYTES_LEN)
             };
 
-            _messageRepository.Setup(_ => _.PendingPingWithIdExistsAsync(pong.Id))
+            _messageRepository.Setup(_ => _.PendingPingExistsForIdAsync(pong.Id))
                 .Returns(() => new ValueTask<bool>(true));
             
             var response = await _sut.ProcessMessageAsync(pong, CancellationToken.None);

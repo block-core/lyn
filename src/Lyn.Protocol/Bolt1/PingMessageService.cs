@@ -60,7 +60,7 @@ namespace Lyn.Protocol.Bolt1
         {
             var bytesLength = _numberGenerator.GetUint16() % PingMessage.MAX_BYTES_LEN;
          
-            while(await _messageRepository.PendingPingWithIdExistsAsync((ushort) bytesLength))
+            while(await _messageRepository.PendingPingExistsForIdAsync((ushort) bytesLength))
                 bytesLength = _numberGenerator.GetUint16() % PingMessage.MAX_BYTES_LEN;
          
             var pingMessage = new PingMessage((ushort)bytesLength);

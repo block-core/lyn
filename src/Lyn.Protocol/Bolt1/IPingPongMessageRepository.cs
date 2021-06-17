@@ -1,6 +1,5 @@
 using System;
 using System.Threading.Tasks;
-using Lyn.Protocol.Bolt1.Entities;
 using Lyn.Types.Bolt.Messages;
 
 namespace Lyn.Protocol.Bolt1
@@ -9,10 +8,8 @@ namespace Lyn.Protocol.Bolt1
     {
         ValueTask AddPingMessageAsync(DateTime dateTimeGenerated, PingMessage pingMessage);
 
-        ValueTask<bool> PendingPingWithIdExistsAsync(ushort pingId);
+        ValueTask<bool> PendingPingExistsForIdAsync(ushort pongId);
         
-        ValueTask<TrackedPingPong?> GetPingMessageAsync(ushort pingId);
-
-        ValueTask<bool> MarkPongReplyForPingAsync(ushort pingId);
+        ValueTask<bool> MarkPongReplyForPingAsync(ushort pongId);
     }
 }
