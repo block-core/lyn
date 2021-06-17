@@ -21,6 +21,7 @@ namespace Lyn.Protocol.Tests.Bolt1
         private readonly Mock<IPingPongMessageRepository> _messageRepository;
 
         private DateTime _utcNow;
+        private ushort _uint16;
 
         public PingMessageServiceTests()
         {
@@ -36,6 +37,11 @@ namespace Lyn.Protocol.Tests.Bolt1
 
             _dateTimeProvider.Setup(_ => _.GetUtcNow())
                 .Returns(() => _utcNow);
+
+            _uint16 = RandomMessages.GetRandomNumberUInt16();
+            
+            _randomNumberGenerator.Setup(_ => _.GetUint16())
+                .Returns(() => _uint16);
         }
 
         [Fact]
@@ -71,6 +77,35 @@ namespace Lyn.Protocol.Tests.Bolt1
  
             await Assert.ThrowsAsync<ProtocolViolationException>(() 
                 => _sut.ProcessMessageAsync(message,CancellationToken.None).AsTask());
+        }
+
+        [Fact]
+        public async Task CreateNewMessageAsyncReturnsPingMessageAndStoresInRepo()
+        {
+            var result = await _sut.CreateNewMessageAsync();
+
+            _messageRepository.Verify(_ => _.AddPingMessageAsync(_utcNow, result));
+
+            Assert.Equal(PingMessage.MAX_BYTES_LEN - _uint16 % PingMessage.MAX_BYTES_LEN, result.NumPongBytes);
+        }
+        
+        [Fact]
+        public async Task CreateNewMessageAsyncWhenThePingLengthExistsCreatesNewOne()
+        {
+            _uint16 = 100;
+
+            _messageRepository.SetupSequence(_ 
+                    => _.PendingPingWithIdExistsAsync((ushort)(_uint16 % PingMessage.MAX_BYTES_LEN)))
+                .Returns(() => new ValueTask<bool>(true))
+                .Returns(() => new ValueTask<bool>(false));
+            
+            var result = await _sut.CreateNewMessageAsync();
+
+            _messageRepository.Verify(_ => _.AddPingMessageAsync(_utcNow, result));
+
+            _messageRepository.VerifyAll();
+            
+            Assert.Equal(PingMessage.MAX_BYTES_LEN - _uint16 % PingMessage.MAX_BYTES_LEN, result.NumPongBytes);
         }
     }
 }

@@ -22,14 +22,14 @@ namespace Lyn.Protocol.Bolt1
         {
             _logger.LogDebug($"Processing pong from with length {message.BytesLen}");
 
-            var pingExists = await _messageRepository.PendingPingWithIdExistsAsync(message.BytesLen); 
+            var pingExists = await _messageRepository.PendingPingWithIdExistsAsync(message.PingId); 
             
             if(!pingExists)
                 return new MessageProcessingOutput();
 
-            await _messageRepository.MarkPongReplyForPingAsync(message.BytesLen);
+            await _messageRepository.MarkPongReplyForPingAsync(message.PingId);
             
-            _logger.LogDebug($"Ping pong has completed successfully for id {message.BytesLen}");
+            _logger.LogDebug($"Ping pong has completed successfully for id {message.PingId}");
 
             return new MessageProcessingOutput {Success = true};
         }

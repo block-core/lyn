@@ -8,5 +8,7 @@ namespace Lyn.Types.Bolt.Messages
         public ushort BytesLen { get; set; }
 
         public byte[]? Ignored { get; set; }
-    }
+        
+      public ushort PingId => (ushort) (PingMessage.MAX_BYTES_LEN - BytesLen);
+   }
 }
