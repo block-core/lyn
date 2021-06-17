@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using Lyn.Protocol.Bolt1;
 using Lyn.Protocol.Bolt7;
 using Lyn.Protocol.Bolt8;
 using Lyn.Types.Bolt.Messages;
@@ -17,7 +18,8 @@ namespace Lyn.Protocol.Common
                 .AddSerializationComponents()
                 .AddNetworkMessageSerialization()
                 .AddNoiseComponents()
-                .AddDefaultComponents();
+                .AddDefaultComponents()
+                .AddControlAndSetupMessageSupport();
         }
 
         public static IServiceCollection AddSerializationComponents(this IServiceCollection services)
@@ -116,6 +118,18 @@ namespace Lyn.Protocol.Common
             services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<PingMessage>>();
             services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<PongMessage>>();
 
+            return services;
+        }
+        
+        private static IServiceCollection AddControlAndSetupMessageSupport(this IServiceCollection services)
+        {
+            services.AddSingleton<IPeerRepository, InMemoryPeerRepository>(); 
+            services.AddSingleton<IPingPongMessageRepository, InMemoryPingPongMessageRepository>();
+            services.AddSingleton<ISetupMessageService<InitMessage>,InitMessageService>();
+            services.AddSingleton<ISetupMessageService<ErrorMessage>,ErrorMessageService>();
+            services.AddSingleton<IControlMessageService<PingMessage>,PingMessageService>();
+            services.AddSingleton<IControlMessageService<PongMessage>,PongMessageService>();
+            
             return services;
         }
     }

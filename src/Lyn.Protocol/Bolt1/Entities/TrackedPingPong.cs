@@ -8,5 +8,7 @@ namespace Lyn.Protocol.Bolt1.Entities
         public DateTime Received { get; set; }
         
         public PingMessage PingMessage { get; set; }
+
+        public bool PongReceived { get; set; }
     }
 }

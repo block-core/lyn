@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,16 +11,20 @@ namespace Lyn.Protocol.Bolt1
 {
     public class InitMessageService : ISetupMessageService<InitMessage>
     {
-        private readonly IPeerMessageRepository _repository;
+        private readonly IPeerRepository _repository;
 
-        public InitMessageService(IPeerMessageRepository repository)
+        public InitMessageService(IPeerRepository repository)
         {
             _repository = repository;
         }
 
         public async ValueTask<MessageProcessingOutput> ProcessMessageAsync(InitMessage message, CancellationToken cancellation)
         {
-            var peer = new Peer();
+            var peer = new Peer
+            {
+                Featurs = message.Features,
+                GlobalFeatures = message.GlobalFeatures
+            };
             
             await _repository.AddNewPeerAsync(peer);
 
@@ -32,16 +37,18 @@ namespace Lyn.Protocol.Bolt1
 
         public ValueTask<InitMessage> CreateNewMessageAsync()
         {
-            throw new System.NotImplementedException();
+            return new(CreateInitMessage());
         }
         
         
-        private InitMessage CreateInitMessage()
+        private static InitMessage CreateInitMessage()
         {
+            var supportedFeatures = Features.InitialRoutingSync | Features.GossipQueries;
+            
             return new InitMessage
             {
                 GlobalFeatures = new byte[4],
-                Features = new byte[4],
+                Features = BitConverter.GetBytes((ulong)supportedFeatures),
                 Extension = new TlVStream
                 {
                     Records = new List<TlvRecord>
@@ -51,10 +58,5 @@ namespace Lyn.Protocol.Bolt1
                 }
             };
         }
-    }
-
-    public interface IPeerMessageRepository
-    {
-        ValueTask AddNewPeerAsync(Peer peer);
     }
 }

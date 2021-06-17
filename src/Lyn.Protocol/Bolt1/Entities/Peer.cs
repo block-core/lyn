@@ -7,6 +7,5 @@ namespace Lyn.Protocol.Bolt1.Entities
         public byte[] Featurs { get; set; }
 
         public byte[] GlobalFeatures { get; set; }
-        
     }
 }
