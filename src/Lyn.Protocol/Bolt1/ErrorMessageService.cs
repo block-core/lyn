@@ -29,15 +29,15 @@ namespace Lyn.Protocol.Bolt1
             
             await _repository.AddErrorMessageToPeerAsync("TODO add peer context", message);
 
-            //TODO David need to fail all channels and close connection once Bolt 2 is available
+            //TODO David need to connect the logic to fail a channel after Bolt2 is implemented
 
             if (message.ChannelId.IsEmpty)
                 _logger.Log(LogLevel.Information,"Need to fail all channels"); // TODO fail all channels
             else
                 _logger.Log(LogLevel.Information,
                     $"Need to fail channel {Hex.ToString(message.ChannelId)}"); // TODO fail the channel
-            
-            return new MessageProcessingOutput{Success = true};
+
+            return new MessageProcessingOutput {Success = true};
         }
 
         public ValueTask<ErrorMessage> CreateNewMessageAsync()
