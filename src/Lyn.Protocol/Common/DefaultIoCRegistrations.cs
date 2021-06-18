@@ -84,7 +84,11 @@ namespace Lyn.Protocol.Common
             services.AddSingleton<IGossipRepository, InMemoryGossipRepository>();
             services.AddTransient<IValidationHelper, ValidationHelper>();
             services.AddTransient<INoiseMessageTransformer, NoiseMessageTransformer>();
+            services.AddSingleton<IRandomNumberGenerator, DefaultRandomNumberGenerator>();
+            services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
             services.AddSingleton<ISerializationFactory, SerializationFactory>();
+            services.AddSingleton<ITransactionHashCalculator, TransactionHashCalculator>();
+            
             return services;
         }
 
