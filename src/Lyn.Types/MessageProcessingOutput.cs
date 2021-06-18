@@ -7,7 +7,7 @@ namespace Lyn.Types
         public bool Success { get; set; }
 
         public ErrorMessage? ErrorMessage { get; set; }
-        
-        public NetworkMessageBase? ResponseMessage { get; set; }
+
+        public BoltMessage? ResponseMessage { get; set; }
     }
 }

@@ -7,8 +7,8 @@ namespace Lyn.Types.Serialization
     {
         bool CanSerialize(string command);
 
-        NetworkMessageBase Deserialize(ref SequenceReader<byte> reader);
-        
-        byte[] Serialize(NetworkMessageBase message);
+        BoltMessage Deserialize(ref SequenceReader<byte> reader);
+
+        byte[] Serialize(BoltMessage message);
     }
 }

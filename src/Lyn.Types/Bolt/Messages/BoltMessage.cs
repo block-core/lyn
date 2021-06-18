@@ -1,6 +1,6 @@
 ﻿namespace Lyn.Types.Bolt.Messages
 {
-   public abstract class NetworkMessageBase
+   public abstract class BoltMessage
    {
       public abstract string Command { get; }
 
