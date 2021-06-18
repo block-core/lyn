@@ -18,6 +18,8 @@ namespace Lyn.Types.Bolt
 
       public static implicit operator byte[](ShortChannelId hash) => hash._value;
 
-      public static explicit operator ShortChannelId(byte[] bytes) => new ShortChannelId(bytes);
+      public static implicit operator ShortChannelId(byte[] bytes) => new(bytes);
+      
+      public static implicit operator ShortChannelId(ReadOnlySpan<byte> bytes) => new(bytes.ToArray());
    }
 }

@@ -30,9 +30,9 @@ namespace Lyn.Types.Fundamental
 
         public static implicit operator byte[](PublicKey hash) => hash._value;
 
-        public static explicit operator PublicKey(byte[] bytes) => new PublicKey(bytes);
+        public static implicit operator PublicKey(byte[] bytes) => new (bytes);
 
-        public static explicit operator PublicKey(ReadOnlySpan<byte> bytes) => new PublicKey(bytes.ToArray());
+        public static implicit operator PublicKey(ReadOnlySpan<byte> bytes) => new (bytes.ToArray());
 
         public override string ToString()
         {

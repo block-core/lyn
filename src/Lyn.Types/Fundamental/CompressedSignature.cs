@@ -28,8 +28,8 @@ namespace Lyn.Types.Fundamental
 
         public static implicit operator byte[](CompressedSignature hash) => hash._value;
 
-        public static explicit operator CompressedSignature(byte[] bytes) => new CompressedSignature(bytes);
+        public static implicit operator CompressedSignature(byte[] bytes) => new (bytes);
 
-        public static explicit operator CompressedSignature(ReadOnlySpan<byte> bytes) => new CompressedSignature(bytes.ToArray());
+        public static implicit operator CompressedSignature(ReadOnlySpan<byte> bytes) => new (bytes.ToArray());
     }
 }
