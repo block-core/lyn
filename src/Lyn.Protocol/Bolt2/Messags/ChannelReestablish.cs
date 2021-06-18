@@ -5,7 +5,7 @@ using Lyn.Types.Fundamental;
 
 namespace Lyn.Protocol.Bolt2.Messags
 {
-    public class ChannelReestablish : NetworkMessageBase
+    public class ChannelReestablish : BoltMessage
     {
         private const string COMMAND = "136";
 

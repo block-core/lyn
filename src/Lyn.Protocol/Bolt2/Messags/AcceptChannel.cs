@@ -4,7 +4,7 @@ using Lyn.Types.Fundamental;
 
 namespace Lyn.Protocol.Bolt2.Messags
 {
-    public class AcceptChannel : NetworkMessageBase
+    public class AcceptChannel : BoltMessage
     {
         private const string COMMAND = "33";
 

@@ -4,7 +4,7 @@ using Lyn.Types.Fundamental;
 
 namespace Lyn.Protocol.Bolt2.Messags
 {
-    public class OpenChannel : NetworkMessageBase
+    public class OpenChannel : BoltMessage
     {
         private const string COMMAND = "32";
 

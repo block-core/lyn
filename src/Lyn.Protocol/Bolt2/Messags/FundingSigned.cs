@@ -4,7 +4,7 @@ using Lyn.Types.Fundamental;
 
 namespace Lyn.Protocol.Bolt2.Messags
 {
-    public class FundingSigned : NetworkMessageBase
+    public class FundingSigned : BoltMessage
     {
         private const string COMMAND = "35";
 

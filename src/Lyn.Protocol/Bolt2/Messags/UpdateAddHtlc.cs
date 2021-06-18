@@ -5,7 +5,7 @@ using Lyn.Types.Fundamental;
 
 namespace Lyn.Protocol.Bolt2.Messags
 {
-    public class UpdateAddHtlc : NetworkMessageBase
+    public class UpdateAddHtlc : BoltMessage
     {
         private const string COMMAND = "128";
 

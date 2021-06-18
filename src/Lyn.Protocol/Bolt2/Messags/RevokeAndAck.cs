@@ -4,7 +4,7 @@ using Lyn.Types.Fundamental;
 
 namespace Lyn.Protocol.Bolt2.Messags
 {
-    public class RevokeAndAck : NetworkMessageBase
+    public class RevokeAndAck : BoltMessage
     {
         private const string COMMAND = "133";
 

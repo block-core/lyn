@@ -4,7 +4,7 @@ using Lyn.Types.Fundamental;
 
 namespace Lyn.Protocol.Bolt2.Messags
 {
-    public class Shutdown : NetworkMessageBase
+    public class Shutdown : BoltMessage
     {
         private const string COMMAND = "38";
 
