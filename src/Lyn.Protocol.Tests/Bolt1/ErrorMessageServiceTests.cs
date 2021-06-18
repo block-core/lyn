@@ -36,7 +36,7 @@ namespace Lyn.Protocol.Tests.Bolt1
 
             var result = await _sut.ProcessMessageAsync(message,CancellationToken.None);
             
-            _repository.Verify(_ => _.AddErrorMessageToPeerAsync());
+            _repository.Verify(_ => _.AddErrorMessageToPeerAsync("TODO add peer context",message));
             
             Assert.True(result.Success);
         }

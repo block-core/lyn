@@ -5,7 +5,7 @@ using Lyn.Types.Bolt.Messages;
 
 namespace Lyn.Protocol.Bolt1
 {
-    public interface IControlMessageService<T> where T : NetworkMessageBase
+    public interface IControlMessageService<T> where T : BoltMessage
     {
         ValueTask<MessageProcessingOutput> ProcessMessageAsync(T message, CancellationToken cancellation);
 
