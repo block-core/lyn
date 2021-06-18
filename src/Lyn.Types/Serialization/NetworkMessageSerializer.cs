@@ -5,7 +5,7 @@ using Lyn.Types.Bolt.Messages;
 namespace Lyn.Types.Serialization
 {
     public class NetworkMessageSerializer<TMessage> : INetworkMessageSerializer
-        where TMessage : NetworkMessageBase, new()
+        where TMessage : BoltMessage, new()
     {
         private readonly IProtocolTypeSerializer<TMessage> _serializer;
 
@@ -22,12 +22,12 @@ namespace Lyn.Types.Serialization
             return _message.Command == command;
         }
 
-        public NetworkMessageBase Deserialize(ref SequenceReader<byte> reader)
+        public BoltMessage Deserialize(ref SequenceReader<byte> reader)
         {
             return _serializer.Deserialize(ref reader);
         }
 
-        public byte[] Serialize(NetworkMessageBase message)
+        public byte[] Serialize(BoltMessage message)
         {
             if (message is not TMessage messageBase)
                 throw new InvalidCastException();

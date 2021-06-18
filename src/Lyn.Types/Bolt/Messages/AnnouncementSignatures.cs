@@ -2,7 +2,7 @@ using Lyn.Types.Fundamental;
 
 namespace Lyn.Types.Bolt.Messages
 {
-    public class AnnouncementSignatures : GossipBaseMessage
+    public class AnnouncementSignatures : GossipMessage
     {
         private const string COMMAND = "259";
 
