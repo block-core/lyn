@@ -12,45 +12,76 @@ namespace Lyn.Protocol.Bolt2.Types
 {
     public class Channel
     {
+        /// <summary>
+        /// The id for this channel.
+        /// </summary>
         public ChannelId? ChannelId { get; set; }
+
+        /// <summary>
+        /// Funding txid and output.
+        /// </summary>
 
         public OutPoint? FundingOutpoint { get; set; }
 
-        /* Keys used to spend funding tx. */
+        /// <summary>
+        ///  Keys used to spend funding tx.
+        /// </summary>
         public PublicKey? FundingPubkey { get; set; }
 
-        /* satoshis in from commitment tx */
-        public Satoshis Funding { get; set; }
+        /// <summary>
+        ///  satoshis in from commitment tx
+        /// </summary>
+        public Satoshis? Funding { get; set; }
 
-        /* confirmations needed for locking funding */
+        /// <summary>
+        ///  confirmations needed for locking funding
+        /// </summary>
         public uint MinimumDepth { get; set; }
 
-        /* Who is paying fees. */
+        /// <summary>
+        ///  Who is paying fees.
+        /// </summary>
         public ChannelSide Opener { get; set; }
 
-        /* Limits and settings on this channel. */
+        /// <summary>
+        ///  Limits and settings on this channel.
+        /// </summary>
         public ChannelConfig Config { get; set; }
 
-        /* Basepoints for deriving keys. */
+        /// <summary>
+        ///  Basepoints for deriving keys.
+        /// </summary>
 
         public PublicKey Basepoints { get; set; }
 
-        /* Mask for obscuring the encoding of the commitment number. */
+        /// <summary>
+        ///  Mask for obscuring the encoding of the commitment number.
+        /// </summary>
         public ulong CommitmentNumberObscurer { get; set; }
 
-        /* All live HTLCs for this channel */
+        /// <summary>
+        ///  All live HTLCs for this channel
+        /// </summary>
         public Dictionary<OutPoint, Htlc> Htlcs { get; set; }
 
-        /* Fee changes, some which may be in transit */
+        /// <summary>
+        ///  Fee changes, some which may be in transit
+        /// </summary>
         public Satoshis FeeStates { get; set; }
 
-        /* What it looks like to each side. */
+        /// <summary>
+        ///  What it looks like to each side.
+        /// </summary>
         public ChannelView ChannelView { get; set; }
 
-        /* Is this using option_static_remotekey? */
+        /// <summary>
+        ///  Is this using option_static_remotekey?
+        /// </summary>
         public bool OptionStaticRemotekey { get; set; }
 
-        /* Is this using option_anchor_outputs? */
+        /// <summary>
+        ///  Is this using option_anchor_outputs?
+        /// </summary>
         public bool OptionAnchorOutputs { get; set; }
     }
 }
