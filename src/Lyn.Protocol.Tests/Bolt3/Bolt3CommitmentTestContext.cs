@@ -57,10 +57,10 @@ namespace Lyn.Protocol.Tests.Bolt3
         public UInt256 FundingTxid;
         public OutPoint FundingTxOutpoint;
 
-        public LightningTransactions LightningTransactions;
-        public LightningScripts LightningScripts;
-        public LightningKeyDerivation KeyDerivation;
-        public TransactionHashCalculator TransactionHashCalculator;
+        public ILightningTransactions LightningTransactions;
+        public ILightningScripts LightningScripts;
+        public ILightningKeyDerivation KeyDerivation;
+        public ITransactionHashCalculator TransactionHashCalculator;
         public ISerializationFactory SerializationFactory;
 
         public Bolt3CommitmentTestContext()
@@ -70,7 +70,7 @@ namespace Lyn.Protocol.Tests.Bolt3
 
             LightningScripts = new LightningScripts();
             LightningTransactions = new LightningTransactions(new Mock<ILogger<LightningTransactions>>().Object, SerializationFactory, LightningScripts);
-            KeyDerivation = new LightningKeyDerivation(new Mock<ILogger<LightningKeyDerivation>>().Object);
+            KeyDerivation = new LightningKeyDerivation();
 
             TransactionHashCalculator = new TransactionHashCalculator(provider.GetService<IProtocolTypeSerializer<Transaction>>());
 
@@ -100,7 +100,6 @@ namespace Lyn.Protocol.Tests.Bolt3
             LocalDelayedSecretkey = KeyDerivation.DerivePrivatekey(LocalDelayedPaymentBasepointSecret, LocalDelayedPaymentBasepoint, LocalPerCommitmentPoint);
 
             RemoteRevocationBasepoint = KeyDerivation.PublicKeyFromPrivateKey(RemoteRevocationBasepointSecret);
-            LocalPerCommitmentPoint = KeyDerivation.PublicKeyFromPrivateKey(LocalPerCommitmentSecret);
             RemoteRevocationKey = KeyDerivation.DeriveRevocationPublicKey(RemoteRevocationBasepoint, LocalPerCommitmentPoint);
 
             LocalDelayedkey = KeyDerivation.PublicKeyFromPrivateKey(LocalDelayedSecretkey);
@@ -136,12 +135,12 @@ namespace Lyn.Protocol.Tests.Bolt3
             // more bytes in the array then just drop the last to bytes form the array to compute the hex
             Assert.Equal("0x2bb038521914", Hex.ToString(BitConverter.GetBytes(CnObscurer).Reverse().ToArray().AsSpan().Slice(2)));
 
-            Keyset.SelfRevocationKey = RemoteRevocationKey;
-            Keyset.SelfDelayedPaymentKey = LocalDelayedkey;
-            Keyset.SelfPaymentKey = Localkey;
-            Keyset.OtherPaymentKey = Remotekey;
-            Keyset.SelfHtlcKey = LocalHtlckey;
-            Keyset.OtherHtlcKey = RemoteHtlckey;
+            Keyset.LocalRevocationKey = RemoteRevocationKey;
+            Keyset.LocalDelayedPaymentKey = LocalDelayedkey;
+            Keyset.LocalPaymentKey = Localkey;
+            Keyset.RemotePaymentKey = Remotekey;
+            Keyset.LocalHtlcKey = LocalHtlckey;
+            Keyset.RemoteHtlcKey = RemoteHtlckey;
         }
     }
 }

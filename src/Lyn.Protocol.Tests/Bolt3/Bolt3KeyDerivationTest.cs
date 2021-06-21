@@ -1,3 +1,4 @@
+using System;
 using Lyn.Protocol.Bolt3;
 using Lyn.Protocol.Common;
 using Lyn.Types.Fundamental;
@@ -12,7 +13,7 @@ namespace Lyn.Protocol.Tests.Bolt3
         [Fact]
         public void AppendixEKeyDerivationTest()
         {
-            var keyDerivation = new LightningKeyDerivation(new Mock<ILogger<LightningKeyDerivation>>().Object);
+            var keyDerivation = new LightningKeyDerivation();
 
             var baseSecret = new PrivateKey(Hex.FromString("0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f"));
             var perCommitmentSecret = new PrivateKey(Hex.FromString("0x1f1e1d1c1b1a191817161514131211100f0e0d0c0b0a09080706050403020100"));
@@ -40,6 +41,13 @@ namespace Lyn.Protocol.Tests.Bolt3
 
             pubkey2 = keyDerivation.PublicKeyFromPrivateKey(privkey);
             Assert.Equal(pubkey.GetSpan().ToArray(), pubkey2.GetSpan().ToArray());
+        }
+
+        [Fact]
+        public void BasepointsDerivationTest()
+        {
+            // compare with test run-derive_basepoints.c in clightning
+            throw new NotImplementedException("implement me");
         }
     }
 }

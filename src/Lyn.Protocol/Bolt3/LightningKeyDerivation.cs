@@ -1,4 +1,7 @@
 ﻿using System;
+using Lyn.Protocol.Bolt2.Entities;
+using Lyn.Protocol.Bolt3.Types;
+using Lyn.Types.Bitcoin;
 using Lyn.Types.Fundamental;
 using Microsoft.Extensions.Logging;
 using NBitcoin.Secp256k1;
@@ -7,11 +10,34 @@ namespace Lyn.Protocol.Bolt3
 {
     public class LightningKeyDerivation : ILightningKeyDerivation
     {
-        private readonly ILogger<LightningKeyDerivation> _logger;
-
-        public LightningKeyDerivation(ILogger<LightningKeyDerivation> logger)
+        public LightningKeyDerivation()
         {
-            _logger = logger;
+        }
+
+        public Secrets DeriveSecrets(Secret seed)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Basepoints DeriveBasepoints(Secrets secrets)
+        {
+            return new Basepoints
+            {
+                Revocation = PublicKeyFromPrivateKey(secrets.RevocationBasepointSecret),
+                Payment = PublicKeyFromPrivateKey(secrets.PaymentBasepointSecret),
+                Htlc = PublicKeyFromPrivateKey(secrets.HtlcBasepointSecret),
+                DelayedPayment = PublicKeyFromPrivateKey(secrets.DelayedPaymentBasepointSecret),
+            };
+        }
+
+        public Secret PerCommitmentSecret(UInt256 shaseed, ulong perCommitIndex)
+        {
+            throw new NotImplementedException();
+        }
+
+        public PublicKey PerCommitmentPoint(UInt256 shaseed, ulong perCommitIndex)
+        {
+            throw new NotImplementedException();
         }
 
         public PublicKey PublicKeyFromPrivateKey(PrivateKey privateKey)

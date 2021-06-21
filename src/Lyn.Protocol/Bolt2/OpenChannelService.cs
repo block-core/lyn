@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Lyn.Protocol.Bolt2.Entities;
 using Lyn.Protocol.Bolt2.Messags;
 using Lyn.Protocol.Bolt3;
+using Lyn.Protocol.Bolt3.Types;
 using Lyn.Protocol.Common;
 using Lyn.Protocol.Common.Blockchain;
 using Lyn.Protocol.Connection;
@@ -17,14 +19,17 @@ namespace Lyn.Protocol.Bolt2
         private readonly ILogger<OpenChannelService> _logger;
         private readonly ILightningTransactions _lightningTransactions;
         private readonly IRandomNumberGenerator _randomNumberGenerator;
+        private readonly ILightningKeyDerivation _lightningKeyDerivation;
 
         public OpenChannelService(ILogger<OpenChannelService> logger,
             ILightningTransactions lightningTransactions,
-            IRandomNumberGenerator randomNumberGenerator)
+            IRandomNumberGenerator randomNumberGenerator,
+            ILightningKeyDerivation lightningKeyDerivation)
         {
             _logger = logger;
             _lightningTransactions = lightningTransactions;
             _randomNumberGenerator = randomNumberGenerator;
+            _lightningKeyDerivation = lightningKeyDerivation;
         }
 
         public Task ProcessMessageAsync(PeerMessage<OpenChannel> message)
@@ -68,10 +73,11 @@ namespace Lyn.Protocol.Bolt2
         }
 
         public void StartOpenChannel(
+            PublicKey nodeId,
             ChainParameters chainParameters,
             Satoshis fundingAmount)
         {
-            OpenChannel openChannel = new OpenChannel();
+            OpenChannel openChannel = new();
 
             // Bolt 2 - MUST ensure the chain_hash value identifies the chain it wishes to open the channel within.
             openChannel.ChainHash = chainParameters.GenesisBlockhash;
@@ -92,11 +98,18 @@ namespace Lyn.Protocol.Bolt2
             // Bolt 2 - MUST set push_msat to equal or less than 1000 * funding_satoshis.
             openChannel.PushMsat = openChannel.FundingSatoshis;
 
-            openChannel.FundingPubkey = null;
-            openChannel.RevocationBasepoint = null;
-            openChannel.HtlcBasepoint = null;
-            openChannel.PaymentBasepoint = null;
-            openChannel.DelayedPaymentBasepoint = null;
+            Secrets secrets = _lightningKeyDerivation.DeriveSecrets(null); // todo: dan create seed store
+
+            openChannel.FundingPubkey = _lightningKeyDerivation.PublicKeyFromPrivateKey(secrets.FundingPrivkey);
+
+            Basepoints basepoints = _lightningKeyDerivation.DeriveBasepoints(secrets);
+
+            openChannel.RevocationBasepoint = basepoints.Revocation;
+            openChannel.HtlcBasepoint = basepoints.Htlc;
+            openChannel.PaymentBasepoint = basepoints.Payment;
+            openChannel.DelayedPaymentBasepoint = basepoints.DelayedPayment;
+
+            openChannel.FirstPerCommitmentPoint = _lightningKeyDerivation.PerCommitmentPoint(secrets.Shaseed, 0);
         }
     }
 }

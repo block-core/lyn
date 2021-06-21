@@ -212,10 +212,10 @@ namespace Lyn.Protocol.Bolt3
                     Satoshis amount = (Satoshis)htlc.AmountMsat;
 
                     byte[]? wscript = _lightningScripts.GetHtlcOfferedRedeemscript(
-                       commitmentTransactionIn.Keyset.SelfHtlcKey,
-                       commitmentTransactionIn.Keyset.OtherHtlcKey,
+                       commitmentTransactionIn.Keyset.LocalHtlcKey,
+                       commitmentTransactionIn.Keyset.RemoteHtlcKey,
                        htlc.Rhash,
-                       commitmentTransactionIn.Keyset.SelfRevocationKey,
+                       commitmentTransactionIn.Keyset.LocalRevocationKey,
                        commitmentTransactionIn.OptionAnchorOutputs);
 
                     var wscriptinst = new Script(wscript);
@@ -250,10 +250,10 @@ namespace Lyn.Protocol.Bolt3
 
                     var wscript = _lightningScripts.GetHtlcReceivedRedeemscript(
                        htlc.Expirylocktime,
-                       commitmentTransactionIn.Keyset.SelfHtlcKey,
-                       commitmentTransactionIn.Keyset.OtherHtlcKey,
+                       commitmentTransactionIn.Keyset.LocalHtlcKey,
+                       commitmentTransactionIn.Keyset.RemoteHtlcKey,
                        htlc.Rhash,
-                       commitmentTransactionIn.Keyset.SelfRevocationKey,
+                       commitmentTransactionIn.Keyset.LocalRevocationKey,
                        commitmentTransactionIn.OptionAnchorOutputs);
 
                     var wscriptinst = new Script(wscript);
@@ -287,7 +287,7 @@ namespace Lyn.Protocol.Bolt3
                 // todo round down msat to sat in s common method
                 Satoshis amount = (Satoshis)commitmentTransactionIn.SelfPayMsat;
 
-                var wscript = _lightningScripts.GetRevokeableRedeemscript(commitmentTransactionIn.Keyset.SelfRevocationKey, commitmentTransactionIn.ToSelfDelay, commitmentTransactionIn.Keyset.SelfDelayedPaymentKey);
+                var wscript = _lightningScripts.GetRevokeableRedeemscript(commitmentTransactionIn.Keyset.LocalRevocationKey, commitmentTransactionIn.ToSelfDelay, commitmentTransactionIn.Keyset.LocalDelayedPaymentKey);
 
                 var wscriptinst = new Script(wscript);
 
@@ -326,7 +326,7 @@ namespace Lyn.Protocol.Bolt3
                 Script p2Wsh;
                 if (commitmentTransactionIn.OptionAnchorOutputs)
                 {
-                    var wscript = _lightningScripts.AnchorToRemoteRedeem(commitmentTransactionIn.Keyset.OtherPaymentKey);
+                    var wscript = _lightningScripts.AnchorToRemoteRedeem(commitmentTransactionIn.Keyset.RemotePaymentKey);
 
                     var wscriptinst = new Script(wscript);
 
@@ -336,7 +336,7 @@ namespace Lyn.Protocol.Bolt3
                 }
                 else
                 {
-                    PubKey pubkey = new PubKey(commitmentTransactionIn.Keyset.OtherPaymentKey);
+                    PubKey pubkey = new PubKey(commitmentTransactionIn.Keyset.RemotePaymentKey);
 
                     p2Wsh = PayToWitPubKeyHashTemplate.Instance.GenerateScriptPubKey(pubkey); // todo: dan - move this to interface
 
