@@ -1,13 +1,11 @@
-using System;
-using System.Threading;
 using System.Threading.Tasks;
-using Lyn.Types;
+using Lyn.Protocol.Connection;
 using Lyn.Types.Bolt.Messages;
 using Microsoft.Extensions.Logging;
 
 namespace Lyn.Protocol.Bolt1
 {
-    public class PongMessageService : IControlMessageService<PongMessage>
+    public class PongMessageService : IBoltMessageService<PongMessage>
     {
         private readonly ILogger<PongMessageService> _logger;
         private readonly IPingPongMessageRepository _messageRepository;
@@ -18,25 +16,18 @@ namespace Lyn.Protocol.Bolt1
             _messageRepository = messageRepository;
         }
 
-        public async ValueTask<MessageProcessingOutput> ProcessMessageAsync(PongMessage message, CancellationToken cancellation)
+        public async Task ProcessMessageAsync(PeerMessage<PongMessage> request)
         {
-            _logger.LogDebug($"Processing pong from with length {message.BytesLen}");
+            _logger.LogDebug($"Processing pong from with length {request.Message.BytesLen.ToString()}");
 
-            var pingExists = await _messageRepository.PendingPingExistsForIdAsync(message.Id); 
+            var pingExists = await _messageRepository.PendingPingExistsForIdAsync(request.NodeId,request.Message.Id); 
             
             if(!pingExists)
-                return new MessageProcessingOutput();
+                return;
 
-            await _messageRepository.MarkPongReplyForPingAsync(message.Id);
+            await _messageRepository.MarkPongReplyForPingAsync(request.NodeId, request.Message.Id);
             
-            _logger.LogDebug($"Ping pong has completed successfully for id {message.Id}");
-
-            return new MessageProcessingOutput {Success = true};
-        }
-
-        public ValueTask<PongMessage> CreateNewMessageAsync()
-        {
-            throw new InvalidOperationException(); //Pong can only be created as a reply to ping messages
+            _logger.LogDebug($"Ping pong has completed successfully for id {request.Message.Id}");
         }
     }
 }

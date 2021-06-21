@@ -3,23 +3,24 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Lyn.Protocol.Bolt1.Entities;
 using Lyn.Types.Bolt.Messages;
+using Lyn.Types.Fundamental;
 
 namespace Lyn.Protocol.Bolt1
 {
     public class InMemoryPeerRepository : IPeerRepository
     {
-        public ConcurrentDictionary<string, Peer> Peers = new ();
+        public ConcurrentDictionary<PublicKey, Peer> Peers = new ();
         
-        public ConcurrentDictionary<string, List<ErrorMessage>> ErrorMessages = new ();
+        public ConcurrentDictionary<PublicKey, List<ErrorMessage>> ErrorMessages = new ();
         
-        public ValueTask AddNewPeerAsync(Peer peer)
+        public Task AddNewPeerAsync(Peer peer)
         {
-            Peers.TryAdd(peer.PeerId,peer);
+            Peers.TryAdd(peer.NodeId,peer);
 
-            return new ValueTask();
+            return Task.CompletedTask;
         }
 
-        public ValueTask AddErrorMessageToPeerAsync(string peerId, ErrorMessage errorMessage)
+        public Task AddErrorMessageToPeerAsync(PublicKey peerId, ErrorMessage errorMessage)
         {
             if (ErrorMessages.ContainsKey(peerId))
             {
@@ -30,7 +31,7 @@ namespace Lyn.Protocol.Bolt1
                 ErrorMessages.TryAdd(peerId, new List<ErrorMessage>{errorMessage});
             }
 
-            return new ValueTask();
+            return Task.CompletedTask;
         }
     }
 }

@@ -1,15 +1,13 @@
-using System;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using Lyn.Protocol.Common;
-using Lyn.Types;
+using Lyn.Protocol.Connection;
 using Lyn.Types.Bolt.Messages;
 using Microsoft.Extensions.Logging;
 
 namespace Lyn.Protocol.Bolt1
 {
-    public class ErrorMessageService : ISetupMessageService<ErrorMessage>
+    public class ErrorMessageService : IBoltMessageService<ErrorMessage>
     {
         private readonly IPeerRepository _repository;
         private readonly ILogger<ErrorMessageService> _logger;
@@ -20,29 +18,22 @@ namespace Lyn.Protocol.Bolt1
             _repository = repository;
         }
 
-        public async ValueTask<MessageProcessingOutput> ProcessMessageAsync(ErrorMessage message, CancellationToken cancellation)
+        public async Task ProcessMessageAsync(PeerMessage<ErrorMessage> request)
         {
             _logger.LogDebug($"Received error message from {0}");//PeerContext.PeerId//
             
-            if (message.Data!= null)
-                _logger.LogDebug($"{Encoding.ASCII.GetString(message.Data)}");
+            if (request.Message.Data != null)
+                _logger.LogDebug($"{Encoding.ASCII.GetString(request.Message.Data)}");
             
-            await _repository.AddErrorMessageToPeerAsync("TODO add peer context", message);
+            await _repository.AddErrorMessageToPeerAsync(request.NodeId, request.Message);
 
             //TODO David need to connect the logic to fail a channel after Bolt2 is implemented
 
-            if (message.ChannelId.IsEmpty)
+            if (request.Message.ChannelId.IsEmpty)
                 _logger.Log(LogLevel.Information,"Need to fail all channels"); // TODO fail all channels
             else
                 _logger.Log(LogLevel.Information,
-                    $"Need to fail channel {Hex.ToString(message.ChannelId)}"); // TODO fail the channel
-
-            return new MessageProcessingOutput {Success = true};
-        }
-
-        public ValueTask<ErrorMessage> CreateNewMessageAsync()
-        {
-            return new(new ErrorMessage());
+                    $"Need to fail channel {Hex.ToString(request.Message.ChannelId)}"); // TODO fail the channel
         }
     }
 }

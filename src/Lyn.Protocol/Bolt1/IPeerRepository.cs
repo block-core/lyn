@@ -1,13 +1,14 @@
 using System.Threading.Tasks;
 using Lyn.Protocol.Bolt1.Entities;
 using Lyn.Types.Bolt.Messages;
+using Lyn.Types.Fundamental;
 
 namespace Lyn.Protocol.Bolt1
 {
     public interface IPeerRepository
     {
-        ValueTask AddNewPeerAsync(Peer peer);
+        Task AddNewPeerAsync(Peer peer);
 
-        ValueTask AddErrorMessageToPeerAsync(string peerId, ErrorMessage errorMessage);
+        Task AddErrorMessageToPeerAsync(PublicKey nodeId, ErrorMessage errorMessage);
     }
 }

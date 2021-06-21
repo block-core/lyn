@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Reflection;
 using Lyn.Protocol.Common;
+using Lyn.Protocol.Connection;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -25,44 +26,19 @@ namespace Lyn.Protocol.Tests
 
             var provider = _serviceCollection.BuildServiceProvider();
 
+            var boltMessageType = typeof(IBoltMessageService<>);
+            
             foreach (var type in Assembly.GetAssembly(typeof(DefaultIoCRegistrations)).DefinedTypes
-                .Where(_ => _.IsInterface && !_.IsGenericType)
-                .Select(_ => _.AsType()))
+                .Where(_ => _.IsClass && 
+                                _.ImplementedInterfaces.Any(interfaceMapping => 
+                            interfaceMapping.IsGenericType &&
+                            interfaceMapping.GetGenericTypeDefinition() == boltMessageType))
+                .Select(_ => _.GetInterface(boltMessageType.Name)))
             {
                 var service = provider.GetService(type);
-
-                if (service is null)
-                {
-                    throw new ArgumentOutOfRangeException(type.FullName);
-                }
                 
                 Assert.NotNull(service);
             }
         }
-        
-        // [Fact]
-        // public void IoCRegistrationsWithNoErrorsForGenerics()
-        // {
-        //     _serviceCollection
-        //         .AddLogging()
-        //         .AddLynComponents();
-        //
-        //     var provider = _serviceCollection.BuildServiceProvider();
-        //
-        //     foreach (var type in Assembly.GetAssembly(typeof(DefaultIoCRegistrations))
-        //         .GetTypes()
-        //         .Where(_ => _.IsInterface)
-        //         .Select(_ => _.GetType()))
-        //     {
-        //         var service = provider.GetService(type);
-        //
-        //         if (service is null)
-        //         {
-        //             throw new ArgumentOutOfRangeException(type.FullName);
-        //         }
-        //         
-        //         Assert.NotNull(service);
-        //     }
-        // }
     }
 }

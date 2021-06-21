@@ -1,46 +1,41 @@
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
 using Lyn.Protocol.Bolt1.Entities;
-using Lyn.Types;
+using Lyn.Protocol.Connection;
 using Lyn.Types.Bolt.Messages;
 using Lyn.Types.Bolt.Messages.TlvRecords;
 
 namespace Lyn.Protocol.Bolt1
 {
-    public class InitMessageService : ISetupMessageService<InitMessage>
+    public class InitMessageService : IBoltMessageService<InitMessage>
     {
         private readonly IPeerRepository _repository;
-
-        public InitMessageService(IPeerRepository repository)
+        private readonly IBoltMessageSender<InitMessage> _messageSender;
+        
+        public InitMessageService(IPeerRepository repository, IBoltMessageSender<InitMessage> messageSender)
         {
             _repository = repository;
+            _messageSender = messageSender ?? throw new ArgumentNullException();
         }
 
-        public async ValueTask<MessageProcessingOutput> ProcessMessageAsync(InitMessage message, CancellationToken cancellation)
+        public async Task ProcessMessageAsync(PeerMessage<InitMessage> request)
         {
             var peer = new Peer
             {
-                Featurs = message.Features,
-                GlobalFeatures = message.GlobalFeatures
+                Featurs = request.Message.Features,
+                GlobalFeatures = request.Message.GlobalFeatures
             };
             
             await _repository.AddNewPeerAsync(peer);
 
-            return new MessageProcessingOutput
+            await _messageSender.SendMessageAsync(new PeerMessage<InitMessage>
             {
-                Success = true,
-                ResponseMessage = CreateInitMessage()
-            };
+                Message = CreateInitMessage(),
+                NodeId = request.NodeId
+            });
         }
 
-        public ValueTask<InitMessage> CreateNewMessageAsync()
-        {
-            return new(CreateInitMessage());
-        }
-        
-        
         private static InitMessage CreateInitMessage()
         {
             var supportedFeatures = Features.InitialRoutingSync | Features.GossipQueries;

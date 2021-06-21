@@ -3,6 +3,7 @@ using System.Linq;
 using Lyn.Protocol.Bolt1;
 using Lyn.Protocol.Bolt7;
 using Lyn.Protocol.Bolt8;
+using Lyn.Protocol.Connection;
 using Lyn.Types.Bolt.Messages;
 using Lyn.Types.Serialization;
 using Microsoft.Extensions.DependencyInjection;
@@ -129,10 +130,12 @@ namespace Lyn.Protocol.Common
         {
             services.AddSingleton<IPeerRepository, InMemoryPeerRepository>(); 
             services.AddSingleton<IPingPongMessageRepository, InMemoryPingPongMessageRepository>();
-            services.AddSingleton<ISetupMessageService<InitMessage>,InitMessageService>();
-            services.AddSingleton<ISetupMessageService<ErrorMessage>,ErrorMessageService>();
-            services.AddSingleton<IControlMessageService<PingMessage>,PingMessageService>();
-            services.AddSingleton<IControlMessageService<PongMessage>,PongMessageService>();
+            services.AddTransient(typeof(IBoltMessageSender<>),typeof(BoltMessageSender<>));
+            //TODO move this to an assembley scan
+            services.AddSingleton<IBoltMessageService<InitMessage>,InitMessageService>();
+            services.AddSingleton<IBoltMessageService<ErrorMessage>,ErrorMessageService>();
+            services.AddSingleton<IBoltMessageService<PingMessage>,PingMessageService>();
+            services.AddSingleton<IBoltMessageService<PongMessage>,PongMessageService>();
             
             return services;
         }

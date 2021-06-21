@@ -1,15 +1,15 @@
 using System;
 using System.Net;
-using System.Threading;
 using System.Threading.Tasks;
 using Lyn.Protocol.Common;
-using Lyn.Types;
+using Lyn.Protocol.Connection;
 using Lyn.Types.Bolt.Messages;
+using Lyn.Types.Fundamental;
 using Microsoft.Extensions.Logging;
 
 namespace Lyn.Protocol.Bolt1
 {
-    public class PingMessageService : IControlMessageService<PingMessage>
+    public class PingMessageService : IBoltMessageService<PingMessage>
     {
         private readonly ILogger<PingMessageService> _logger;
 
@@ -20,52 +20,56 @@ namespace Lyn.Protocol.Bolt1
         
         private DateTime? _lastPingReceivedDateTime; // the service lifetime will be associated with a node so no need to store in repo
         private readonly IPingPongMessageRepository _messageRepository;
+
+        private readonly IBoltMessageSender<PongMessage> _boltMessageSender;
         
         
         public PingMessageService(ILogger<PingMessageService> logger, IDateTimeProvider dateTimeProvider, 
-            IRandomNumberGenerator numberGenerator, IPingPongMessageRepository messageRepository)
+            IRandomNumberGenerator numberGenerator, IPingPongMessageRepository messageRepository, IBoltMessageSender<PongMessage> boltMessageSender)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _dateTimeProvider = dateTimeProvider;
             _numberGenerator = numberGenerator;
             _messageRepository = messageRepository;
+            _boltMessageSender = boltMessageSender;
         }
 
-        public async ValueTask<MessageProcessingOutput> ProcessMessageAsync(PingMessage message, CancellationToken cancellation)
+        public async Task ProcessMessageAsync(PeerMessage<PingMessage> request)
         {
-            if (_lastPingReceivedDateTime > _dateTimeProvider.GetUtcNow().AddSeconds(-PING_INTERVAL_SECS))
-                throw new ProtocolViolationException( //TODO David examine returning success false *this edge case requires failing the channel
+            var utcNow = _dateTimeProvider.GetUtcNow();
+            
+            if (_lastPingReceivedDateTime > utcNow.AddSeconds(-PING_INTERVAL_SECS))
+                throw new ProtocolViolationException( //TODO David this case requires failing all the channels with the node
                     $"Ping message can only be received every {PING_INTERVAL_SECS} seconds");
 
-            if (message.NumPongBytes > PingMessage.MAX_BYTES_LEN)
-                return new MessageProcessingOutput();
+            if (request.Message.NumPongBytes > PingMessage.MAX_BYTES_LEN)
+                return;
 
-            _lastPingReceivedDateTime = _dateTimeProvider.GetUtcNow();
+            _lastPingReceivedDateTime = utcNow;
 
-            _logger.LogDebug($"Send pong to with length {message.NumPongBytes}");
-         
-            // will prevent to handle noise messages to other Processors
-            return new MessageProcessingOutput
+            _logger.LogDebug($"Send pong to with length {request.Message.NumPongBytes}");
+            
+            await _boltMessageSender.SendMessageAsync(new PeerMessage<PongMessage>
             {
-                Success = true,
-                ResponseMessage = new PongMessage
+                NodeId = request.NodeId,
+                Message = new PongMessage
                 {
-                    BytesLen = message.NumPongBytes,
-                    Ignored = new byte[message.NumPongBytes]
+                    BytesLen = request.Message.NumPongBytes,
+                    Ignored = new byte[request.Message.NumPongBytes]
                 }
-            };
+            });
         }
 
-        public async ValueTask<PingMessage> CreateNewMessageAsync()
+        public async ValueTask<PingMessage> CreateNewMessageAsync(PublicKey nodeId)
         {
             var bytesLength = _numberGenerator.GetUint16() % PingMessage.MAX_BYTES_LEN;
          
-            while(await _messageRepository.PendingPingExistsForIdAsync((ushort) bytesLength))
+            while(await _messageRepository.PendingPingExistsForIdAsync(nodeId,(ushort) bytesLength))
                 bytesLength = _numberGenerator.GetUint16() % PingMessage.MAX_BYTES_LEN;
          
             var pingMessage = new PingMessage((ushort)bytesLength);
 
-            await _messageRepository.AddPingMessageAsync(_dateTimeProvider.GetUtcNow(),pingMessage);
+            await _messageRepository.AddPingMessageAsync(nodeId, _dateTimeProvider.GetUtcNow(),pingMessage);
 
             _logger.LogDebug($"Ping generated ,pong length {pingMessage.NumPongBytes}");
 

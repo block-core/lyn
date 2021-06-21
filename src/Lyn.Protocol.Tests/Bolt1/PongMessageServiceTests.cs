@@ -2,7 +2,9 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Lyn.Protocol.Bolt1;
+using Lyn.Protocol.Connection;
 using Lyn.Types.Bolt.Messages;
+using Lyn.Types.Fundamental;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -24,44 +26,45 @@ namespace Lyn.Protocol.Tests.Bolt1
             _sut = new PongMessageService(_logger.Object, _messageRepository.Object);
         }
 
-        [Fact]
-        public async Task ProcessMessageAsyncReturnsFalseWhenPingNotFound()
+        private static PeerMessage<T> NewBoltMessage<T>(T message, PublicKey id)
+        where T : BoltMessage
         {
-            var pong = new PongMessage
+            return new PeerMessage<T>() {Message = message, NodeId = id};
+        }
+        
+        private static PeerMessage<PongMessage> WithPongBoltMessage()
+        {
+            return NewBoltMessage(new PongMessage
             {
                 BytesLen = PingMessage.MAX_BYTES_LEN,
                 Ignored = RandomMessages.GetRandomByteArray(PingMessage.MAX_BYTES_LEN)
-            };
+            }, RandomMessages.NewRandomPublicKey());
+        }
+        
+        [Fact]
+        public async Task ProcessMessageAsyncWhenPingNotFoundDoesNotUpdateTheRepo()
+        {
+            var pong = WithPongBoltMessage();
 
-            var response = await _sut.ProcessMessageAsync(pong, CancellationToken.None);
+            await _sut.ProcessMessageAsync(pong);
             
-            Assert.False(response.Success);
+            _messageRepository.Verify(_ 
+                    => _.MarkPongReplyForPingAsync(pong.NodeId,((PongMessage)pong.Message).Id)
+            ,Times.Never);
         }
         
         [Fact]
         public async Task ProcessMessageAsyncUpdatesPingInRepoAndReturnsTrue()
         {
-            var pong = new PongMessage
-            {
-                BytesLen = PingMessage.MAX_BYTES_LEN,
-                Ignored = RandomMessages.GetRandomByteArray(PingMessage.MAX_BYTES_LEN)
-            };
+            var pong = WithPongBoltMessage();
 
-            _messageRepository.Setup(_ => _.PendingPingExistsForIdAsync(pong.Id))
-                .Returns(() => new ValueTask<bool>(true));
+            _messageRepository.Setup(_ => _.PendingPingExistsForIdAsync(pong.NodeId,pong.Message.Id))
+                .Returns(() => new ValueTask<bool>(true))
+                .Verifiable();
             
-            var response = await _sut.ProcessMessageAsync(pong, CancellationToken.None);
-            
-            _messageRepository.Verify(_ => _.MarkPongReplyForPingAsync(pong.Id));
-            
-            Assert.True(response.Success);
-        }
+            await _sut.ProcessMessageAsync(pong);
 
-        [Fact]
-        public async Task CreateNewMessageAsyncThrowsWhenCalled()
-        {
-            await Assert.ThrowsAsync<InvalidOperationException>(() 
-                => _sut.CreateNewMessageAsync().AsTask());
+            _messageRepository.Verify(_ => _.MarkPongReplyForPingAsync(pong.NodeId, pong.Message.Id));
         }
     }
 }
