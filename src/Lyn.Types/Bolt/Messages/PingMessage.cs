@@ -20,14 +20,16 @@ namespace Lyn.Types.Bolt.Messages
             NumPongBytes = (ushort)(MAX_BYTES_LEN - bytesLen);
         }
 
-        private const string COMMAND = "18";
+      private const string COMMAND = "18";
+      
+      public override string Command => COMMAND;
 
-        public override string Command => COMMAND;
+      public ushort NumPongBytes { get; set; }
 
-        public ushort NumPongBytes { get; set; }
+      public ushort BytesLen { get; set; }
 
-        public ushort BytesLen { get; set; }
+      public byte[]? Ignored { get; set; }
 
-        public byte[]? Ignored { get; set; }
+      public ushort PongId => NumPongBytes;
     }
 }

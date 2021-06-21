@@ -38,7 +38,7 @@ namespace Lyn.Protocol.Tests.Bolt7
                 Alias = RandomMessages.GetRandomByteArray(64),
                 Signature = RandomMessages.NewRandomCompressedSignature(),
                 NodeId = RandomMessages.NewRandomPublicKey(),
-                Timestamp = RandomMessages.GetRandomNumber(),
+                Timestamp = RandomMessages.GetRandomNumberUInt32(),
                 Features = new byte[0],
                 Len = 0,
                 RgbColor = new byte[0]

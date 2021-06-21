@@ -1,6 +1,6 @@
 using Lyn.Types.Bolt.Messages;
 
-namespace Lyn.Protocol.Bolt7
+namespace Lyn.Protocol.Bolt7.Entities
 {
    public class GossipNode
    {

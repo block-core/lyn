@@ -4,14 +4,12 @@ namespace Lyn.Types.Bolt.Messages
     {
         private const string COMMAND = "17";
 
-        public ErrorMessage() => ChannelId = new byte[0];
+      public override string Command => COMMAND;
 
-        public override string Command => COMMAND;
+      public ChannelId ChannelId { get; set; } = new(new byte[0]);
 
-        public byte[] ChannelId { get; set; }
-
-        public ushort Len { get; set; }
-
-        public byte[]? Data { get; set; }
-    }
+      public ushort Len { get; set; }
+      
+      public byte[]? Data { get; set; }
+   }
 }

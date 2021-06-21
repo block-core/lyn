@@ -17,5 +17,10 @@ namespace Lyn.Types.Bolt
       }
 
       public static implicit operator byte[](ChannelId hash) => hash._value;
-      public static explicit operator ChannelId(byte[] bytes) => new ChannelId(bytes);   }
+      public static implicit operator Span<byte>(ChannelId hash) => hash._value;
+      public static implicit operator ChannelId(byte[] bytes) => new (bytes);
+      public static implicit operator ChannelId(ReadOnlySpan<byte> bytes) => new (bytes.ToArray());
+
+      public bool IsEmpty => _value.Length == 0;// TODO David check if should check all array is 0
+   }
 }

@@ -1,3 +1,4 @@
+using Lyn.Protocol.Bolt7.Entities;
 using Lyn.Types.Bolt;
 using Lyn.Types.Fundamental;
 

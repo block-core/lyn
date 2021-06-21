@@ -1,8 +1,6 @@
 using System.Buffers;
-using Lyn.Types.Bolt;
 using Lyn.Types.Bolt.Messages;
 using Lyn.Types.Fundamental;
-using ShortChannelId = Lyn.Types.Bolt.ShortChannelId;
 
 namespace Lyn.Types.Serialization.Serializers
 {
@@ -25,10 +23,10 @@ namespace Lyn.Types.Serialization.Serializers
         {
             return new AnnouncementSignatures
             {
-                ChannelId = (ChannelId)reader.ReadBytes(32).ToArray(),
-                ShortChannelId = (ShortChannelId)reader.ReadBytes(8).ToArray(),
-                NodeSignature = (CompressedSignature)reader.ReadBytes(CompressedSignature.LENGTH).ToArray(),
-                BitcoinSignature = (CompressedSignature)reader.ReadBytes(CompressedSignature.LENGTH).ToArray(),
+                ChannelId = reader.ReadBytes(32),
+                ShortChannelId = reader.ReadBytes(8),
+                NodeSignature = reader.ReadBytes(CompressedSignature.LENGTH),
+                BitcoinSignature = reader.ReadBytes(CompressedSignature.LENGTH),
             };
         }
     }

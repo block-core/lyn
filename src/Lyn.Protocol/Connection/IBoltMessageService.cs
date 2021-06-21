@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Lyn.Types.Bolt.Messages;
 
 namespace Lyn.Protocol.Connection

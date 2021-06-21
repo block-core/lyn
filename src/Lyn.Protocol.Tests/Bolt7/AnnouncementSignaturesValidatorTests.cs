@@ -1,5 +1,6 @@
 using System;
 using Lyn.Protocol.Bolt7;
+using Lyn.Protocol.Bolt7.Entities;
 using Lyn.Protocol.Common;
 using Lyn.Types.Bolt.Messages;
 using Moq;

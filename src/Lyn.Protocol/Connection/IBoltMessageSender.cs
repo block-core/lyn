@@ -7,4 +7,12 @@ namespace Lyn.Protocol.Connection
     {
         Task SendMessageAsync(PeerMessage<T> message);
     }
+
+    public class BoltMessageSender<T> : IBoltMessageSender<T> where T : BoltMessage
+    {
+        public Task SendMessageAsync(PeerMessage<T> message)
+        {
+            throw new System.NotImplementedException();
+        }
+    }
 }
