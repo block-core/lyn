@@ -32,21 +32,21 @@ namespace Lyn.Types.Serialization.Serializers
         {
             var message = new ChannelAnnouncement
             {
-                NodeSignature1 = (CompressedSignature)reader.ReadBytes(CompressedSignature.LENGTH),
-                NodeSignature2 = (CompressedSignature)reader.ReadBytes(CompressedSignature.LENGTH),
-                BitcoinSignature1 = (CompressedSignature)reader.ReadBytes(CompressedSignature.LENGTH),
-                BitcoinSignature2 = (CompressedSignature)reader.ReadBytes(CompressedSignature.LENGTH),
+                NodeSignature1 = reader.ReadBytes(CompressedSignature.LENGTH),
+                NodeSignature2 = reader.ReadBytes(CompressedSignature.LENGTH),
+                BitcoinSignature1 = reader.ReadBytes(CompressedSignature.LENGTH),
+                BitcoinSignature2 = reader.ReadBytes(CompressedSignature.LENGTH),
             };
 
             message.Len = reader.ReadUShort();
             message.Features = reader.ReadBytes(message.Len).ToArray();
-            message.ChainHash = (ChainHash)reader.ReadBytes(32);
-            message.ShortChannelId = (ShortChannelId)reader.ReadBytes(8).ToArray();
-            message.NodeId1 = (PublicKey)reader.ReadBytes(PublicKey.LENGTH);
-            message.NodeId2 = (PublicKey)reader.ReadBytes(PublicKey.LENGTH);
-            message.BitcoinKey1 = (PublicKey)reader.ReadBytes(PublicKey.LENGTH);
-            message.BitcoinKey2 = (PublicKey)reader.ReadBytes(PublicKey.LENGTH);
-
+            message.ChainHash =  reader.ReadBytes(32);
+            message.ShortChannelId = reader.ReadBytes(8);
+            message.NodeId1 = reader.ReadBytes(PublicKey.LENGTH);
+            message.NodeId2 = reader.ReadBytes(PublicKey.LENGTH);
+            message.BitcoinKey1 = reader.ReadBytes(PublicKey.LENGTH);
+            message.BitcoinKey2 = reader.ReadBytes(PublicKey.LENGTH);
+         
             return message;
         }
     }

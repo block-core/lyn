@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Lyn.Protocol.Bolt7.Entities;
 using Lyn.Types;
 using Lyn.Types.Bolt.Messages;
 

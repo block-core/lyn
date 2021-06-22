@@ -1,7 +1,9 @@
 using System;
 using System.Linq;
+using Lyn.Protocol.Bolt1;
 using Lyn.Protocol.Bolt7;
 using Lyn.Protocol.Bolt8;
+using Lyn.Protocol.Connection;
 using Lyn.Types.Bolt.Messages;
 using Lyn.Types.Serialization;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,7 +19,8 @@ namespace Lyn.Protocol.Common
                 .AddSerializationComponents()
                 .AddNetworkMessageSerialization()
                 .AddNoiseComponents()
-                .AddDefaultComponents();
+                .AddDefaultComponents()
+                .AddControlAndSetupMessageSupport();
         }
 
         public static IServiceCollection AddSerializationComponents(this IServiceCollection services)
@@ -82,7 +85,11 @@ namespace Lyn.Protocol.Common
             services.AddSingleton<IGossipRepository, InMemoryGossipRepository>();
             services.AddTransient<IValidationHelper, ValidationHelper>();
             services.AddTransient<INoiseMessageTransformer, NoiseMessageTransformer>();
+            services.AddSingleton<IRandomNumberGenerator, DefaultRandomNumberGenerator>();
+            services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
             services.AddSingleton<ISerializationFactory, SerializationFactory>();
+            services.AddSingleton<ITransactionHashCalculator, TransactionHashCalculator>();
+            
             return services;
         }
 
@@ -116,6 +123,20 @@ namespace Lyn.Protocol.Common
             services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<PingMessage>>();
             services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<PongMessage>>();
 
+            return services;
+        }
+        
+        private static IServiceCollection AddControlAndSetupMessageSupport(this IServiceCollection services)
+        {
+            services.AddSingleton<IPeerRepository, InMemoryPeerRepository>(); 
+            services.AddSingleton<IPingPongMessageRepository, InMemoryPingPongMessageRepository>();
+            services.AddTransient(typeof(IBoltMessageSender<>),typeof(BoltMessageSender<>));
+            //TODO move this to an assembley scan
+            services.AddSingleton<IBoltMessageService<InitMessage>,InitMessageService>();
+            services.AddSingleton<IBoltMessageService<ErrorMessage>,ErrorMessageService>();
+            services.AddSingleton<IBoltMessageService<PingMessage>,PingMessageService>();
+            services.AddSingleton<IBoltMessageService<PongMessage>,PongMessageService>();
+            
             return services;
         }
     }

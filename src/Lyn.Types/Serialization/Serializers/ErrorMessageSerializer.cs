@@ -1,4 +1,5 @@
 using System.Buffers;
+using Lyn.Types.Bolt;
 using Lyn.Types.Bolt.Messages;
 
 namespace Lyn.Types.Serialization.Serializers
@@ -23,8 +24,8 @@ namespace Lyn.Types.Serialization.Serializers
 
             return new ErrorMessage
             {
-                ChannelId = channelId,
-                Len = len,
+                ChannelId = new ChannelId(channelId), 
+                Len = len, 
                 Data = reader.ReadBytes(len).ToArray()
             };
         }

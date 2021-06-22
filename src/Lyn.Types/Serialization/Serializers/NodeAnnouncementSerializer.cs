@@ -29,13 +29,13 @@ namespace Lyn.Types.Serialization.Serializers
         {
             var message = new NodeAnnouncement
             {
-                Signature = (CompressedSignature)reader.ReadBytes(CompressedSignature.LENGTH),
+                Signature = reader.ReadBytes(CompressedSignature.LENGTH), 
                 Len = reader.ReadUShort(true)
             };
 
             message.Features = reader.ReadBytes(message.Len).ToArray();
             message.Timestamp = reader.ReadUInt(true);
-            message.NodeId = (PublicKey)reader.ReadBytes(PublicKey.LENGTH);
+            message.NodeId = reader.ReadBytes(PublicKey.LENGTH);
             message.RgbColor = reader.ReadBytes(3).ToArray();
             message.Alias = reader.ReadBytes(32).ToArray();
             message.Addrlen = reader.ReadUShort(true);
