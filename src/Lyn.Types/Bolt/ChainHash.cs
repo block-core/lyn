@@ -19,12 +19,9 @@ namespace Lyn.Types.Bolt
 
         public static implicit operator byte[](ChainHash hash) => hash._value.GetBytes().ToArray(); //TODO David validate that getbytes returns the right array
 
-        public static explicit operator ChainHash(byte[] bytes) => new ChainHash(bytes);
+        public static implicit operator ChainHash(byte[] bytes) => new ChainHash(bytes);
 
-        public static explicit operator ChainHash(ReadOnlySpan<byte> bytes) => new ChainHash(bytes.ToArray());
-      public static implicit operator byte[](ChainHash hash) => hash._value.GetBytes().ToArray(); //TODO David validate that getbytes returns the right array
-      public static implicit operator ChainHash(byte[] bytes) => new ChainHash(bytes);
-      public static implicit operator ChainHash(ReadOnlySpan<byte> bytes) => new ChainHash(bytes.ToArray());
+        public static implicit operator ChainHash(ReadOnlySpan<byte> bytes) => new ChainHash(bytes.ToArray());
 
         public static implicit operator UInt256(ChainHash chainHash) => chainHash._value;
 

@@ -13,6 +13,13 @@ namespace Lyn.Protocol.Common
             Generator.GetBytes(data);
         }
 
+        public byte[] GetBytes(int len)
+        {
+            Span<byte> result = stackalloc byte[len];
+            Generator.GetBytes(MemoryMarshal.AsBytes(result));
+            return result.ToArray();
+        }
+
         public void GetNonZeroBytes(Span<byte> data)
         {
             Generator.GetNonZeroBytes(data);
@@ -24,7 +31,7 @@ namespace Lyn.Protocol.Common
             Generator.GetBytes(MemoryMarshal.AsBytes(resultSpan));
             return resultSpan[0];
         }
-        
+
         public int GetInt32()
         {
             Span<int> resultSpan = stackalloc int[1];
