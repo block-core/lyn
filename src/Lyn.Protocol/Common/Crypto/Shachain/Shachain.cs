@@ -1,14 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.Metadata;
-using System.Text;
-using System.Threading.Tasks;
 using Lyn.Protocol.Common.Hashing;
 using Lyn.Types.Bitcoin;
-using NBitcoin;
 
-namespace Lyn.Protocol.Bolt3
+namespace Lyn.Protocol.Common.Crypto.Shachain
 {
     /// <summary>
     /// This was ported from
