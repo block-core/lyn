@@ -30,7 +30,7 @@ namespace Lyn.Protocol.Tests.Bolt3
         [ClassData(typeof(Bolt3AppendixCTestDataStaticRemotekey))]
         public void AppendixC_CommitmentAndHTLCTransactionStaticRemotekeyTest(Bolt3CommitmentTestVectors vectors)
         {
-            Context.Keyset.OtherPaymentKey = Context.RemotePaymentBasepoint;
+            Context.Keyset.RemotePaymentKey = Context.RemotePaymentBasepoint;
             Context.OptionAnchorOutputs = false;
 
             Bolt3CommitmentAndHtlcTransactionTest(vectors);
@@ -40,7 +40,7 @@ namespace Lyn.Protocol.Tests.Bolt3
         [ClassData(typeof(Bolt3AppendixCTestDataNoAnchors))]
         public void AppendixC_CommitmentAndHTLCTransactionNoAnchorsTest(Bolt3CommitmentTestVectors vectors)
         {
-            Context.Keyset.OtherPaymentKey = Context.Remotekey;
+            Context.Keyset.RemotePaymentKey = Context.Remotekey;
             Context.OptionAnchorOutputs = false;
 
             Bolt3CommitmentAndHtlcTransactionTest(vectors);
@@ -50,7 +50,7 @@ namespace Lyn.Protocol.Tests.Bolt3
         [ClassData(typeof(Bolt3AppendixFTestDataAnchors))]
         public void AppendixF_CommitmentAndHTLCTransactionAnchorsTest(Bolt3CommitmentTestVectors vectors)
         {
-            Context.Keyset.OtherPaymentKey = Context.RemotePaymentBasepoint;
+            Context.Keyset.RemotePaymentKey = Context.RemotePaymentBasepoint;
             Context.OptionAnchorOutputs = true;
 
             Bolt3CommitmentAndHtlcTransactionTest(vectors);
@@ -136,12 +136,12 @@ namespace Lyn.Protocol.Tests.Bolt3
 
             Keyset keyset = new Keyset
             {
-                SelfRevocationKey = Context.RemoteRevocationKey,
-                SelfDelayedPaymentKey = Context.LocalDelayedkey,
-                SelfPaymentKey = Context.Localkey,
-                OtherPaymentKey = Context.Remotekey,
-                SelfHtlcKey = Context.LocalHtlckey,
-                OtherHtlcKey = Context.RemoteHtlckey,
+                LocalRevocationKey = Context.RemoteRevocationKey,
+                LocalDelayedPaymentKey = Context.LocalDelayedkey,
+                LocalPaymentKey = Context.Localkey,
+                RemotePaymentKey = Context.Remotekey,
+                LocalHtlcKey = Context.LocalHtlckey,
+                RemoteHtlcKey = Context.RemoteHtlckey,
             };
 
             int htlcOutputIndex = 0;
@@ -174,8 +174,8 @@ namespace Lyn.Protocol.Tests.Bolt3
                            FeeratePerKw = vectors.FeeratePerKw,
                            AmountMsat = htlc.Htlc.AmountMsat,
                            CommitOutPoint = outPoint,
-                           RevocationPubkey = keyset.SelfRevocationKey,
-                           LocalDelayedkey = keyset.SelfDelayedPaymentKey,
+                           RevocationPubkey = keyset.LocalRevocationKey,
+                           LocalDelayedkey = keyset.LocalDelayedPaymentKey,
                            ToSelfDelay = Context.ToSelfDelay,
                            CltvExpiry = (uint)htlc.CltvExpirey
                        });
@@ -197,8 +197,8 @@ namespace Lyn.Protocol.Tests.Bolt3
                            FeeratePerKw = vectors.FeeratePerKw,
                            AmountMsat = htlc.Htlc.AmountMsat,
                            CommitOutPoint = outPoint,
-                           RevocationPubkey = keyset.SelfRevocationKey,
-                           LocalDelayedkey = keyset.SelfDelayedPaymentKey,
+                           RevocationPubkey = keyset.LocalRevocationKey,
+                           LocalDelayedkey = keyset.LocalDelayedPaymentKey,
                            ToSelfDelay = Context.ToSelfDelay,
                        });
                 }

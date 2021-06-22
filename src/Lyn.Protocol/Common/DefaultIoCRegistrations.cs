@@ -1,6 +1,9 @@
 using System;
 using System.Linq;
 using Lyn.Protocol.Bolt1;
+using Lyn.Protocol.Bolt2;
+using Lyn.Protocol.Bolt2.Messags;
+using Lyn.Protocol.Bolt3;
 using Lyn.Protocol.Bolt7;
 using Lyn.Protocol.Bolt8;
 using Lyn.Protocol.Connection;
@@ -89,7 +92,11 @@ namespace Lyn.Protocol.Common
             services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
             services.AddSingleton<ISerializationFactory, SerializationFactory>();
             services.AddSingleton<ITransactionHashCalculator, TransactionHashCalculator>();
-            
+
+            services.AddSingleton<ILightningTransactions, LightningTransactions>();
+            services.AddSingleton<ILightningKeyDerivation, LightningKeyDerivation>();
+            services.AddSingleton<ILightningScripts, LightningScripts>();
+
             return services;
         }
 
@@ -125,18 +132,20 @@ namespace Lyn.Protocol.Common
 
             return services;
         }
-        
+
         private static IServiceCollection AddControlAndSetupMessageSupport(this IServiceCollection services)
         {
-            services.AddSingleton<IPeerRepository, InMemoryPeerRepository>(); 
+            services.AddSingleton<IPeerRepository, InMemoryPeerRepository>();
             services.AddSingleton<IPingPongMessageRepository, InMemoryPingPongMessageRepository>();
-            services.AddTransient(typeof(IBoltMessageSender<>),typeof(BoltMessageSender<>));
+            services.AddTransient(typeof(IBoltMessageSender<>), typeof(BoltMessageSender<>));
             //TODO move this to an assembley scan
-            services.AddSingleton<IBoltMessageService<InitMessage>,InitMessageService>();
-            services.AddSingleton<IBoltMessageService<ErrorMessage>,ErrorMessageService>();
-            services.AddSingleton<IBoltMessageService<PingMessage>,PingMessageService>();
-            services.AddSingleton<IBoltMessageService<PongMessage>,PongMessageService>();
-            
+            services.AddSingleton<IBoltMessageService<InitMessage>, InitMessageService>();
+            services.AddSingleton<IBoltMessageService<ErrorMessage>, ErrorMessageService>();
+            services.AddSingleton<IBoltMessageService<PingMessage>, PingMessageService>();
+            services.AddSingleton<IBoltMessageService<PongMessage>, PongMessageService>();
+
+            services.AddSingleton<IBoltMessageService<OpenChannel>, OpenChannelService>();
+
             return services;
         }
     }

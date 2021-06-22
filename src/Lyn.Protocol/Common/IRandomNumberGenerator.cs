@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 namespace Lyn.Protocol.Common
 {
@@ -6,10 +6,12 @@ namespace Lyn.Protocol.Common
     {
         void GetBytes(Span<byte> data);
 
+        byte[] GetBytes(int len);
+
         void GetNonZeroBytes(Span<byte> data);
 
         ushort GetUint16();
-        
+
         int GetInt32();
 
         uint GetUint32();

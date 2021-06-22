@@ -25,9 +25,9 @@ namespace Lyn.Protocol.Common
             var sb = new StringBuilder();
             sb.Append("0x");
             foreach (byte b in span)
-                sb.Append(b.ToString("X2"));
+                sb.Append(b.ToString("x2"));
 
-            return sb.ToString().ToLower();
+            return sb.ToString();
         }
 
         public static string ToString(Span<byte> span)
@@ -35,9 +35,9 @@ namespace Lyn.Protocol.Common
             var sb = new StringBuilder();
             sb.Append("0x");
             foreach (byte b in span)
-                sb.Append(b.ToString("X2"));
+                sb.Append(b.ToString("x2"));
 
-            return sb.ToString().ToLower();
+            return sb.ToString();
         }
 
         public static string ToString(IEnumerable<byte> arr)
@@ -45,9 +45,9 @@ namespace Lyn.Protocol.Common
             var sb = new StringBuilder();
             sb.Append("0x");
             foreach (byte b in arr)
-                sb.Append(b.ToString("X2"));
+                sb.Append(b.ToString("x2"));
 
-            return sb.ToString().ToLower();
+            return sb.ToString();
         }
     }
 }

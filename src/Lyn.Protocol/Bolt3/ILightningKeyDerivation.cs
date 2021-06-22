@@ -1,9 +1,20 @@
-﻿using Lyn.Types.Fundamental;
+﻿using Lyn.Protocol.Bolt2.Entities;
+using Lyn.Protocol.Bolt3.Types;
+using Lyn.Types.Bitcoin;
+using Lyn.Types.Fundamental;
 
 namespace Lyn.Protocol.Bolt3
 {
     public interface ILightningKeyDerivation
     {
+        Secrets DeriveSecrets(Secret seed);
+
+        Basepoints DeriveBasepoints(Secrets secrets);
+
+        Secret PerCommitmentSecret(UInt256 shaseed, ulong perCommitIndex);
+
+        PublicKey PerCommitmentPoint(UInt256 shaseed, ulong perCommitIndex);
+
         PublicKey PublicKeyFromPrivateKey(PrivateKey privateKey);
 
         /// <summary>
