@@ -1,5 +1,7 @@
 using System;
+using System.Security.Cryptography;
 using Lyn.Protocol.Bolt3;
+using Lyn.Protocol.Bolt3.Types;
 using Lyn.Protocol.Common;
 using Lyn.Types.Fundamental;
 using Microsoft.Extensions.Logging;
@@ -46,8 +48,37 @@ namespace Lyn.Protocol.Tests.Bolt3
         [Fact]
         public void BasepointsDerivationTest()
         {
-            // compare with test run-derive_basepoints.c in clightning
-            throw new NotImplementedException("implement me");
+            DefaultRandomNumberGenerator defaultRandomNumberGenerator = new DefaultRandomNumberGenerator();
+
+            var randomNumbers = defaultRandomNumberGenerator.GetBytes(32);
+            Secret secret = new Secret(randomNumbers);
+
+            var keyDerivation = new LightningKeyDerivation();
+
+            Secrets secrets = keyDerivation.DeriveSecrets(secret);
+
+            Basepoints basepoints1 = keyDerivation.DeriveBasepoints(secrets);
+            Basepoints basepoints2 = keyDerivation.DeriveBasepoints(secrets);
+
+            Assert.Equal(basepoints1.Revocation.GetSpan().ToArray(), basepoints2.Revocation.GetSpan().ToArray());
+            Assert.Equal(basepoints1.Payment.GetSpan().ToArray(), basepoints2.Payment.GetSpan().ToArray());
+            Assert.Equal(basepoints1.Htlc.GetSpan().ToArray(), basepoints2.Htlc.GetSpan().ToArray());
+            Assert.Equal(basepoints1.DelayedPayment.GetSpan().ToArray(), basepoints2.DelayedPayment.GetSpan().ToArray());
+
+            for (int i = 0; i < 32; i++)
+            {
+                var arr = (byte[])secret;
+                arr[i] ^= arr[i];
+                secret = new Secret(arr);
+
+                secrets = keyDerivation.DeriveSecrets(secret);
+                basepoints2 = keyDerivation.DeriveBasepoints(secrets);
+
+                Assert.NotEqual(basepoints1.Revocation.GetSpan().ToArray(), basepoints2.Revocation.GetSpan().ToArray());
+                Assert.NotEqual(basepoints1.Payment.GetSpan().ToArray(), basepoints2.Payment.GetSpan().ToArray());
+                Assert.NotEqual(basepoints1.Htlc.GetSpan().ToArray(), basepoints2.Htlc.GetSpan().ToArray());
+                Assert.NotEqual(basepoints1.DelayedPayment.GetSpan().ToArray(), basepoints2.DelayedPayment.GetSpan().ToArray());
+            }
         }
     }
 }

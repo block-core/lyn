@@ -1,9 +1,8 @@
 ﻿using System;
-using Lyn.Protocol.Bolt2.Entities;
 using Lyn.Protocol.Bolt3.Types;
 using Lyn.Types.Bitcoin;
 using Lyn.Types.Fundamental;
-using Microsoft.Extensions.Logging;
+using NBitcoin;
 using NBitcoin.Secp256k1;
 
 namespace Lyn.Protocol.Bolt3
@@ -16,18 +15,35 @@ namespace Lyn.Protocol.Bolt3
 
         public Secrets DeriveSecrets(Secret seed)
         {
-            throw new NotImplementedException();
+            // To derive out private keys we use BIP32 key derivation with hardened derivation
+            // todo: check this is secure enough
+
+            ExtKey keyDerivation = new ExtKey(seed);
+
+            var secrets = new Secrets
+            {
+                FundingPrivkey = new Secret(keyDerivation.Derive(1, true).PrivateKey.ToBytes()),
+                RevocationBasepointSecret = new Secret(keyDerivation.Derive(2, true).PrivateKey.ToBytes()),
+                PaymentBasepointSecret = new Secret(keyDerivation.Derive(3, true).PrivateKey.ToBytes()),
+                HtlcBasepointSecret = new Secret(keyDerivation.Derive(4, true).PrivateKey.ToBytes()),
+                DelayedPaymentBasepointSecret = new Secret(keyDerivation.Derive(5, true).PrivateKey.ToBytes()),
+                Shaseed = new UInt256(keyDerivation.Derive(6, true).PrivateKey.ToBytes())
+            };
+
+            return secrets;
         }
 
         public Basepoints DeriveBasepoints(Secrets secrets)
         {
-            return new Basepoints
+            var basepoints = new Basepoints
             {
                 Revocation = PublicKeyFromPrivateKey(secrets.RevocationBasepointSecret),
                 Payment = PublicKeyFromPrivateKey(secrets.PaymentBasepointSecret),
                 Htlc = PublicKeyFromPrivateKey(secrets.HtlcBasepointSecret),
                 DelayedPayment = PublicKeyFromPrivateKey(secrets.DelayedPaymentBasepointSecret),
             };
+
+            return basepoints;
         }
 
         public Secret PerCommitmentSecret(UInt256 shaseed, ulong perCommitIndex)
