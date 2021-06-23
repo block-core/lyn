@@ -1,5 +1,4 @@
 using Lyn.Protocol.Common;
-using Lyn.Types.Bolt;
 using Lyn.Types.Bolt.Messages;
 using Lyn.Types.Fundamental;
 using NBitcoin.Crypto;
