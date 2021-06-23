@@ -16,4 +16,8 @@
   <ItemGroup>
     <ProjectReference Include="..\Lyn.Types\Lyn.Types.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Bolt2\ChannelEstablishment\Serializers\" />
+  </ItemGroup>
 </Project>

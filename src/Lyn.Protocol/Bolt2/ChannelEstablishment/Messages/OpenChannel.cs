@@ -2,7 +2,7 @@ using Lyn.Types.Bolt;
 using Lyn.Types.Bolt.Messages;
 using Lyn.Types.Fundamental;
 
-namespace Lyn.Protocol.Bolt2.Messags
+namespace Lyn.Protocol.Bolt2.ChannelEstablishment.Messages
 {
     public class OpenChannel : BoltMessage
     {
