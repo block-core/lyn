@@ -145,7 +145,7 @@ namespace Lyn.Protocol.Common
             services.AddSingleton<IBoltMessageService<PingMessage>, PingMessageService>();
             services.AddSingleton<IBoltMessageService<PongMessage>, PongMessageService>();
 
-            services.AddSingleton<IBoltMessageService<OpenChannel>, OpenChannelService>();
+            services.AddSingleton<IBoltMessageService<OpenChannel>, OpenChannelMessageService>();
 
             return services;
         }

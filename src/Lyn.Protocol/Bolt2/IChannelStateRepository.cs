@@ -8,7 +8,7 @@ using Lyn.Types.Bolt;
 
 namespace Lyn.Protocol.Bolt2
 {
-    public interface IChannelRepository
+    public interface IChannelStateRepository
     {
         void AddOrUpdate(ChannelState channelState);
 
