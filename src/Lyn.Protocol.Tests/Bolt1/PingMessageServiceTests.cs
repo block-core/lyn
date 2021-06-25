@@ -43,56 +43,56 @@ namespace Lyn.Protocol.Tests.Bolt1
                 .Returns(() => _utcNow);
 
             _uint16 = RandomMessages.GetRandomNumberUInt16();
-            
+
             _randomNumberGenerator.Setup(_ => _.GetUint16())
                 .Returns(() => _uint16);
         }
 
         private static PeerMessage<PingMessage> WithPingBoltMessage(ushort numPongBytes)
         {
-            return new PeerMessage<PingMessage>
-            {
-                Message = new PingMessage
+            return new 
+            (
+                RandomMessages.NewRandomPublicKey(),
+                new PingMessage
                 {
                     BytesLen = PingMessage.MAX_BYTES_LEN,
                     Ignored = RandomMessages.GetRandomByteArray(PingMessage.MAX_BYTES_LEN),
                     NumPongBytes = numPongBytes
-                },
-                NodeId = RandomMessages.NewRandomPublicKey()
-            };
+                }
+            );
         }
-        
+
         [Fact]
         public async Task ProcessMessageAsyncWhenMessageIsLongerThanAllowedFailsTheMessage()
         {
             var message = WithPingBoltMessage(PingMessage.MAX_BYTES_LEN + 1);
 
             await _sut.ProcessMessageAsync(message);
-            
+
             _boltMessageSender.VerifyNoOtherCalls();
         }
 
-        
+
         [Fact]
         public async Task ProcessMessageAsyncReturnsSuccessWithAPongMessage()
         {
             var message = WithPingBoltMessage(PingMessage.MAX_BYTES_LEN);
 
             await _sut.ProcessMessageAsync(message);
-            
-            _boltMessageSender.Verify(_ => _.SendMessageAsync(It.Is<PeerMessage<PongMessage>>(_ => 
-                _.Message.BytesLen == message.Message.NumPongBytes && 
+
+            _boltMessageSender.Verify(_ => _.SendMessageAsync(It.Is<PeerMessage<PongMessage>>(_ =>
+                _.Message.BytesLen == message.Message.NumPongBytes &&
                 _.Message.BytesLen == message.Message.Ignored!.Length)));
         }
-        
+
         [Fact]
         public async Task ProcessMessageAsyncThrowsIfPingWasReceivedBeforeTheAllowedTime()
         {
             var message = WithPingBoltMessage(PingMessage.MAX_BYTES_LEN);
 
             await _sut.ProcessMessageAsync(message);
- 
-            await Assert.ThrowsAsync<ProtocolViolationException>(() 
+
+            await Assert.ThrowsAsync<ProtocolViolationException>(()
                 => _sut.ProcessMessageAsync(message));
         }
 
@@ -100,30 +100,30 @@ namespace Lyn.Protocol.Tests.Bolt1
         public async Task CreateNewMessageAsyncReturnsPingMessageAndStoresInRepo()
         {
             var nodeId = RandomMessages.NewRandomPublicKey();
-            
+
             var result = await _sut.CreateNewMessageAsync(nodeId);
 
-            _messageRepository.Verify(_ => _.AddPingMessageAsync(nodeId,_utcNow, result));
+            _messageRepository.Verify(_ => _.AddPingMessageAsync(nodeId, _utcNow, result));
 
             Assert.Equal(PingMessage.MAX_BYTES_LEN - _uint16 % PingMessage.MAX_BYTES_LEN, result.NumPongBytes);
         }
-        
+
         [Fact]
         public async Task CreateNewMessageAsyncWhenThePingLengthExistsCreatesNewOne()
         {
             var nodeId = RandomMessages.NewRandomPublicKey();
 
-            _messageRepository.SetupSequence(_ 
-                    => _.PendingPingExistsForIdAsync(nodeId, (ushort)(_uint16 % PingMessage.MAX_BYTES_LEN)))
+            _messageRepository.SetupSequence(_
+                    => _.PendingPingExistsForIdAsync(nodeId, (ushort) (_uint16 % PingMessage.MAX_BYTES_LEN)))
                 .Returns(() => new ValueTask<bool>(true))
                 .Returns(() => new ValueTask<bool>(false));
-            
+
             var result = await _sut.CreateNewMessageAsync(nodeId);
 
             _messageRepository.Verify(_ => _.AddPingMessageAsync(nodeId, _utcNow, result));
 
             _messageRepository.VerifyAll();
-            
+
             Assert.Equal(PingMessage.MAX_BYTES_LEN - _uint16 % PingMessage.MAX_BYTES_LEN, result.NumPongBytes);
         }
     }
