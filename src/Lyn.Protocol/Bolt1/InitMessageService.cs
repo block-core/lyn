@@ -15,41 +15,30 @@ namespace Lyn.Protocol.Bolt1
             private readonly IPeerRepository _repository;
             private readonly IBoltMessageSender<InitMessage> _messageSender;
             private readonly IBoltFeatures _boltFeatures;
-            private readonly IParseFeatureFlags _featureFlags;
 
             public InitMessageService(IPeerRepository repository, IBoltMessageSender<InitMessage> messageSender, 
-            IBoltFeatures features, IParseFeatureFlags featureFlags)
+            IBoltFeatures boltFeatures)
         {
-            _repository = repository ?? throw new ArgumentNullException();
-            _messageSender = messageSender ?? throw new ArgumentNullException();
-            _boltFeatures = features ?? throw new ArgumentNullException();
-            _featureFlags = featureFlags ?? throw new ArgumentNullException();
+            _repository = repository;
+            _messageSender = messageSender;
+            _boltFeatures = boltFeatures;
         }
 
         public async Task ProcessMessageAsync(PeerMessage<InitMessage> request)
         {
+            if (!_boltFeatures.ValidateRemoteFeatureAreCompatible(request.Message.Features,request.Message.GlobalFeatures))
+                throw new ArgumentException(nameof(request.Message.Features)); //TODO David we need to define the way to close a connection gracefully 
+         
             var peer = new Peer
             {
                 Featurs = request.Message.Features,
                 GlobalFeatures = request.Message.GlobalFeatures,
                 NodeId = request.NodeId
             };
-
-            var remoteNodeFeatures = _featureFlags.ParseFeatures(request.Message.Features) |
-                                     _featureFlags.ParseFeatures(request.Message.GlobalFeatures);
-
-            var remoteFeaturesBytes = _featureFlags.ParseFeatures(remoteNodeFeatures);
-
-            if (!_boltFeatures.ValidateRemoteFeatureAreCompatible(remoteFeaturesBytes))
-                throw new ArgumentException(nameof(remoteNodeFeatures)); //TODO David we need to define the way to close a connection gracefully 
-                
+            
             await _repository.AddNewPeerAsync(peer);
 
-            await _messageSender.SendMessageAsync(new PeerMessage<InitMessage>
-            {
-                Message = CreateInitMessage(),
-                NodeId = request.NodeId
-            });
+            await _messageSender.SendMessageAsync(new PeerMessage<InitMessage>(request.NodeId, CreateInitMessage()));
         }
 
         private InitMessage CreateInitMessage()

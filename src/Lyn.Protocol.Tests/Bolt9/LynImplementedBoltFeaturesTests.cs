@@ -1,5 +1,8 @@
+using System;
+using System.Collections;
 using System.Linq;
 using Lyn.Protocol.Bolt9;
+using Lyn.Types.Bolt.Messages;
 using Xunit;
 
 namespace Lyn.Protocol.Tests.Bolt9
@@ -17,8 +20,8 @@ namespace Lyn.Protocol.Tests.Bolt9
         public void ReturnsAllFeaturesAsByteArray()
         {
             var featuresArray = _sut.GetSupportedFeatures();
-            
-            Assert.Equal(new byte[] {72},featuresArray);
+
+            Assert.Equal(new byte[] {72}, featuresArray);
         }
 
         [Fact]
@@ -35,8 +38,57 @@ namespace Lyn.Protocol.Tests.Bolt9
             }
 
             var globalFeatures = _sut.GetSupportedGlobalFeatures();
-            
-            Assert.Equal(bytes,globalFeatures);
+
+            Assert.Equal(bytes, globalFeatures);
+        }
+
+        [Fact]
+        public void ValidateRemoteFeatureAreCompatibleReturnsFalseWhenRemoteIsShorterAndAnyOfThemMissingRequired()
+        {
+            var localFeaturesBytes = _sut.GetSupportedFeatures();
+            var testRemote = new byte[localFeaturesBytes.Length];
+
+            var arr = new BitArray(localFeaturesBytes);
+            var local = new BitArray(localFeaturesBytes);
+
+            for (var i = 0; i < arr.Length; i += 2)
+            {
+                arr.SetAll(false);
+                arr[i] = !arr[i] ^ local[i]; //make it different to the local bits if required and true
+                arr.CopyTo(testRemote, 0);
+
+                var result = _sut.ValidateRemoteFeatureAreCompatible(testRemote, new byte[0]);
+
+                Assert.False(result);
+            }
+        }
+
+        [Fact]
+        public void ValidateRemoteFeatureAreCompatibleReturnsFalseWhenRemoteIsLongerAndAnyOfThemMissingRequired()
+        {
+            var testRemote = new byte[byte.MaxValue];
+
+            var arr = new BitArray(testRemote);
+            var local = new BitArray(_sut.GetSupportedFeatures());
+
+
+            for (var i = 0; i < arr.Length; i += 2)
+            {
+                if (i < local.Length)
+                {
+                    arr[i] = local[i];
+                    continue;
+                }
+
+                arr[i] = !arr[i]; //set bit to true for the test
+                arr.CopyTo(testRemote, 0);
+
+                var result = _sut.ValidateRemoteFeatureAreCompatible(testRemote, new byte[0]);
+
+                Assert.False(result);
+
+                arr[i] = !arr[i]; //clear bit for next iteration
+            }
         }
     }
 }

@@ -5,8 +5,14 @@ namespace Lyn.Protocol.Connection
 {
     public class PeerMessage<T> where T : BoltMessage
     {
-        public PublicKey? NodeId { get; set; }
+        public PeerMessage(PublicKey nodeId, T message)
+        {
+            NodeId = nodeId;
+            Message = message;
+        }
 
-        public T? Message { get; set; }
+        public PublicKey NodeId { get; set; }
+
+        public T Message { get; set; }
     }
 }

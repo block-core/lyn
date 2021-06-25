@@ -1,9 +1,7 @@
 using System;
 using System.Collections;
-using System.IO.Compression;
 using System.Linq;
 using System.Runtime.InteropServices;
-using Lyn.Protocol.Bolt1;
 using Lyn.Types.Bolt.Messages;
 
 namespace Lyn.Protocol.Bolt9

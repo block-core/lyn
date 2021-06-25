@@ -10,7 +10,7 @@ namespace Lyn.Protocol.Tests.Bolt9
     {
         private ParseFeatureFlags _sut;
 
-        private readonly ulong _featuresMaxValue = 0;
+        private readonly ulong _featuresMaxValue;
         
         public ParseFeatureFlagsTests()
         {

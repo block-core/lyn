@@ -8,29 +8,36 @@ namespace Lyn.Protocol.Bolt9
         private const Features FEATURES = Features.InitialRoutingSync | Features.GossipQueries;
 
         private readonly byte[] _bytes;
+        private readonly BitArray _FeaturesBitArray;
         private readonly byte[] _globalBytes;
         public Features SupportedFeatures => FEATURES;
 
         public LynImplementedBoltFeatures(IParseFeatureFlags parseFeatureFlags)
         {
             _bytes = parseFeatureFlags.ParseFeatures(FEATURES);
+            _FeaturesBitArray = new BitArray(_bytes);
             _globalBytes = parseFeatureFlags.ParseNFeatures(FEATURES, 13);
         }
         
         public byte[] GetSupportedFeatures() => _bytes;
         public byte[] GetSupportedGlobalFeatures() => _globalBytes;
 
-        public bool ValidateRemoteFeatureAreCompatible(byte[] remoteNodeFeatures)
+        public bool ValidateRemoteFeatureAreCompatible(byte[] remoteNodeFeatures, byte[] remoteNodeGlobalFeatures)
         {
             var remoteBitArray = new BitArray(remoteNodeFeatures);
-            var localBitArray = new BitArray(_bytes);
+            var remoteGlobalBitArray = new BitArray(remoteNodeGlobalFeatures);
+
+            for (var i = 0; i < remoteGlobalBitArray.Length; i++)
+            {
+                remoteBitArray[i] = remoteBitArray[i] || remoteGlobalBitArray[i];
+            }
             
-            return localBitArray.Length > remoteBitArray.Length
-                ? CheckFlagsInBothAndLongerForRequiredFields(remoteBitArray, localBitArray)
-                : CheckFlagsInBothAndLongerForRequiredFields(localBitArray, remoteBitArray);
+            return _FeaturesBitArray.Length > remoteBitArray.Length
+                ? CheckFlagsInBothAndLongerForRequiredFlags(remoteBitArray, _FeaturesBitArray)
+                : CheckFlagsInBothAndLongerForRequiredFlags(_FeaturesBitArray, remoteBitArray);
         }
 
-        private static bool CheckFlagsInBothAndLongerForRequiredFields(BitArray shortArray, BitArray longArray)
+        private static bool CheckFlagsInBothAndLongerForRequiredFlags(BitArray shortArray, BitArray longArray)
         {
             for (var i = 0; i < longArray.Length; i++)
             {
