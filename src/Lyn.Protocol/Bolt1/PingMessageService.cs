@@ -48,16 +48,16 @@ namespace Lyn.Protocol.Bolt1
             _lastPingReceivedDateTime = utcNow;
 
             _logger.LogDebug($"Send pong to with length {request.Message.NumPongBytes}");
-            
+
             await _boltMessageSender.SendMessageAsync(new PeerMessage<PongMessage>
-            {
-                NodeId = request.NodeId,
-                Message = new PongMessage
+            (
+                request.NodeId,
+                new PongMessage
                 {
                     BytesLen = request.Message.NumPongBytes,
                     Ignored = new byte[request.Message.NumPongBytes]
                 }
-            });
+            ));
         }
 
         public async ValueTask<PingMessage> CreateNewMessageAsync(PublicKey nodeId)

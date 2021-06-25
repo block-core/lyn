@@ -28,15 +28,14 @@ namespace Lyn.Protocol.Tests.Bolt1
         [Fact]
         public async Task ProcessMessageAsyncStoresErrorReturnsSuccess()
         {
-            var message = new PeerMessage<ErrorMessage>{ 
-                Message = new ErrorMessage
+            var message = new PeerMessage<ErrorMessage>
+                (RandomMessages.NewRandomPublicKey(),
+                new ErrorMessage
             {
                 ChannelId = RandomMessages.NewRandomChannelId(),
                 Len = RandomMessages.GetRandomNumberUInt16(),
                 Data = RandomMessages.GetRandomByteArray(64) //64 just to keep it small it actually is a text message 
-            },
-              NodeId  = RandomMessages.NewRandomPublicKey()
-            };
+            });
 
             await _sut.ProcessMessageAsync(message);
             

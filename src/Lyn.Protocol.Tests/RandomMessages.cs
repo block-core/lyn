@@ -42,9 +42,9 @@ namespace Lyn.Protocol.Tests
             return bytes;
         }
 
-        public static uint GetRandomNumberUInt32()
+        public static uint GetRandomNumberUInt32(int? maxValue = null)
         {
-            return (uint) _random.Next(0, int.MaxValue);
+            return (uint) _random.Next(0, maxValue ?? int.MaxValue);
         }
         
         public static ushort GetRandomNumberUInt16()
