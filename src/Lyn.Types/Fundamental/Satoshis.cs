@@ -21,6 +21,10 @@
 
         public static implicit operator Satoshis(int sats) => new Satoshis((ulong)sats);
 
+        public static implicit operator uint(Satoshis sats) => (uint)sats._value;
+
+        public static implicit operator Satoshis(uint sats) => new Satoshis((ulong)sats);
+
         public static implicit operator MiliSatoshis(Satoshis sats) => new MiliSatoshis(sats._value * 1000);
 
         public override string ToString() => $@"sats={_value}";

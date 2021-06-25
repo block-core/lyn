@@ -10,7 +10,12 @@ namespace Lyn.Protocol.Bolt2
 {
     public class ChannelStateRepository : IChannelStateRepository
     {
-        public void AddOrUpdate(ChannelState channelState)
+        public void Create(ChannelState channelState)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Update(ChannelState channelState)
         {
             throw new NotImplementedException();
         }

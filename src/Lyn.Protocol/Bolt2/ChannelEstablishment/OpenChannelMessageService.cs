@@ -1,5 +1,6 @@
 ﻿using System.Threading.Tasks;
 using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages;
+using Lyn.Protocol.Bolt2.Configuration;
 using Lyn.Protocol.Bolt2.Entities;
 using Lyn.Protocol.Bolt3;
 using Lyn.Protocol.Bolt3.Types;
@@ -41,8 +42,6 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
         public async Task ProcessMessageAsync(PeerMessage<OpenChannel> message)
         {
-            if (!await _validationService.ValidateMessageAsync(message).ConfigureAwait(false)) return;
-
             OpenChannel openChannel = message.Message;
 
             // Create the channel durable state
@@ -50,8 +49,8 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             {
                 Funding = openChannel.FundingSatoshis,
                 ChannelId = openChannel.TemporaryChannelId,
-                LocalPublicKey = openChannel.FundingPubkey,
-                LocalPoints = new Basepoints
+                RemotePublicKey = openChannel.FundingPubkey,
+                RemotePoints = new Basepoints
                 {
                     Payment = openChannel.PaymentBasepoint,
                     Htlc = openChannel.HtlcBasepoint,
@@ -59,10 +58,19 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                     Revocation = openChannel.RevocationBasepoint,
                 },
                 PushMsat = openChannel.PushMsat,
-                LocalFirstPerCommitmentPoint = openChannel.FirstPerCommitmentPoint,
+                RemoteFirstPerCommitmentPoint = openChannel.FirstPerCommitmentPoint,
+                RemoteConfig = new ChannelConfig
+                {
+                    ToSelfDelay = openChannel.ToSelfDelay,
+                    ChannelReserve = openChannel.ChannelReserveSatoshis,
+                    DustLimit = openChannel.DustLimitSatoshis,
+                    HtlcMinimum = openChannel.HtlcMinimumMsat,
+                    MaxAcceptedHtlcs = openChannel.MaxAcceptedHtlcs,
+                    MaxHtlcValueInFlight = openChannel.MaxHtlcValueInFlightMsat
+                },
             };
 
-            _channelStateRepository.AddOrUpdate(channelState);
+            _channelStateRepository.Create(channelState);
 
             AcceptChannel acceptChannel = new(); // todo: dan create the accept channel code
 

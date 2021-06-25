@@ -5,6 +5,7 @@ using Lyn.Protocol.Bolt3.Types;
 using Lyn.Types.Bitcoin;
 using Lyn.Types.Bolt;
 using Lyn.Types.Fundamental;
+using ChannelConfig = Lyn.Protocol.Bolt2.Configuration.ChannelConfig;
 
 namespace Lyn.Protocol.Bolt2.Entities
 {
@@ -33,7 +34,7 @@ namespace Lyn.Protocol.Bolt2.Entities
         /// <summary>
         /// The remote offered featured.
         /// </summary>
-        public ulong LocalFeatures { get; set; }
+        public byte LocalFeatures { get; set; }
 
         /// <summary>
         /// The remote offered featured.

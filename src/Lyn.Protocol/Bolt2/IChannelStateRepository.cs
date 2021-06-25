@@ -10,7 +10,9 @@ namespace Lyn.Protocol.Bolt2
 {
     public interface IChannelStateRepository
     {
-        void AddOrUpdate(ChannelState channelState);
+        void Create(ChannelState channelState);
+
+        void Update(ChannelState channelState);
 
         ChannelState Get(ChannelId channelId);
     }
