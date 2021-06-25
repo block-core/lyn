@@ -168,7 +168,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             _channelStateRepository.Create(channelState);
 
-            await _messageSender.SendMessageAsync(new PeerMessage<OpenChannel> { Message = openChannel, NodeId = startOpenChannelIn.NodeId });
+            await _messageSender.SendMessageAsync(new PeerMessage<OpenChannel>(startOpenChannelIn.NodeId, openChannel));
         }
     }
 }

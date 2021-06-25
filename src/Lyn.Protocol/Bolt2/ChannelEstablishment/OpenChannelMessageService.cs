@@ -74,7 +74,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             AcceptChannel acceptChannel = new(); // todo: dan create the accept channel code
 
-            await _messageSender.SendMessageAsync(new PeerMessage<AcceptChannel> { Message = acceptChannel, NodeId = message.NodeId });
+            await _messageSender.SendMessageAsync(new PeerMessage<AcceptChannel>(message.NodeId, acceptChannel));
 
             return;
         }
