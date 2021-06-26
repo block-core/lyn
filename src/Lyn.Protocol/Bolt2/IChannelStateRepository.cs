@@ -14,6 +14,6 @@ namespace Lyn.Protocol.Bolt2
 
         void Update(ChannelState channelState);
 
-        ChannelState Get(ChannelId channelId);
+        ChannelState? Get(ChannelId channelId);
     }
 }

@@ -8,6 +8,7 @@ using Lyn.Protocol.Bolt2.Configuration;
 using Lyn.Protocol.Bolt2.Entities;
 using Lyn.Protocol.Bolt3;
 using Lyn.Protocol.Bolt3.Types;
+using Lyn.Protocol.Bolt9;
 using Lyn.Protocol.Common;
 using Lyn.Protocol.Common.Blockchain;
 using Lyn.Protocol.Connection;
@@ -30,6 +31,8 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
         private readonly IPeerRepository _peerRepository;
         private readonly IChainConfigProvider _chainConfigProvider;
         private readonly IChannelConfigProvider _channelConfigProvider;
+        private readonly IBoltFeatures _boltFeatures;
+        private readonly IParseFeatureFlags _parseFeatureFlags;
         private readonly IBoltMessageSender<OpenChannel> _messageSender;
 
         public StartOpenChannelService(ILogger<OpenChannelMessageService> logger,
@@ -40,7 +43,9 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             IChannelStateRepository channelStateRepository,
             IPeerRepository peerRepository,
             IChainConfigProvider chainConfigProvider,
-            IChannelConfigProvider channelConfigProvider)
+            IChannelConfigProvider channelConfigProvider,
+            IBoltFeatures boltFeatures,
+            IParseFeatureFlags parseFeatureFlags)
         {
             _logger = logger;
             _lightningTransactions = lightningTransactions;
@@ -50,6 +55,8 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             _peerRepository = peerRepository;
             _chainConfigProvider = chainConfigProvider;
             _channelConfigProvider = channelConfigProvider;
+            _boltFeatures = boltFeatures;
+            _parseFeatureFlags = parseFeatureFlags;
             _messageSender = messageSender;
         }
 
@@ -60,12 +67,12 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             if (peer == null)
                 throw new ApplicationException($"Peer was not found or is not connected");
 
-            ChainParameters chainParameters = _chainConfigProvider.GetConfiguration(startOpenChannelIn.ChainHash);
+            ChainParameters? chainParameters = _chainConfigProvider.GetConfiguration(startOpenChannelIn.ChainHash);
 
             if (chainParameters == null)
                 throw new ApplicationException($"Invalid chain hash");
 
-            ChannelConfig channelConfig = _channelConfigProvider.GetConfiguration(startOpenChannelIn.ChainHash);
+            ChannelConfig? channelConfig = _channelConfigProvider.GetConfiguration(startOpenChannelIn.ChainHash);
 
             if (channelConfig == null)
                 throw new ApplicationException($"Invalid chain hash");
@@ -83,13 +90,12 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             // MAY set funding_satoshis greater than or equal to 2 ^ 24 satoshi.
             //    otherwise:
             // MUST set funding_satoshis to less than 2 ^ 24 satoshi.
-            // todo: check `option_support_large_channel` in features
-            bool optionSupportLargeChannel = false;
-            const ulong largeChannelAmount = 16_777_216; // todo: dan move this to configuration
-            if (!optionSupportLargeChannel)
+            bool localSupportLargChannels = _boltFeatures.SupportedFeatures == Features.OptionSupportLargeChannel;
+            bool remoteSupportLargChannels = _parseFeatureFlags.ParseFeatures(peer.Featurs) == Features.OptionSupportLargeChannel;
+            if (localSupportLargChannels == false || remoteSupportLargChannels == false)
             {
-                if (startOpenChannelIn.FundingAmount > largeChannelAmount) // 2^24
-                    throw new ApplicationException($"Peer enforces max channel capacity of {largeChannelAmount}sats");
+                if (startOpenChannelIn.FundingAmount > chainParameters.LargeChannelAmount) // 2^24
+                    throw new ApplicationException($"Peer enforces max channel capacity of {chainParameters.LargeChannelAmount}sats");
             }
 
             openChannel.FundingSatoshis = startOpenChannelIn.FundingAmount;
@@ -117,12 +123,13 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             openChannel.FirstPerCommitmentPoint = _lightningKeyDerivation.PerCommitmentPoint(secrets.Shaseed, 0);
 
             // Bolt 2 - MUST set channel_reserve_satoshis greater than or equal to dust_limit_satoshis.
-            openChannel.ChannelReserveSatoshis = startOpenChannelIn.ChannelReserveSatoshis < channelConfig.DustLimit
-                ? channelConfig.DustLimit
-                : startOpenChannelIn.ChannelReserveSatoshis;
+            if (channelConfig.ChannelReserve < channelConfig.DustLimit)
+                throw new ApplicationException($"ChannelReserve = {channelConfig.ChannelReserve}sat must be greater then DustLimit = {channelConfig.DustLimit}sat");
+
+            openChannel.ChannelReserveSatoshis = channelConfig.ChannelReserve;
 
             // Bolt 2 - MUST set undefined bits in channel_flags to 0.
-            openChannel.ChannelFlags = 0; // todo: dan fix once bolt9 is done
+            openChannel.ChannelFlags = startOpenChannelIn.PrivateChannel ? (byte)0 : (byte)ChannelFlags.ChannelFlags.AnnounceChannel;
 
             // set to_self_delay sufficient to ensure the sender can irreversibly spend a commitment transaction output, in case of misbehavior by the receiver.
             openChannel.ToSelfDelay = channelConfig.ToSelfDelay;
@@ -140,7 +147,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             // MUST include upfront_shutdown_script with either a valid shutdown_scriptpubkey as required by shutdown scriptpubkey, or a zero - length shutdown_scriptpubkey(ie. 0x0000).
             //    otherwise:
             // MAY include upfront_shutdown_script.
-            // if it includes open_channel_tlvs:
+            //    if it includes open_channel_tlvs:
             // MUST include upfront_shutdown_script.
 
             // todo: dan create the shutdown_scriptpubkey once tlv is done.
@@ -163,7 +170,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                 LocalFirstPerCommitmentPoint = openChannel.FirstPerCommitmentPoint,
                 LocalConfig = channelConfig,
                 FeeratePerKw = startOpenChannelIn.FeeRate,
-                LocalFeatures = openChannel.ChannelFlags
+                LocalFeatures = openChannel.ChannelFlags,
             };
 
             _channelStateRepository.Create(channelState);

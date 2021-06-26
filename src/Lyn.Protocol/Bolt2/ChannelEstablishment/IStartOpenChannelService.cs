@@ -7,22 +7,22 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 {
     public class StartOpenChannelIn
     {
-        public StartOpenChannelIn(PublicKey nodeId, UInt256 chainHash, Satoshis fundingAmount, MiliSatoshis pushOnOpen, Satoshis channelReserveSatoshis, Satoshis feeRate)
+        public StartOpenChannelIn(PublicKey nodeId, UInt256 chainHash, Satoshis fundingAmount, MiliSatoshis pushOnOpen, Satoshis feeRate, bool privateChannel)
         {
             NodeId = nodeId;
             ChainHash = chainHash;
             FundingAmount = fundingAmount;
             PushOnOpen = pushOnOpen;
-            ChannelReserveSatoshis = channelReserveSatoshis;
             FeeRate = feeRate;
+            PrivateChannel = privateChannel;
         }
 
         public PublicKey NodeId { get; private set; }
         public UInt256 ChainHash { get; private set; }
         public Satoshis FundingAmount { get; private set; }
         public MiliSatoshis PushOnOpen { get; private set; }
-        public Satoshis ChannelReserveSatoshis { get; private set; }
         public Satoshis FeeRate { get; private set; }
+        public bool PrivateChannel { get; set; }
     }
 
     public interface IStartOpenChannelService
