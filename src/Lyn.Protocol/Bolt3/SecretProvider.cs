@@ -1,8 +1,10 @@
-﻿namespace Lyn.Protocol.Bolt3.Secret
+﻿using Lyn.Types.Fundamental;
+
+namespace Lyn.Protocol.Bolt3
 {
     public class SecretProvider : ISecretProvider
     {
-        public Lyn.Types.Fundamental.Secret GetSeed()
+        public Secret GetSeed()
         {
             throw new System.NotImplementedException();
         }

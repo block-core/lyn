@@ -32,16 +32,6 @@ namespace Lyn.Protocol.Bolt2.Entities
         public ChannelConfig RemoteConfig { get; set; }
 
         /// <summary>
-        /// The remote offered featured.
-        /// </summary>
-        public byte LocalFeatures { get; set; }
-
-        /// <summary>
-        /// The remote offered featured.
-        /// </summary>
-        public ulong RemoteFeatures { get; set; }
-
-        /// <summary>
         /// Our local base points needed for channel establishment.
         /// </summary>
         public Basepoints LocalPoints { get; set; }

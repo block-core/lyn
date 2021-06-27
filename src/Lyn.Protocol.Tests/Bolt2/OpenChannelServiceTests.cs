@@ -1,4 +1,3 @@
-using System;
 using System.Threading.Tasks;
 using Lyn.Protocol.Bolt1;
 using Lyn.Protocol.Bolt1.Entities;
@@ -8,18 +7,16 @@ using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages;
 using Lyn.Protocol.Bolt2.Configuration;
 using Lyn.Protocol.Bolt2.Entities;
 using Lyn.Protocol.Bolt3;
-using Lyn.Protocol.Bolt3.Secret;
 using Lyn.Protocol.Bolt9;
 using Lyn.Protocol.Common;
 using Lyn.Protocol.Common.Blockchain;
 using Lyn.Protocol.Connection;
-using Lyn.Types.Bolt.Messages;
 using Lyn.Types.Fundamental;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
-namespace Lyn.Protocol.Tests.Bolt1
+namespace Lyn.Protocol.Tests.Bolt2
 {
     public class StartOpenChannelServiceTests
     {

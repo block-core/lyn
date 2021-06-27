@@ -1,4 +1,4 @@
-﻿namespace Lyn.Protocol.Bolt3.Secret
+﻿namespace Lyn.Protocol.Bolt3
 {
     public interface ISecretProvider
     {

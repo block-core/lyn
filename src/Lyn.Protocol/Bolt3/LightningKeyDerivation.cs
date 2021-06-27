@@ -56,6 +56,16 @@ namespace Lyn.Protocol.Bolt3
             throw new NotImplementedException();
         }
 
+        public bool IsValidPublicKey(PublicKey publicKey)
+        {
+            if (ECPubKey.TryCreate(publicKey, Context.Instance, out bool compressed, out ECPubKey? ecpubkey))
+            {
+                return compressed;
+            }
+
+            return false;
+        }
+
         public PublicKey PublicKeyFromPrivateKey(PrivateKey privateKey)
         {
             if (ECPrivKey.TryCreate(privateKey, Context.Instance, out ECPrivKey? ecprvkey))
