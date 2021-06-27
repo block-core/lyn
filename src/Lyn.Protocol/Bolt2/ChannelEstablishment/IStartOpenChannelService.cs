@@ -27,6 +27,6 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
     public interface IStartOpenChannelService
     {
-        Task StartOpenChannel(StartOpenChannelIn startOpenChannelIn);
+        Task StartOpenChannelAsync(StartOpenChannelIn startOpenChannelIn);
     }
 }

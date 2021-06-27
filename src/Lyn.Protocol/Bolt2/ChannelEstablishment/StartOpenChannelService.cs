@@ -7,6 +7,7 @@ using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages;
 using Lyn.Protocol.Bolt2.Configuration;
 using Lyn.Protocol.Bolt2.Entities;
 using Lyn.Protocol.Bolt3;
+using Lyn.Protocol.Bolt3.Secret;
 using Lyn.Protocol.Bolt3.Types;
 using Lyn.Protocol.Bolt9;
 using Lyn.Protocol.Common;
@@ -24,7 +25,6 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
     public class StartOpenChannelService : IStartOpenChannelService
     {
         private readonly ILogger<OpenChannelMessageService> _logger;
-        private readonly ILightningTransactions _lightningTransactions;
         private readonly IRandomNumberGenerator _randomNumberGenerator;
         private readonly ILightningKeyDerivation _lightningKeyDerivation;
         private readonly IChannelStateRepository _channelStateRepository;
@@ -33,11 +33,11 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
         private readonly IChannelConfigProvider _channelConfigProvider;
         private readonly IBoltFeatures _boltFeatures;
         private readonly IParseFeatureFlags _parseFeatureFlags;
+        private readonly ISecretProvider _secretProvider;
         private readonly IBoltMessageSender<OpenChannel> _messageSender;
 
         public StartOpenChannelService(ILogger<OpenChannelMessageService> logger,
             IBoltMessageSender<OpenChannel> messageSender,
-            ILightningTransactions lightningTransactions,
             IRandomNumberGenerator randomNumberGenerator,
             ILightningKeyDerivation lightningKeyDerivation,
             IChannelStateRepository channelStateRepository,
@@ -45,10 +45,10 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             IChainConfigProvider chainConfigProvider,
             IChannelConfigProvider channelConfigProvider,
             IBoltFeatures boltFeatures,
-            IParseFeatureFlags parseFeatureFlags)
+            IParseFeatureFlags parseFeatureFlags,
+            ISecretProvider secretProvider)
         {
             _logger = logger;
-            _lightningTransactions = lightningTransactions;
             _randomNumberGenerator = randomNumberGenerator;
             _lightningKeyDerivation = lightningKeyDerivation;
             _channelStateRepository = channelStateRepository;
@@ -57,10 +57,11 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             _channelConfigProvider = channelConfigProvider;
             _boltFeatures = boltFeatures;
             _parseFeatureFlags = parseFeatureFlags;
+            _secretProvider = secretProvider;
             _messageSender = messageSender;
         }
 
-        public async Task StartOpenChannel(StartOpenChannelIn startOpenChannelIn)
+        public async Task StartOpenChannelAsync(StartOpenChannelIn startOpenChannelIn)
         {
             Peer peer = _peerRepository.GetPeer(startOpenChannelIn.NodeId);
 
@@ -107,7 +108,8 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             openChannel.PushMsat = startOpenChannelIn.PushOnOpen;
 
-            Secrets secrets = _lightningKeyDerivation.DeriveSecrets(null); // todo: dan create seed store
+            Secret seed = _secretProvider.GetSeed();
+            Secrets secrets = _lightningKeyDerivation.DeriveSecrets(seed);
 
             openChannel.FundingPubkey = _lightningKeyDerivation.PublicKeyFromPrivateKey(secrets.FundingPrivkey);
 
@@ -131,16 +133,16 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             // Bolt 2 - MUST set undefined bits in channel_flags to 0.
             openChannel.ChannelFlags = startOpenChannelIn.PrivateChannel ? (byte)0 : (byte)ChannelFlags.ChannelFlags.AnnounceChannel;
 
-            // set to_self_delay sufficient to ensure the sender can irreversibly spend a commitment transaction output, in case of misbehavior by the receiver.
+            // Bolt 2 - set to_self_delay sufficient to ensure the sender can irreversibly spend a commitment transaction output, in case of misbehavior by the receiver.
             openChannel.ToSelfDelay = channelConfig.ToSelfDelay;
 
-            // set feerate_per_kw to at least the rate it estimates would cause the transaction to be immediately included in a block.
+            // Bolt 2 - set feerate_per_kw to at least the rate it estimates would cause the transaction to be immediately included in a block.
             openChannel.FeeratePerKw = startOpenChannelIn.FeeRate;
 
-            // set dust_limit_satoshis to a sufficient value to allow commitment transactions to propagate through the Bitcoin network.
+            // Bolt 2 - set dust_limit_satoshis to a sufficient value to allow commitment transactions to propagate through the Bitcoin network.
             openChannel.DustLimitSatoshis = channelConfig.DustLimit;
 
-            // set htlc_minimum_msat to the minimum value HTLC it's willing to accept from this peer.
+            // Bolt 2 - set htlc_minimum_msat to the minimum value HTLC it's willing to accept from this peer.
             openChannel.HtlcMinimumMsat = channelConfig.HtlcMinimum;
 
             // Bolt 2 - if both nodes advertised the option_upfront_shutdown_script feature:
