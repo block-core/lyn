@@ -106,7 +106,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             // Create the channel durable state
             ChannelState channelState = new()
             {
-                Funding = openChannel.FundingSatoshis,
+                FundingAmount = openChannel.FundingSatoshis,
                 ChannelId = openChannel.TemporaryChannelId,
                 RemotePublicKey = openChannel.FundingPubkey,
                 PushMsat = openChannel.PushMsat,

@@ -64,7 +64,7 @@ namespace Lyn.Protocol.Bolt2.Entities
         /// <summary>
         /// The amount the funder is putting into the channel.
         /// </summary>
-        public Satoshis Funding { get; set; }
+        public Satoshis FundingAmount { get; set; }
 
         /// <summary>
         /// An amount of initial funds that the sender is unconditionally giving to the receiver.
