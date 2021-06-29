@@ -35,7 +35,7 @@ namespace Lyn.Protocol.Tests.Bolt2
         private readonly Mock<IChainConfigProvider> _chainConfigProvider = new();
         private readonly Mock<IChannelConfigProvider> _channelConfigProvider = new();
         private readonly Mock<IParseFeatureFlags> _parseFeatureFlags = new();
-        private readonly Mock<ISecretProvider> _secretProvider = new();
+        private readonly Mock<ISecretStore> _secretProvider = new();
 
         private readonly Secret _randomSecret;
 

@@ -2,7 +2,7 @@
 
 namespace Lyn.Protocol.Bolt3
 {
-    public class SecretProvider : ISecretProvider
+    public class SecretStore : ISecretStore
     {
         public Secret GetSeed()
         {

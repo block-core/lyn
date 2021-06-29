@@ -30,7 +30,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
         private readonly IChannelConfigProvider _channelConfigProvider;
         private readonly IBoltFeatures _boltFeatures;
         private readonly IParseFeatureFlags _parseFeatureFlags;
-        private readonly ISecretProvider _secretProvider;
+        private readonly ISecretStore _secretStore;
         private readonly IBoltMessageSender<OpenChannel> _messageSender;
 
         public StartOpenChannelService(ILogger<OpenChannelMessageService> logger,
@@ -43,7 +43,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             IChannelConfigProvider channelConfigProvider,
             IBoltFeatures boltFeatures,
             IParseFeatureFlags parseFeatureFlags,
-            ISecretProvider secretProvider)
+            ISecretStore secretStore)
         {
             _logger = logger;
             _randomNumberGenerator = randomNumberGenerator;
@@ -54,7 +54,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             _channelConfigProvider = channelConfigProvider;
             _boltFeatures = boltFeatures;
             _parseFeatureFlags = parseFeatureFlags;
-            _secretProvider = secretProvider;
+            _secretStore = secretStore;
             _messageSender = messageSender;
         }
 
@@ -97,7 +97,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             openChannel.PushMsat = startOpenChannelIn.PushOnOpen;
 
-            Secret seed = _secretProvider.GetSeed();
+            Secret seed = _secretStore.GetSeed();
             Secrets secrets = _lightningKeyDerivation.DeriveSecrets(seed);
 
             openChannel.FundingPubkey = _lightningKeyDerivation.PublicKeyFromPrivateKey(secrets.FundingPrivkey);

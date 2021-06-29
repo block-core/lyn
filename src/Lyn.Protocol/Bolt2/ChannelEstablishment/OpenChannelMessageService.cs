@@ -27,7 +27,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
         private readonly IChannelStateRepository _channelStateRepository;
         private readonly IChainConfigProvider _chainConfigProvider;
         private readonly IChannelConfigProvider _channelConfigProvider;
-        private readonly ISecretProvider _secretProvider;
+        private readonly ISecretStore _secretStore;
         private readonly IBoltFeatures _boltFeatures;
         private readonly IParseFeatureFlags _parseFeatureFlags;
         private readonly IBoltMessageSender<AcceptChannel> _messageSender;
@@ -41,7 +41,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             IChannelStateRepository channelStateRepository,
             IChainConfigProvider chainConfigProvider,
             IChannelConfigProvider channelConfigProvider,
-            ISecretProvider secretProvider,
+            ISecretStore secretStore,
             IBoltFeatures boltFeatures,
             IParseFeatureFlags parseFeatureFlags)
         {
@@ -53,7 +53,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             _channelStateRepository = channelStateRepository;
             _chainConfigProvider = chainConfigProvider;
             _channelConfigProvider = channelConfigProvider;
-            _secretProvider = secretProvider;
+            _secretStore = secretStore;
             _boltFeatures = boltFeatures;
             _parseFeatureFlags = parseFeatureFlags;
             _messageSender = messageSender;
@@ -122,7 +122,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             AcceptChannel acceptChannel = new();
 
-            Secret seed = _secretProvider.GetSeed();
+            Secret seed = _secretStore.GetSeed();
             Secrets secrets = _lightningKeyDerivation.DeriveSecrets(seed);
 
             acceptChannel.FundingPubkey = _lightningKeyDerivation.PublicKeyFromPrivateKey(secrets.FundingPrivkey);
