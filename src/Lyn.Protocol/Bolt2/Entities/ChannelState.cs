@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using Lyn.Protocol.Bolt2.Configuration;
 using Lyn.Protocol.Bolt3.Types;
 using Lyn.Types.Bitcoin;
 using Lyn.Types.Bolt;
 using Lyn.Types.Fundamental;
-using ChannelConfig = Lyn.Protocol.Bolt2.Configuration.ChannelConfig;
 
 namespace Lyn.Protocol.Bolt2.Entities
 {
@@ -18,8 +15,6 @@ namespace Lyn.Protocol.Bolt2.Entities
         /// The id for this channel.
         /// </summary>
         public ChannelId? ChannelId { get; set; }
-
-        public Channel Channel { get; set; }
 
         /// <summary>
         /// Local configuration.

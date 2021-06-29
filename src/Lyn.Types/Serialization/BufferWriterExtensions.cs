@@ -3,6 +3,7 @@ using System.Buffers;
 using System.Buffers.Binary;
 using System.Runtime.CompilerServices;
 using System.Text;
+using Lyn.Types.Bitcoin;
 
 namespace Lyn.Types.Serialization
 {
@@ -126,6 +127,14 @@ namespace Lyn.Types.Serialization
 
             writer.Advance(size);
             return size;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int WriteUint256(this IBufferWriter<byte> writer, UInt256 value)
+        {
+            ReadOnlySpan<byte> span = value.GetBytes();
+            writer.Write(span);
+            return span.Length;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

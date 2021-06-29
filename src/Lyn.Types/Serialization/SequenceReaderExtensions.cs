@@ -2,6 +2,7 @@
 using System.Buffers;
 using System.Runtime.CompilerServices;
 using System.Text;
+using Lyn.Types.Bitcoin;
 
 namespace Lyn.Types.Serialization
 {
@@ -125,6 +126,12 @@ namespace Lyn.Types.Serialization
 
                 return (ulong)value;
             }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static UInt256 ReadUint256(ref this SequenceReader<byte> reader)
+        {
+            return new UInt256(reader.ReadBytes(32));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

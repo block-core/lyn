@@ -1,3 +1,4 @@
+using Lyn.Types.Bitcoin;
 using Lyn.Types.Bolt;
 using Lyn.Types.Bolt.Messages;
 using Lyn.Types.Fundamental;
@@ -9,7 +10,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment.Messages
         private const string COMMAND = "32";
         public override string Command => COMMAND;
         public ChannelId TemporaryChannelId { get; set; }
-        public ChainHash ChainHash { get; set; }
+        public UInt256 ChainHash { get; set; }
         public Satoshis FundingSatoshis { get; set; }
         public MiliSatoshis PushMsat { get; set; }
         public Satoshis DustLimitSatoshis { get; set; }
