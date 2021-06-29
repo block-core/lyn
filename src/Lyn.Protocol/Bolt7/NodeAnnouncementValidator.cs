@@ -16,10 +16,10 @@ namespace Lyn.Protocol.Bolt7
             _serializationFactory = serializationFactory;
         }
 
-        public (bool, ErrorMessage?) ValidateMessage(NodeAnnouncement networkMessage)
+        public bool ValidateMessage(NodeAnnouncement networkMessage)
         {
             if (!_validationHelper.VerifyPublicKey(networkMessage.NodeId))
-                return (false, null);
+                return false;
 
             var output =
                _serializationFactory.Serialize(networkMessage)[CompressedSignature.LENGTH..];
@@ -27,11 +27,11 @@ namespace Lyn.Protocol.Bolt7
             byte[]? doubleHash = Hashes.DoubleSHA256RawBytes(output, 0, output.Length);
 
             if (!_validationHelper.VerifySignature(networkMessage.NodeId, networkMessage.Signature, doubleHash))
-                return (false, null);
+                return false;
 
             //TODO David validate features including addrlen
 
-            return (true, null);
+            return true;
         }
     }
 }

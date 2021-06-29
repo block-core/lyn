@@ -1,12 +1,11 @@
 using System;
-using System.Threading;
 using System.Threading.Tasks;
-using Lyn.Types;
+using Lyn.Protocol.Connection;
 using Lyn.Types.Bolt.Messages;
 
 namespace Lyn.Protocol.Bolt7
 {
-   public class AnnouncementSignaturesService : IGossipMessageService<AnnouncementSignatures>
+   public class AnnouncementSignaturesService : IBoltMessageService<AnnouncementSignatures>
    {
       readonly IMessageValidator<AnnouncementSignatures> _messageValidator;
       private readonly IGossipRepository _repository;
@@ -18,22 +17,13 @@ namespace Lyn.Protocol.Bolt7
          _repository = repository;
       }
 
-      public MessageProcessingOutput ProcessMessage(AnnouncementSignatures message)
+      public async Task ProcessMessageAsync(PeerMessage<AnnouncementSignatures> request)
       {
-         throw new NotImplementedException();
-      }
-
-      public async ValueTask<MessageProcessingOutput> ProcessMessageAsync(AnnouncementSignatures message, CancellationToken cancellation)
-      {
-         var (isValid, errorMessage) = _messageValidator.ValidateMessage(message);
-
-         if (!isValid)
-         {
-            if (errorMessage == null)
-               throw new ArgumentException(nameof(message));
-
-            return new MessageProcessingOutput {ErrorMessage = errorMessage};
-         }
+         var message = request.Message;
+         
+         if (!_messageValidator.ValidateMessage(message))
+            throw new ArgumentException(nameof(message));
+         
          //TODO David - need to verify the short channel id with the funding transaction  
          
          //TODO David - add check for funding transaction announce channel bit, and received funding locked message with 6 confirmations before sending a response
@@ -66,8 +56,6 @@ namespace Lyn.Protocol.Bolt7
          }
          
          //TODO David - add gossip message broadcasting to all connected nodes (raise event?)
-         
-         return new MessageProcessingOutput{Success = true, ResponseMessage = reply};
       }
    }
 }

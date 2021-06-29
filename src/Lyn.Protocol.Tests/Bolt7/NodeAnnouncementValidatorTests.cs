@@ -12,25 +12,21 @@ namespace Lyn.Protocol.Tests.Bolt7
     public class NodeAnnouncementValidatorTests : RandomGossipMessages
     {
         private NodeAnnouncementValidator _sut;
-
-        private Mock<IGossipRepository> _gossipRepository;
+        
         private Mock<ISerializationFactory> _serializationFactory;
         private Mock<IValidationHelper> _validationHelper;
 
         public NodeAnnouncementValidatorTests()
         {
-            _gossipRepository = new Mock<IGossipRepository>();
             _serializationFactory = new Mock<ISerializationFactory>();
             _validationHelper = new Mock<IValidationHelper>();
 
             _sut = new NodeAnnouncementValidator(_validationHelper.Object, _serializationFactory.Object);
         }
 
-        private void ThanTheValidationFailedWithNoErrorMessage((bool, ErrorMessage?) result)
+        private void ThanTheValidationFailedWithNoErrorMessage(bool isValid)
         {
-            var (isValid, errorMessage) = result;
             Assert.False(isValid);
-            Assert.Null(errorMessage);
 
             _validationHelper.VerifyAll();
         }
@@ -104,8 +100,7 @@ namespace Lyn.Protocol.Tests.Bolt7
 
             var result = _sut.ValidateMessage(message);
 
-            Assert.True(result.Item1);
-            Assert.Null(result.Item2);
+            Assert.True(result);
 
             _validationHelper.VerifyAll();
         }

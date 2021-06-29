@@ -1,13 +1,12 @@
 using System;
-using System.Threading;
 using System.Threading.Tasks;
 using Lyn.Protocol.Bolt7.Entities;
-using Lyn.Types;
+using Lyn.Protocol.Connection;
 using Lyn.Types.Bolt.Messages;
 
 namespace Lyn.Protocol.Bolt7
 {
-   public class NodeAnnouncementMessageService : IGossipMessageService<NodeAnnouncement>
+   public class NodeAnnouncementMessageService : IBoltMessageService<NodeAnnouncement>
    {
       readonly IMessageValidator<NodeAnnouncement> _messageValidator;
 
@@ -19,28 +18,21 @@ namespace Lyn.Protocol.Bolt7
          _gossipRepository = gossipRepository;
       }
 
-      public MessageProcessingOutput ProcessMessage(NodeAnnouncement message)
+      public Task ProcessMessageAsync(PeerMessage<NodeAnnouncement> request)
       {
-         throw new NotImplementedException();
-      }
+         var message = request.Message;
 
-      public async ValueTask<MessageProcessingOutput> ProcessMessageAsync(NodeAnnouncement message, CancellationToken cancellation)
-      {
-         var (isValid, errorMessage) = _messageValidator.ValidateMessage(message);
+         if (!_messageValidator.ValidateMessage(message))
+            throw new ArgumentException(nameof(message)); //Close connection when failed validation
 
-         if (!isValid)
-         {
-            if (errorMessage == null)
-               throw new ArgumentException(nameof(message));
-
-            return new MessageProcessingOutput {ErrorMessage = errorMessage};
-         }
+         //TODO need to get exising channel announcement and update node details
+         //TODO missing logic here from Bolt 8
 
          var node = new GossipNode(message);
-         
+
          _gossipRepository.AddNode(node);
- 
-         return new MessageProcessingOutput{Success = true};
+         
+         return Task.CompletedTask;
       }
    }
 }

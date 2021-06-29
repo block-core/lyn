@@ -17,12 +17,12 @@ namespace Lyn.Protocol.Bolt7
          _validationHelper = validationHelper;
       }
 
-      public (bool, ErrorMessage?) ValidateMessage(AnnouncementSignatures networkMessage)
+      public bool ValidateMessage(AnnouncementSignatures networkMessage)
       {
          var channel = _repository.GetGossipChannel(networkMessage.ShortChannelId);
 
          if (channel?.IsChannelWithLocalNode() != true)
-            return (false, null);
+            return false;
          
          var channelAnnouncement = _serializationFactory.Serialize(channel.ChannelAnnouncement)[256..]; 
 
@@ -30,9 +30,9 @@ namespace Lyn.Protocol.Bolt7
 
          if (!_validationHelper.VerifySignature(channel.GetRemoteNodeId(), networkMessage.NodeSignature, hash) ||
              !_validationHelper.VerifySignature(channel.GetRemoteBitcoinAddress(), networkMessage.BitcoinSignature, hash))
-            return (false, null);
+            return false;
 
-         return (true, null);
+         return true;
       }
    }
 }

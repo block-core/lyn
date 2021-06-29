@@ -10,5 +10,7 @@ namespace Lyn.Protocol.Bolt9
         byte[] GetSupportedGlobalFeatures();
 
         bool ValidateRemoteFeatureAreCompatible(byte[] remoteNodeFeatures, byte[] remoteNodeGlobalFeatures);
+
+        bool ContainsUnknownRequiredFeatures(byte[] features);
     }
 }

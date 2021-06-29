@@ -1,7 +1,6 @@
 using Lyn.Protocol.Bolt7;
 using Lyn.Protocol.Common;
 using Lyn.Types;
-using Lyn.Types.Bolt;
 using Lyn.Types.Bolt.Messages;
 using Lyn.Types.Fundamental;
 using Moq;
@@ -223,8 +222,7 @@ namespace Lyn.Protocol.Tests.Bolt7
 
             var result = _sut.ValidateMessage(channelAnnouncement);
 
-            Assert.True(result.Item1);
-            Assert.Null(result.Item2);
+            Assert.True(result);
 
             _validationHelper.VerifyAll();
         }
@@ -277,12 +275,10 @@ namespace Lyn.Protocol.Tests.Bolt7
                 .Returns(true);
         }
 
-        private void ThanTheValidationFailedWithNoErrorMessage((bool, ErrorMessage?) result)
+        private void ThanTheValidationFailedWithNoErrorMessage(bool result)
         {
-            var (isValid, errorMessage) = result;
-            Assert.False(isValid);
-            Assert.Null(errorMessage);
-
+            Assert.False(result);
+            
             _validationHelper.VerifyAll();
         }
     }

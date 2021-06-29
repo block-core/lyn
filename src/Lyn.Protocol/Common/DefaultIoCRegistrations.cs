@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Reflection;
 using Lyn.Protocol.Bolt1;
 using Lyn.Protocol.Bolt2;
 using Lyn.Protocol.Bolt2.Messags;
@@ -19,7 +20,6 @@ namespace Lyn.Protocol.Common
         public static void AddLynComponents(this IServiceCollection serviceCollection)
         {
             serviceCollection.AddGossipComponents()
-                .AddMessageValidatorComponents()
                 .AddSerializationComponents()
                 .AddNetworkMessageSerialization()
                 .AddNoiseComponents()
@@ -29,57 +29,15 @@ namespace Lyn.Protocol.Common
 
         public static IServiceCollection AddSerializationComponents(this IServiceCollection services)
         {
-            // Discovers and registers all message serializer in this assembly.
-            // It is possible to add them manually to have full control of protocol serializers we are interested into.
-            Type protocolSerializerInterface = typeof(IProtocolTypeSerializer<>);
-            var implementations = from type in typeof(IProtocolTypeSerializer<>).Assembly.GetTypes()
-                                  from typeInterface in type.GetInterfaces()
-                                  where typeInterface.IsGenericType &&
-                                        protocolSerializerInterface.IsAssignableFrom(typeInterface.GetGenericTypeDefinition())
-                                  select new { Interface = typeInterface, ImplementationType = type };
-
-            foreach (var implementation in implementations)
-            {
-                services.AddSingleton(implementation.Interface, implementation.ImplementationType);
-            }
+            ScanAssemblyAndRegisterTypeSingleton(services, typeof(IProtocolTypeSerializer<>));
 
             return services;
         }
 
         private static IServiceCollection AddGossipComponents(this IServiceCollection services)
         {
-            // Discovers and registers all message serializer in this assembly.
-            // It is possible to add them manually to have full control of protocol serializers we are interested into.
-            Type protocolSerializerInterface = typeof(IGossipMessageService<>);
-            var implementations = from type in typeof(DefaultIoCRegistrations).Assembly.GetTypes()
-                                  from typeInterface in type.GetInterfaces()
-                                  where typeInterface.IsGenericType &&
-                                        protocolSerializerInterface.IsAssignableFrom(typeInterface.GetGenericTypeDefinition())
-                                  select new { Interface = typeInterface, ImplementationType = type };
-
-            foreach (var implementation in implementations)
-            {
-                services.AddSingleton(implementation.Interface, implementation.ImplementationType);
-            }
-
-            return services;
-        }
-
-        private static IServiceCollection AddMessageValidatorComponents(this IServiceCollection services)
-        {
-            // Discovers and registers all message serializer in this assembly.
-            // It is possible to add them manually to have full control of protocol serializers we are interested into.
-            Type protocolSerializerInterface = typeof(IMessageValidator<>);
-            var implementations = from type in typeof(DefaultIoCRegistrations).Assembly.GetTypes()
-                                  from typeInterface in type.GetInterfaces()
-                                  where typeInterface.IsGenericType &&
-                                        protocolSerializerInterface.IsAssignableFrom(typeInterface.GetGenericTypeDefinition())
-                                  select new { Interface = typeInterface, ImplementationType = type };
-
-            foreach (var implementation in implementations)
-            {
-                services.AddSingleton(implementation.Interface, implementation.ImplementationType);
-            }
+            ScanAssemblyAndRegisterTypeSingleton(services, typeof(IBoltMessageService<>));
+            ScanAssemblyAndRegisterTypeSingleton(services, typeof(IMessageValidator<>));
 
             return services;
         }
@@ -141,15 +99,23 @@ namespace Lyn.Protocol.Common
             services.AddSingleton<IPeerRepository, InMemoryPeerRepository>();
             services.AddSingleton<IPingPongMessageRepository, InMemoryPingPongMessageRepository>();
             services.AddTransient(typeof(IBoltMessageSender<>), typeof(BoltMessageSender<>));
-            //TODO move this to an assembley scan
-            services.AddSingleton<IBoltMessageService<InitMessage>, InitMessageService>();
-            services.AddSingleton<IBoltMessageService<ErrorMessage>, ErrorMessageService>();
-            services.AddSingleton<IBoltMessageService<PingMessage>, PingMessageService>();
-            services.AddSingleton<IBoltMessageService<PongMessage>, PongMessageService>();
-
-            services.AddSingleton<IBoltMessageService<OpenChannel>, OpenChannelService>();
-
             return services;
+        }
+        
+        
+        private static void ScanAssemblyAndRegisterTypeSingleton(IServiceCollection services, Type protocolSerializerInterface)
+        {
+            // Discovers and registers all type implementation in this assembly.
+            var implementations = from type in protocolSerializerInterface.Assembly.GetTypes()
+                from typeInterface in type.GetInterfaces()
+                where typeInterface.IsGenericType &&
+                      protocolSerializerInterface.IsAssignableFrom(typeInterface.GetGenericTypeDefinition())
+                select new {Interface = typeInterface, ImplementationType = type};
+
+            foreach (var implementation in implementations)
+            {
+                services.AddSingleton(implementation.Interface, implementation.ImplementationType);
+            }
         }
     }
 }

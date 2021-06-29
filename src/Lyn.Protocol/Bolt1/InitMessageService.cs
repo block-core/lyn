@@ -39,6 +39,8 @@ namespace Lyn.Protocol.Bolt1
             await _repository.AddNewPeerAsync(peer);
 
             await _messageSender.SendMessageAsync(new PeerMessage<InitMessage>(request.NodeId, CreateInitMessage()));
+            
+            //TODO David add sending the gossip timestamp filter *init message MUST be sent first
         }
 
         private InitMessage CreateInitMessage()

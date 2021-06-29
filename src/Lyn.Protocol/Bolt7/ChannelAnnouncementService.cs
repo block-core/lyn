@@ -1,38 +1,31 @@
-using System;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
-using Lyn.Types;
+using Lyn.Protocol.Bolt7.Entities;
+using Lyn.Protocol.Bolt9;
+using Lyn.Protocol.Connection;
 using Lyn.Types.Bolt.Messages;
 
 namespace Lyn.Protocol.Bolt7
 {
-   public class ChannelAnnouncementService : IGossipMessageService<ChannelAnnouncement>
+   public class ChannelAnnouncementService : IBoltMessageService<ChannelAnnouncement>
    {
-      readonly IMessageValidator<ChannelAnnouncement> _messageValidator;
-      readonly IGossipRepository _gossipRepository;
+      private readonly IMessageValidator<ChannelAnnouncement> _messageValidator;
+      private readonly IGossipRepository _gossipRepository;
+      private readonly IBoltFeatures _boltFeatures;
       
-      public ChannelAnnouncementService(IMessageValidator<ChannelAnnouncement> messageValidator, IGossipRepository gossipRepository)
+      public ChannelAnnouncementService(IMessageValidator<ChannelAnnouncement> messageValidator, IGossipRepository gossipRepository, IBoltFeatures boltFeatures)
       {
          _messageValidator = messageValidator;
          _gossipRepository = gossipRepository;
+         _boltFeatures = boltFeatures;
       }
 
-      public MessageProcessingOutput ProcessMessage(ChannelAnnouncement message)
+      public async Task ProcessMessageAsync(PeerMessage<ChannelAnnouncement> request)
       {
-         throw new NotImplementedException();
-      }
-
-      public async ValueTask<MessageProcessingOutput> ProcessMessageAsync(ChannelAnnouncement message, CancellationToken cancellation)
-      {
-         (bool isValid, ErrorMessage? errorMessage) = _messageValidator.ValidateMessage(message);
-         if (!isValid)
-         {
-            if (errorMessage == null)
-               throw new ArgumentException(nameof(message));
-
-            return new MessageProcessingOutput {ErrorMessage = errorMessage};
-         }
+         var message = request.Message;
+         
+         if (!_messageValidator.ValidateMessage(message))
+            return; //ignore message
 
          var existingChannel = _gossipRepository.GetGossipChannel(message.ShortChannelId);
 
@@ -45,13 +38,16 @@ namespace Lyn.Protocol.Bolt7
          }
             
          
-         //TODO David add logic to verify P2WSH for bitcoin keys
-         
+         //TODO David add logic to verify P2WSH for bitcoin keys on the blockchain using short channel id
 
-         return new MessageProcessingOutput{Success = true};
+         var gossipChannel = new GossipChannel(request.Message);
+         
+         gossipChannel.UnsupportedFeatures = _boltFeatures.ContainsUnknownRequiredFeatures(message.Features);
+         
+         _gossipRepository.AddGossipChannel(gossipChannel);
       }
 
-      void BlacklistNodesAndForgetChannels(ChannelAnnouncement message, ChannelAnnouncement existingChannel)
+      private void BlacklistNodesAndForgetChannels(ChannelAnnouncement message, ChannelAnnouncement existingChannel)
       {
          var nodes = _gossipRepository.GetNodes(existingChannel.NodeId1, existingChannel.NodeId2,
             message.NodeId1, message.NodeId2);

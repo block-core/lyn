@@ -123,14 +123,12 @@ namespace Lyn.Protocol.Tests.Bolt7
 
             var result = _sut.ValidateMessage(message);
 
-            Assert.True(result.Item1);
-            Assert.Null(result.Item2);
+            Assert.True(result);
         }
 
-        private static void ThanTheMessageFailedWithNoError((bool, ErrorMessage?) result)
+        private static void ThanTheMessageFailedWithNoError(bool result)
         {
-            Assert.False(result.Item1);
-            Assert.Null(result.Item2);
+            Assert.False(result);
         }
     }
 }
