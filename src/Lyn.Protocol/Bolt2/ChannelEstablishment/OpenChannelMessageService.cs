@@ -20,7 +20,6 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
     public class OpenChannelMessageService : IBoltMessageService<OpenChannel>
     {
         private readonly ILogger<OpenChannelMessageService> _logger;
-        private readonly IBoltValidationService<OpenChannel> _validationService;
         private readonly ILightningTransactions _lightningTransactions;
         private readonly IRandomNumberGenerator _randomNumberGenerator;
         private readonly ILightningKeyDerivation _lightningKeyDerivation;
@@ -33,7 +32,6 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
         private readonly IBoltMessageSender<AcceptChannel> _messageSender;
 
         public OpenChannelMessageService(ILogger<OpenChannelMessageService> logger,
-            IBoltValidationService<OpenChannel> validationService,
             IBoltMessageSender<AcceptChannel> messageSender,
             ILightningTransactions lightningTransactions,
             IRandomNumberGenerator randomNumberGenerator,
@@ -46,7 +44,6 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             IParseFeatureFlags parseFeatureFlags)
         {
             _logger = logger;
-            _validationService = validationService;
             _lightningTransactions = lightningTransactions;
             _randomNumberGenerator = randomNumberGenerator;
             _lightningKeyDerivation = lightningKeyDerivation;

@@ -4,10 +4,12 @@ using Lyn.Protocol.Bolt1;
 using Lyn.Protocol.Bolt2;
 using Lyn.Protocol.Bolt2.ChannelEstablishment;
 using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages;
+using Lyn.Protocol.Bolt2.Configuration;
 using Lyn.Protocol.Bolt3;
 using Lyn.Protocol.Bolt7;
 using Lyn.Protocol.Bolt8;
 using Lyn.Protocol.Bolt9;
+using Lyn.Protocol.Common.Blockchain;
 using Lyn.Protocol.Connection;
 using Lyn.Types.Bolt.Messages;
 using Lyn.Types.Serialization;
@@ -101,6 +103,10 @@ namespace Lyn.Protocol.Common
             services.AddSingleton<IBoltFeatures, LynImplementedBoltFeatures>();
             services.AddSingleton<IParseFeatureFlags, ParseFeatureFlags>();
 
+            services.AddSingleton<IChannelConfigProvider, ChannelConfigProvider>();
+            services.AddSingleton<IChainConfigProvider, ChainConfigProvider>(); ;
+            services.AddSingleton<ISecretStore, SecretStore>();
+
             return services;
         }
 
@@ -148,6 +154,8 @@ namespace Lyn.Protocol.Common
             services.AddSingleton<IBoltMessageService<PingMessage>, PingMessageService>();
             services.AddSingleton<IBoltMessageService<PongMessage>, PongMessageService>();
 
+            services.AddSingleton<IStartOpenChannelService, StartOpenChannelService>();
+            services.AddSingleton<IChannelStateRepository, InMemoryChannelStateRepository>();
             services.AddSingleton<IBoltMessageService<OpenChannel>, OpenChannelMessageService>();
 
             return services;
