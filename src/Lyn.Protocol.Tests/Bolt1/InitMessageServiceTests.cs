@@ -1,6 +1,7 @@
 using System;
 using Lyn.Protocol.Bolt1;
 using Lyn.Protocol.Bolt1.Entities;
+using Lyn.Protocol.Bolt1.Messages;
 using Lyn.Protocol.Bolt9;
 using Lyn.Protocol.Connection;
 using Lyn.Types.Bolt.Messages;
@@ -48,7 +49,7 @@ namespace Lyn.Protocol.Tests.Bolt1
             );
             return message;
         }
-        
+
         [Fact]
         public void ProcessMessageAsyncThrowsWhenFeaturesAreNotSupportedLocally()
         {

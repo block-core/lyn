@@ -9,8 +9,8 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Logging" Version="5.0.0" />
     <PackageReference Include="NaCl.Core" Version="2.0.2" />
-    <PackageReference Include="NBitcoin" Version="5.0.81" />
-    <PackageReference Include="NBitcoin.Secp256k1" Version="1.0.8" />
+    <PackageReference Include="NBitcoin" Version="5.0.83" />
+    <PackageReference Include="NBitcoin.Secp256k1" Version="1.0.10" />
   </ItemGroup>
 
   <ItemGroup>

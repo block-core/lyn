@@ -150,7 +150,7 @@ namespace Lyn.Protocol.Bolt3
             ECPubKey? revocationBasepointTweaked = null;
             if (ECPubKey.TryCreate(basepoint, Context.Instance, out _, out ECPubKey? ecbasepoint))
             {
-                if (ecbasepoint.TryMultTweak(hashed1.AsSpan(), out ECPubKey? ecpubkeytweaked))
+                if (ecbasepoint.TryTweakMul(hashed1.AsSpan(), out ECPubKey? ecpubkeytweaked))
                 {
                     if (ecpubkeytweaked != null)
                     {
@@ -167,7 +167,7 @@ namespace Lyn.Protocol.Bolt3
             ECPubKey? perCommitmentPointTweaked = null;
             if (ECPubKey.TryCreate(perCommitmentPoint, Context.Instance, out _, out ECPubKey? ecperCommitmentPoint))
             {
-                if (ecperCommitmentPoint.TryMultTweak(hashed2.AsSpan(), out ECPubKey? ecperCommitmentPointtweaked))
+                if (ecperCommitmentPoint.TryTweakMul(hashed2.AsSpan(), out ECPubKey? ecperCommitmentPointtweaked))
                 {
                     if (ecperCommitmentPointtweaked != null)
                     {
