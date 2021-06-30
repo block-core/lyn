@@ -1,7 +1,7 @@
 using Lyn.Protocol.Common;
+using Lyn.Protocol.Common.Hashing;
 using Lyn.Types.Bolt.Messages;
 using Lyn.Types.Fundamental;
-using NBitcoin.Crypto;
 
 namespace Lyn.Protocol.Bolt7
 {
@@ -21,11 +21,12 @@ namespace Lyn.Protocol.Bolt7
             if (!_validationHelper.VerifyPublicKey(networkMessage.NodeId))
                 return false;
 
-            var output =
-               _serializationFactory.Serialize(networkMessage)[CompressedSignature.LENGTH..];
+            var output = _serializationFactory.Serialize(networkMessage)[CompressedSignature.LENGTH..];
 
-            byte[]? doubleHash = Hashes.DoubleSHA256RawBytes(output, 0, output.Length);
-
+            var doubleHash = HashGenerator.DoubleSha256AsUInt256(output)
+                .GetBytes()
+                .ToArray();
+            
             if (!_validationHelper.VerifySignature(networkMessage.NodeId, networkMessage.Signature, doubleHash))
                 return false;
 

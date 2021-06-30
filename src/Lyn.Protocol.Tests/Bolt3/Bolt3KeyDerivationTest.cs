@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using Lyn.Protocol.Bolt3;
 using Lyn.Protocol.Bolt3.Types;
 using Lyn.Protocol.Common;
+using Lyn.Types;
 using Lyn.Types.Fundamental;
 using Microsoft.Extensions.Logging;
 using Moq;

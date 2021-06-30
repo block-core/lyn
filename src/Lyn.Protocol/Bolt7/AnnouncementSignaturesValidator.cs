@@ -1,6 +1,6 @@
 using Lyn.Protocol.Common;
+using Lyn.Protocol.Common.Hashing;
 using Lyn.Types.Bolt.Messages;
-using NBitcoin.Crypto;
 
 namespace Lyn.Protocol.Bolt7
 {
@@ -26,10 +26,12 @@ namespace Lyn.Protocol.Bolt7
          
          var channelAnnouncement = _serializationFactory.Serialize(channel.ChannelAnnouncement)[256..]; 
 
-         var hash = Hashes.DoubleSHA256RawBytes(channelAnnouncement, 0, channelAnnouncement.Length);
-
-         if (!_validationHelper.VerifySignature(channel.GetRemoteNodeId(), networkMessage.NodeSignature, hash) ||
-             !_validationHelper.VerifySignature(channel.GetRemoteBitcoinAddress(), networkMessage.BitcoinSignature, hash))
+         var doubleHash = HashGenerator.DoubleSha256AsUInt256(channelAnnouncement)
+            .GetBytes()
+            .ToArray();
+         
+         if (!_validationHelper.VerifySignature(channel.GetRemoteNodeId(), networkMessage.NodeSignature, doubleHash) ||
+             !_validationHelper.VerifySignature(channel.GetRemoteBitcoinAddress(), networkMessage.BitcoinSignature, doubleHash))
             return false;
 
          return true;

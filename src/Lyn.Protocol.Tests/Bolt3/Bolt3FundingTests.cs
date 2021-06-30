@@ -1,6 +1,7 @@
 using System.Linq;
 using Lyn.Protocol.Bolt3;
 using Lyn.Protocol.Common;
+using Lyn.Types;
 using Lyn.Types.Fundamental;
 using NBitcoin;
 using NBitcoin.DataEncoders;

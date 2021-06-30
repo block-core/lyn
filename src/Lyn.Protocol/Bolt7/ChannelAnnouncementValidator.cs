@@ -4,7 +4,6 @@ using Lyn.Protocol.Common.Hashing;
 using Lyn.Types;
 using Lyn.Types.Bolt.Messages;
 using Lyn.Types.Fundamental;
-//using NBitcoin.Crypto;
 
 namespace Lyn.Protocol.Bolt7
 {
@@ -36,9 +35,6 @@ namespace Lyn.Protocol.Bolt7
                  .GetBytes()
                  .ToArray();
             
-            // byte[]? doubleHash = Hashes.DoubleSHA256RawBytes(messageByteArrayWithoutSignatures,
-            //    0, messageByteArrayWithoutSignatures.Length);
-
             if (!_validationHelper.VerifySignature(networkMessage.NodeId1, networkMessage.NodeSignature1, doubleHash) ||
                 !_validationHelper.VerifySignature(networkMessage.NodeId2, networkMessage.NodeSignature2, doubleHash) ||
                 !_validationHelper.VerifySignature(networkMessage.BitcoinKey1, networkMessage.BitcoinSignature1, doubleHash) ||

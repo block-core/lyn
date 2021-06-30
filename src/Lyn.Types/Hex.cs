@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Lyn.Protocol.Common
+namespace Lyn.Types
 {
     public static class Hex
     {
@@ -41,6 +41,16 @@ namespace Lyn.Protocol.Common
         }
 
         public static string ToString(IEnumerable<byte> arr)
+        {
+            var sb = new StringBuilder();
+            sb.Append("0x");
+            foreach (byte b in arr)
+                sb.Append(b.ToString("x2"));
+
+            return sb.ToString();
+        }
+        
+        public static string ToString(byte[] arr)
         {
             var sb = new StringBuilder();
             sb.Append("0x");
