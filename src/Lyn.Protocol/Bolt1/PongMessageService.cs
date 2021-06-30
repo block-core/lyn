@@ -18,7 +18,7 @@ namespace Lyn.Protocol.Bolt1
 
         public async Task ProcessMessageAsync(PeerMessage<PongMessage> request)
         {
-            _logger.LogDebug($"Processing pong from with length {request.Message.BytesLen.ToString()}");
+            _logger.LogDebug($"Processing pong from {request.NodeId} with length {request.Message.BytesLen.ToString()}");
 
             var pingExists = await _messageRepository.PendingPingExistsForIdAsync(request.NodeId,request.Message.Id); 
             
