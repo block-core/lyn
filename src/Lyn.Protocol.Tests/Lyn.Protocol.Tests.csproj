@@ -33,4 +33,13 @@
       <ProjectReference Include="..\Lyn.Types\Lyn.Types.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Update="Bolt1\Data\BigSizeDecodingData.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="Bolt1\Data\BigSizeEncodingData.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+
 </Project>
