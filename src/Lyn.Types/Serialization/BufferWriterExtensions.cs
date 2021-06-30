@@ -223,6 +223,34 @@ namespace Lyn.Types.Serialization
         }
 
         /// <summary>
+        /// For details information on BigSize see BOLT 1
+        /// https://github.com/lightningnetwork/lightning-rfc/blob/master/01-messaging.md#appendix-a-bigsize-test-vectors
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int WriteBigSize(this IBufferWriter<byte> writer, ulong value)
+        {
+            if (value < 0xFD)
+            {
+                return writer.WriteByte((byte)value) + 1;
+            }
+            else if (value < 0x10000)
+            {
+                writer.WriteByte(0xFD);
+                return writer.WriteUShort((ushort)value, isBigEndian: true) + 1;
+            }
+            else if (value < 0x100000000)
+            {
+                writer.WriteByte(0xFE);
+                return writer.WriteUInt((uint)value, isBigEndian: true) + 1;
+            }
+            else  // == 0xFF
+            {
+                writer.WriteByte(0xFF);
+                return writer.WriteULong(value, isBigEndian: true) + 1;
+            }
+        }
+
+        /// <summary>
         /// Writes the array of passed <typeparamref name="TSerializableType" /> types.
         /// Internally it writes a VarInt followed by the list of serialized items.
         /// </summary>
