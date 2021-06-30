@@ -12,6 +12,7 @@ using Lyn.Protocol.Bolt7;
 using Lyn.Protocol.Bolt8;
 using Lyn.Protocol.Bolt9;
 using Lyn.Protocol.Common.Blockchain;
+using Lyn.Protocol.Common.Serialization;
 using Lyn.Protocol.Connection;
 using Lyn.Types.Bolt.Messages;
 using Lyn.Types.Serialization;
@@ -21,7 +22,7 @@ namespace Lyn.Protocol.Common
 {
     public static class DefaultIoCRegistrations
     {
-        public static void AddLynComponents(this IServiceCollection serviceCollection)
+        public static IServiceCollection AddLynComponents(this IServiceCollection serviceCollection)
         {
             serviceCollection.AddGossipComponents()
                 .AddSerializationComponents()
@@ -29,11 +30,14 @@ namespace Lyn.Protocol.Common
                 .AddNoiseComponents()
                 .AddDefaultComponents()
                 .AddControlAndSetupMessageSupport();
+            return serviceCollection;
         }
 
         public static IServiceCollection AddSerializationComponents(this IServiceCollection services)
         {
             ScanAssemblyAndRegisterTypeSingleton(services, typeof(IProtocolTypeSerializer<>));
+
+            services.AddSingleton<IProtocolTypeSerializer<InitMessage>, InitMessageSerializer>(); //TODO David delete this once all the messages and serialization are moved to Protocol
 
             return services;
         }
@@ -71,7 +75,6 @@ namespace Lyn.Protocol.Common
 
         private static IServiceCollection AddNoiseComponents(this IServiceCollection services)
         {
-            //services.AddSingleton<IHandshakeStateFactory, HandshakeStateFactory>();
             services.AddSingleton<IEllipticCurveActions, EllipticCurveActions>();
             services.AddTransient<IHashWithState, HashWithState>();
             services.AddSingleton<IHkdf, Hkdf>();
@@ -106,6 +109,7 @@ namespace Lyn.Protocol.Common
         {
             services.AddSingleton<IPeerRepository, InMemoryPeerRepository>();
             services.AddSingleton<IPingPongMessageRepository, InMemoryPingPongMessageRepository>();
+            services.AddSingleton<IPingMessageAction, PingMessageService>();
             services.AddTransient(typeof(IBoltMessageSender<>), typeof(BoltMessageSender<>));
 
             services.AddSingleton<IStartOpenChannelService, StartOpenChannelService>(); //TODO Dan this is not control and setup services

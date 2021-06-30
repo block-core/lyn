@@ -1,5 +1,6 @@
 using System.Linq;
 using Lyn.Protocol.Common;
+using Lyn.Protocol.Common.Serialization;
 using Lyn.Protocol.Common.Hashing;
 using Lyn.Types;
 using Lyn.Types.Bolt.Messages;
