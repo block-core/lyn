@@ -1,4 +1,6 @@
-﻿namespace Lyn.Types.Bolt.Messages
+﻿using Lyn.Types.Bolt.Messages;
+
+namespace Lyn.Protocol.Bolt1.Messages
 {
     public sealed class InitMessage : BoltMessage
     {
