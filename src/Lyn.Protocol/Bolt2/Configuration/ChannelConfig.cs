@@ -1,35 +1,34 @@
-﻿namespace Lyn.Protocol.Bolt3.Types
+﻿using Lyn.Types.Fundamental;
+
+namespace Lyn.Protocol.Bolt2.Configuration
 {
     public class ChannelConfig
     {
-        /* Database ID */
-        public ulong Id { get; set; }
-
         /* BOLT #2:
          *
          * `dust_limit_satoshis` is the threshold below which outputs should
          * not be generated for this node's commitment or HTLC transaction */
-        public ulong DustLimit { get; set; }
+        public Satoshis DustLimit { get; set; }
 
         /* BOLT #2:
          *
          * `max_htlc_value_in_flight_msat` is a cap on total value of
          * outstanding HTLCs, which allows a node to limit its exposure to
          * HTLCs */
-        public ulong MaxHtlcValueInFlight { get; set; }
+        public MiliSatoshis MaxHtlcValueInFlight { get; set; }
 
         /* BOLT #2:
          *
          * `channel_reserve_satoshis` is the minimum amount that the other
          * node is to keep as a direct payment. */
-        public ulong ChannelReserve { get; set; }
+        public Satoshis ChannelReserve { get; set; }
 
         /* BOLT #2:
          *
          * `htlc_minimum_msat` indicates the smallest value HTLC this node
          * will accept.
          */
-        public ulong HtlcMinimum { get; set; }
+        public MiliSatoshis HtlcMinimum { get; set; }
 
         /* BOLT #2:
          *
@@ -43,5 +42,5 @@
          * similarly, `max_accepted_htlcs` limits the number of outstanding
          * HTLCs the other node can offer. */
         public ushort MaxAcceptedHtlcs { get; set; }
-    };
+    }
 }
