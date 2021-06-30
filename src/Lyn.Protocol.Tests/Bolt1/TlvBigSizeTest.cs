@@ -14,7 +14,7 @@ namespace Lyn.Protocol.Tests.Bolt1
         public void BigSizeDecodingDataTest()
         {
             string rawData = File.ReadAllText("Bolt1/Data/BigSizeDecodingData.json");
-            TlvData[] data = JsonSerializer.Deserialize<TlvData[]>(rawData);
+            TlvData[]? data = JsonSerializer.Deserialize<TlvData[]>(rawData);
 
             foreach (TlvData tlvData in data)
             {
@@ -41,7 +41,7 @@ namespace Lyn.Protocol.Tests.Bolt1
         public void BigSizeEncodingDataTest()
         {
             string rawData = File.ReadAllText("Bolt1/Data/BigSizeEncodingData.json");
-            TlvData[] data = JsonSerializer.Deserialize<TlvData[]>(rawData);
+            TlvData[]? data = JsonSerializer.Deserialize<TlvData[]>(rawData);
 
             foreach (TlvData tlvData in data)
             {
