@@ -15,6 +15,8 @@ namespace Lyn.Protocol.Bolt3
 
         PublicKey PerCommitmentPoint(UInt256 shaseed, ulong perCommitIndex);
 
+        bool IsValidPublicKey(PublicKey publicKey);
+
         PublicKey PublicKeyFromPrivateKey(PrivateKey privateKey);
 
         /// <summary>

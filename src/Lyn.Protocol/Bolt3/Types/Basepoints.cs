@@ -2,7 +2,7 @@
 
 namespace Lyn.Protocol.Bolt3.Types
 {
-    public struct Basepoints
+    public class Basepoints
     {
         public PublicKey Revocation { get; set; }
         public PublicKey Payment { get; set; }

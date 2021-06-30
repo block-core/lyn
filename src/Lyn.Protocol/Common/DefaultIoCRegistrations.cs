@@ -3,11 +3,14 @@ using System.Linq;
 using System.Reflection;
 using Lyn.Protocol.Bolt1;
 using Lyn.Protocol.Bolt2;
-using Lyn.Protocol.Bolt2.Messags;
+using Lyn.Protocol.Bolt2.ChannelEstablishment;
+using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages;
+using Lyn.Protocol.Bolt2.Configuration;
 using Lyn.Protocol.Bolt3;
 using Lyn.Protocol.Bolt7;
 using Lyn.Protocol.Bolt8;
 using Lyn.Protocol.Bolt9;
+using Lyn.Protocol.Common.Blockchain;
 using Lyn.Protocol.Connection;
 using Lyn.Types.Bolt.Messages;
 using Lyn.Types.Serialization;
@@ -58,6 +61,10 @@ namespace Lyn.Protocol.Common
             services.AddSingleton<IBoltFeatures, LynImplementedBoltFeatures>();
             services.AddSingleton<IParseFeatureFlags, ParseFeatureFlags>();
 
+            services.AddSingleton<IChannelConfigProvider, ChannelConfigProvider>();
+            services.AddSingleton<IChainConfigProvider, ChainConfigProvider>(); ;
+            services.AddSingleton<ISecretStore, SecretStore>();
+
             return services;
         }
 
@@ -99,6 +106,10 @@ namespace Lyn.Protocol.Common
             services.AddSingleton<IPeerRepository, InMemoryPeerRepository>();
             services.AddSingleton<IPingPongMessageRepository, InMemoryPingPongMessageRepository>();
             services.AddTransient(typeof(IBoltMessageSender<>), typeof(BoltMessageSender<>));
+
+            services.AddSingleton<IStartOpenChannelService, StartOpenChannelService>(); //TODO Dan this is not control and setup services
+            services.AddSingleton<IChannelStateRepository, InMemoryChannelStateRepository>();
+ 
             return services;
         }
         
