@@ -1,5 +1,6 @@
 using Lyn.Protocol.Bolt7;
 using Lyn.Protocol.Common;
+using Lyn.Types.Bitcoin;
 using Lyn.Types.Bolt;
 using Lyn.Types.Bolt.Messages;
 using Lyn.Types.Fundamental;
@@ -72,8 +73,8 @@ namespace Lyn.Protocol.Tests.Bolt7
 
             var doubleHash = Hashes.DoubleSHA256RawBytes(serializedMessage, 0, serializedMessage.Length);
 
-            _validationHelper.Setup(_ => _.VerifySignature(message.NodeId, message.Signature,
-                    doubleHash))
+            _validationHelper.Setup(_ => _.VerifySignature(message.NodeId, message.Signature, 
+                    new UInt256(doubleHash)))
                 .Returns(false)
                 .Verifiable();
 
@@ -94,7 +95,7 @@ namespace Lyn.Protocol.Tests.Bolt7
             var doubleHash = Hashes.DoubleSHA256RawBytes(serializedMessage, 0, serializedMessage.Length);
 
             _validationHelper.Setup(_ => _.VerifySignature(message.NodeId, message.Signature,
-                    doubleHash))
+                    new UInt256(doubleHash)))
                 .Returns(true)
                 .Verifiable();
 

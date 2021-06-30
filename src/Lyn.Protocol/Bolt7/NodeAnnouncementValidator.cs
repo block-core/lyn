@@ -23,9 +23,7 @@ namespace Lyn.Protocol.Bolt7
 
             var output = _serializationFactory.Serialize(networkMessage)[CompressedSignature.LENGTH..];
 
-            var doubleHash = HashGenerator.DoubleSha256AsUInt256(output)
-                .GetBytes()
-                .ToArray();
+            var doubleHash = HashGenerator.DoubleSha256AsUInt256(output);
             
             if (!_validationHelper.VerifySignature(networkMessage.NodeId, networkMessage.Signature, doubleHash))
                 return false;

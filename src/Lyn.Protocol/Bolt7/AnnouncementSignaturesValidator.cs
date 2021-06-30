@@ -26,9 +26,7 @@ namespace Lyn.Protocol.Bolt7
          
          var channelAnnouncement = _serializationFactory.Serialize(channel.ChannelAnnouncement)[256..]; 
 
-         var doubleHash = HashGenerator.DoubleSha256AsUInt256(channelAnnouncement)
-            .GetBytes()
-            .ToArray();
+         var doubleHash = HashGenerator.DoubleSha256AsUInt256(channelAnnouncement);
          
          if (!_validationHelper.VerifySignature(channel.GetRemoteNodeId(), networkMessage.NodeSignature, doubleHash) ||
              !_validationHelper.VerifySignature(channel.GetRemoteBitcoinAddress(), networkMessage.BitcoinSignature, doubleHash))
