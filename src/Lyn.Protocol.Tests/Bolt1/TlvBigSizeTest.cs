@@ -1,7 +1,7 @@
 using System.Buffers;
 using System.IO;
 using System.Text.Json;
-using Lyn.Protocol.Common;
+using Lyn.Types;
 using Lyn.Types.Serialization;
 using Xunit;
 using SequenceReaderExtensions = Lyn.Types.Serialization.SequenceReaderExtensions;
