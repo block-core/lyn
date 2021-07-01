@@ -13,18 +13,18 @@ namespace Lyn.Protocol.Tests.Bolt8
       public FixedKeysGenerator(byte[] privateKey, byte[] publicKey)
       {
          _privateKey = privateKey;
-         _keys = new Dictionary<string, byte[]> {{privateKey.ToHexString(), publicKey}};
+         _keys = new Dictionary<string, byte[]> {{Hex.ToString(privateKey), publicKey}};
       }
 
       public FixedKeysGenerator AddKeys(byte[] privateKey, byte[] publicKey)
       {
-         _keys.Add(privateKey.ToHexString(),publicKey);
+         _keys.Add(Hex.ToString(privateKey),publicKey);
          return this;
       }
 
       public byte[] GenerateKey() => _privateKey;
 
       public ReadOnlySpan<byte> GetPublicKey(byte[] privateKey) =>
-         _keys[privateKey.ToHexString()];
+         _keys[Hex.ToString(privateKey)];
    }
 }

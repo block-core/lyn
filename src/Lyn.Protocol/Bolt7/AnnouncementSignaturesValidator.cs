@@ -1,6 +1,6 @@
 using Lyn.Protocol.Common;
+using Lyn.Protocol.Common.Hashing;
 using Lyn.Types.Bolt.Messages;
-using NBitcoin.Crypto;
 
 namespace Lyn.Protocol.Bolt7
 {
@@ -17,22 +17,22 @@ namespace Lyn.Protocol.Bolt7
          _validationHelper = validationHelper;
       }
 
-      public (bool, ErrorMessage?) ValidateMessage(AnnouncementSignatures networkMessage)
+      public bool ValidateMessage(AnnouncementSignatures networkMessage)
       {
          var channel = _repository.GetGossipChannel(networkMessage.ShortChannelId);
 
          if (channel?.IsChannelWithLocalNode() != true)
-            return (false, null);
+            return false;
          
          var channelAnnouncement = _serializationFactory.Serialize(channel.ChannelAnnouncement)[256..]; 
 
-         var hash = Hashes.DoubleSHA256RawBytes(channelAnnouncement, 0, channelAnnouncement.Length);
+         var doubleHash = HashGenerator.DoubleSha256AsUInt256(channelAnnouncement);
+         
+         if (!_validationHelper.VerifySignature(channel.GetRemoteNodeId(), networkMessage.NodeSignature, doubleHash) ||
+             !_validationHelper.VerifySignature(channel.GetRemoteBitcoinAddress(), networkMessage.BitcoinSignature, doubleHash))
+            return false;
 
-         if (!_validationHelper.VerifySignature(channel.GetRemoteNodeId(), networkMessage.NodeSignature, hash) ||
-             !_validationHelper.VerifySignature(channel.GetRemoteBitcoinAddress(), networkMessage.BitcoinSignature, hash))
-            return (false, null);
-
-         return (true, null);
+         return true;
       }
    }
 }

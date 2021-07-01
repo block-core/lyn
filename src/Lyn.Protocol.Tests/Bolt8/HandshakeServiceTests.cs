@@ -51,7 +51,7 @@ namespace Lyn.Protocol.Tests.Bolt8
          var initiatorTransformer = initiator.GetMessageTransformer();
          var responderTransformer = responder.GetMessageTransformer();
 
-         byte[] message = MESSAGE.ToByteArray();
+         byte[] message = Hex.FromString(MESSAGE);
          
          // sending a message across initiator to responder
          input = new ReadOnlySequence<byte>(message);

@@ -1,14 +1,13 @@
 using System;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
-using Lyn.Types;
+using Lyn.Protocol.Connection;
 using Lyn.Types.Bolt;
 using Lyn.Types.Bolt.Messages;
 
 namespace Lyn.Protocol.Bolt7
 {
-   public class GossipTimestampFilterService : IGossipMessageService<GossipTimestampFilter>
+   public class GossipTimestampFilterService : IBoltMessageService<GossipTimestampFilter>
    {
       readonly IGossipRepository _gossipRepository;
       
@@ -16,15 +15,11 @@ namespace Lyn.Protocol.Bolt7
       {
          _gossipRepository = gossipRepository;
       }
-      
 
-      public MessageProcessingOutput ProcessMessage(GossipTimestampFilter message)
+      public async Task ProcessMessageAsync(PeerMessage<GossipTimestampFilter> request)
       {
-         throw new NotImplementedException();
-      }
-
-      public async ValueTask<MessageProcessingOutput> ProcessMessageAsync(GossipTimestampFilter message, CancellationToken cancellation)
-      {
+         var message = request.Message;
+         
          if (message.ChainHash == null)
             throw new ArgumentNullException(nameof(ChainHash));
 
@@ -44,8 +39,6 @@ namespace Lyn.Protocol.Bolt7
          existingFilter.TimestampRange = message.TimestampRange;
 
          _gossipRepository.AddNode(node);
-
-         return new MessageProcessingOutput{Success = true};
       }
    }
 }

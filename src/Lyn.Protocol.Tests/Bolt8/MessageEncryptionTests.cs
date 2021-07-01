@@ -46,7 +46,7 @@ namespace Lyn.Protocol.Tests.Bolt8
 
          var expectedOutput = EncryptMessage(GetMessage, initiatorTransport);
 
-         Assert.Equal(expectedOutput, expectedOutputHex.ToByteArray());
+         Assert.Equal(expectedOutput, Hex.FromString(expectedOutputHex));
       }
 
       [Theory]
@@ -64,7 +64,7 @@ namespace Lyn.Protocol.Tests.Bolt8
          var output = EncryptMessage(GetMessage, initiatorTransport);
 
          Assert.Equal(GetMessage.FirstSpan.ToArray(),decryptedMessage.ToArray());
-         Assert.Equal(output, expectedOutputHex.ToByteArray());
+         Assert.Equal(output, Hex.FromString(expectedOutputHex));
       }
 
       [Theory]
@@ -91,8 +91,8 @@ namespace Lyn.Protocol.Tests.Bolt8
                responderTransport);
          }
 
-         Assert.Equal(decryptedMessage.ToArray(), message.ToByteArray());
-         Assert.Equal(encryptedMessage.WrittenMemory.ToArray(), expectedOutputHex.ToByteArray());
+         Assert.Equal(decryptedMessage.ToArray(), Hex.FromString(message));
+         Assert.Equal(encryptedMessage.WrittenMemory.ToArray(), Hex.FromString(expectedOutputHex));
       }
 
       private static byte[] EncryptMessage(ReadOnlySequence<byte> m, INoiseMessageTransformer transport)
@@ -153,6 +153,6 @@ namespace Lyn.Protocol.Tests.Bolt8
 
       private static ArrayBufferWriter<byte> GetArray(int size) => new ArrayBufferWriter<byte>(size);
       
-      private static ReadOnlySequence<byte> GetMessage => new ReadOnlySequence<byte>("0x68656c6c6f".ToByteArray());
+      private static ReadOnlySequence<byte> GetMessage => new ReadOnlySequence<byte>(Hex.FromString("0x68656c6c6f"));
    }
 }

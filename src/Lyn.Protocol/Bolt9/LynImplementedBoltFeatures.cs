@@ -5,7 +5,7 @@ namespace Lyn.Protocol.Bolt9
 {
     public class LynImplementedBoltFeatures : IBoltFeatures
     {
-        private const Features FEATURES = Features.InitialRoutingSync | Features.GossipQueries;
+        private const Features FEATURES = Features.InitialRoutingSync ;//| Features.GossipQueries; this will need to be added back when the gossip queries are fully supported
 
         private readonly byte[] _bytes;
         private readonly BitArray _FeaturesBitArray;
@@ -35,6 +35,19 @@ namespace Lyn.Protocol.Bolt9
             return _FeaturesBitArray.Length > remoteBitArray.Length
                 ? CheckFlagsInBothAndLongerForRequiredFlags(remoteBitArray, _FeaturesBitArray)
                 : CheckFlagsInBothAndLongerForRequiredFlags(_FeaturesBitArray, remoteBitArray);
+        }
+
+        public bool ContainsUnknownRequiredFeatures(byte[] features)
+        {
+            var bits = new BitArray(features);
+
+            for (int i = _FeaturesBitArray.Length; i < bits.Length; i++)
+            {
+                if (bits[i] && i % 2 == 0)
+                    return true;
+            }
+
+            return false;
         }
 
         private static bool CheckFlagsInBothAndLongerForRequiredFlags(BitArray shortArray, BitArray longArray)

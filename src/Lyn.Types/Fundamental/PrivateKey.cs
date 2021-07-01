@@ -24,7 +24,7 @@ namespace Lyn.Types.Fundamental
 
         public override string ToString()
         {
-            return _value.AsSpan().ToHexString();
+            return Hex.ToString(_value.AsSpan());
         }
     }
 }

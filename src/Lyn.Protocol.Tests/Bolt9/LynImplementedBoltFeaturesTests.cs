@@ -21,7 +21,7 @@ namespace Lyn.Protocol.Tests.Bolt9
         {
             var featuresArray = _sut.GetSupportedFeatures();
 
-            Assert.Equal(new byte[] {72}, featuresArray);
+            Assert.Equal(new byte[] {8}, featuresArray);
         }
 
         [Fact]

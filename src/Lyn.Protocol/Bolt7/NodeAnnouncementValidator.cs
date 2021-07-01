@@ -1,7 +1,7 @@
 using Lyn.Protocol.Common;
+using Lyn.Protocol.Common.Hashing;
 using Lyn.Types.Bolt.Messages;
 using Lyn.Types.Fundamental;
-using NBitcoin.Crypto;
 
 namespace Lyn.Protocol.Bolt7
 {
@@ -16,22 +16,21 @@ namespace Lyn.Protocol.Bolt7
             _serializationFactory = serializationFactory;
         }
 
-        public (bool, ErrorMessage?) ValidateMessage(NodeAnnouncement networkMessage)
+        public bool ValidateMessage(NodeAnnouncement networkMessage)
         {
             if (!_validationHelper.VerifyPublicKey(networkMessage.NodeId))
-                return (false, null);
+                return false;
 
-            var output =
-               _serializationFactory.Serialize(networkMessage)[CompressedSignature.LENGTH..];
+            var output = _serializationFactory.Serialize(networkMessage)[CompressedSignature.LENGTH..];
 
-            byte[]? doubleHash = Hashes.DoubleSHA256RawBytes(output, 0, output.Length);
-
+            var doubleHash = HashGenerator.DoubleSha256AsUInt256(output);
+            
             if (!_validationHelper.VerifySignature(networkMessage.NodeId, networkMessage.Signature, doubleHash))
-                return (false, null);
+                return false;
 
             //TODO David validate features including addrlen
 
-            return (true, null);
+            return true;
         }
     }
 }
