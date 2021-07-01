@@ -4,7 +4,6 @@ using System.Linq;
 using Lyn.Protocol.Bolt3;
 using Lyn.Protocol.Bolt3.Types;
 using Lyn.Protocol.Common;
-using Lyn.Protocol.Common.Serialization;
 using Lyn.Types;
 using Lyn.Types.Bitcoin;
 using Lyn.Types.Fundamental;
