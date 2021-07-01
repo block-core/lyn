@@ -21,7 +21,7 @@ namespace Lyn.Protocol.Common
 {
     public static class DefaultIoCRegistrations
     {
-        public static void AddLynComponents(this IServiceCollection serviceCollection)
+        public static IServiceCollection AddLynComponents(this IServiceCollection serviceCollection)
         {
             serviceCollection.AddGossipComponents()
                 .AddSerializationComponents()
@@ -29,6 +29,7 @@ namespace Lyn.Protocol.Common
                 .AddNoiseComponents()
                 .AddDefaultComponents()
                 .AddControlAndSetupMessageSupport();
+            return serviceCollection;
         }
 
         public static IServiceCollection AddSerializationComponents(this IServiceCollection services)
