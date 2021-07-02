@@ -43,6 +43,17 @@ namespace Lyn.Protocol.Tests.Bolt9
         }
 
         [Fact]
+        public void ValidateRemoteFeatureAreCompatibleReturnsTrueWhenFeaturesAreTheSame()
+        {
+            var localFeaturesBytes = _sut.GetSupportedFeatures();
+            var localGlobalFeaturesBytes = _sut.GetSupportedGlobalFeatures();
+            
+            var result = _sut.ValidateRemoteFeatureAreCompatible(localFeaturesBytes, localGlobalFeaturesBytes);
+            
+            Assert.True(result);
+        }
+        
+        [Fact]
         public void ValidateRemoteFeatureAreCompatibleReturnsFalseWhenRemoteIsShorterAndAnyOfThemMissingRequired()
         {
             var localFeaturesBytes = _sut.GetSupportedFeatures();

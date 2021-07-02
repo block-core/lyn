@@ -22,11 +22,15 @@ namespace Lyn.Protocol.Bolt1
 
         public ValueTask AddPingMessageAsync(PublicKey nodeId,DateTime dateTimeGenerated, PingMessage pingMessage)
         {
-            var trackingPing = new TrackedPingPong {Received = dateTimeGenerated, PingMessage = pingMessage};
-            
+            var trackingPing = new TrackedPingPong {Created = dateTimeGenerated, PingMessage = pingMessage};
+
             _dictionary.AddOrUpdate(nodeId,
                 _ => new List<TrackedPingPong> {trackingPing},
-                (_, pongs) => { pongs.Add(trackingPing); return pongs; });
+                (_, pongs) =>
+                {
+                    pongs.Add(trackingPing);
+                    return pongs;
+                });
 
             return new ValueTask();
         }
@@ -44,9 +48,12 @@ namespace Lyn.Protocol.Bolt1
             if (!_dictionary.ContainsKey(nodeId))
                 return new ValueTask<bool>(false);
 
-            _dictionary[nodeId]
-                .Single(_ => _.PingMessage.PongId == pingId)
-                .Received = _dateTimeProvider.GetUtcNow();
+            var ping = _dictionary[nodeId]
+                .Where(_ => _.PingMessage.PongId == pingId)
+                .OrderBy(_ => _.Created)
+                .First();
+
+            ping.PongReceived = true;
 
             return new ValueTask<bool>(true);
         }

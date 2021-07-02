@@ -36,6 +36,8 @@ namespace Lyn.Protocol.Common
         {
             ScanAssemblyAndRegisterTypeSingleton(services, typeof(IProtocolTypeSerializer<>));
 
+            services.AddSingleton<IProtocolTypeSerializer<InitMessage>, InitMessageSerializer>(); //scan will only get whats in the same assembly for now added manually 
+            
             return services;
         }
 
@@ -66,6 +68,8 @@ namespace Lyn.Protocol.Common
             services.AddSingleton<IChannelConfigProvider, ChannelConfigProvider>();
             services.AddSingleton<IChainConfigProvider, ChainConfigProvider>(); ;
             services.AddSingleton<ISecretStore, SecretStore>();
+            
+            services.AddTransient(typeof(IBoltMessageSender<>), typeof(BoltMessageSender<>));
 
             return services;
         }
@@ -107,7 +111,7 @@ namespace Lyn.Protocol.Common
         {
             services.AddSingleton<IPeerRepository, InMemoryPeerRepository>();
             services.AddSingleton<IPingPongMessageRepository, InMemoryPingPongMessageRepository>();
-            services.AddTransient(typeof(IBoltMessageSender<>), typeof(BoltMessageSender<>));
+            services.AddTransient<IPingMessageAction,PingMessageService>();
 
             services.AddSingleton<IStartOpenChannelService, StartOpenChannelService>(); //TODO Dan this is not control and setup services
             services.AddSingleton<IChannelStateRepository, InMemoryChannelStateRepository>();

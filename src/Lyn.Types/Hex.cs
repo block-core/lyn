@@ -7,7 +7,6 @@ namespace Lyn.Types
 {
     public static class Hex
     {
-        //TODO David move logic to utilities
         public static byte[] FromString(string hex)
         {
             if (string.IsNullOrEmpty(hex)) return null;

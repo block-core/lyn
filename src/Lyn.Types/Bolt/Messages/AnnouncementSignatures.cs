@@ -17,7 +17,7 @@ namespace Lyn.Types.Bolt.Messages
         public AnnouncementSignatures()
         {
             ChannelId = new ChannelId(new byte[] { 0 });
-            ShortChannelId = new ShortChannelId(new byte[] { 0 });
+            ShortChannelId = new ShortChannelId(new byte[8]);
             NodeSignature = new CompressedSignature();
             BitcoinSignature = new CompressedSignature();
         }

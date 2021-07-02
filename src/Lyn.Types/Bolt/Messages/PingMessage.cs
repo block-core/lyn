@@ -28,7 +28,7 @@ namespace Lyn.Types.Bolt.Messages
 
       public ushort BytesLen { get; set; }
 
-      public byte[]? Ignored { get; set; }
+      public byte[] Ignored { get; set; }
 
       public ushort PongId => NumPongBytes;
     }
