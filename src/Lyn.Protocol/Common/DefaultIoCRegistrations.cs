@@ -112,6 +112,7 @@ namespace Lyn.Protocol.Common
             services.AddSingleton<IPeerRepository, InMemoryPeerRepository>();
             services.AddSingleton<IPingPongMessageRepository, InMemoryPingPongMessageRepository>();
             services.AddTransient<IPingMessageAction,PingMessageService>();
+            services.AddTransient<IInitMessageAction, InitMessageService>();
 
             services.AddSingleton<IStartOpenChannelService, StartOpenChannelService>(); //TODO Dan this is not control and setup services
             services.AddSingleton<IChannelStateRepository, InMemoryChannelStateRepository>();

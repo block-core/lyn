@@ -6,7 +6,6 @@ namespace Lyn.Protocol.Bolt9
     {
         Features ParseFeatures(byte[] raw);
         byte[] ParseFeatures(Features features);
-        
         byte[] ParseNFeatures(Features features,int n);
     }
 }
