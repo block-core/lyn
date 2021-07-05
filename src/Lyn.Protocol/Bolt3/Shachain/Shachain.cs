@@ -2,7 +2,7 @@
 using Lyn.Protocol.Common.Hashing;
 using Lyn.Types.Bitcoin;
 
-namespace Lyn.Protocol.Common.Crypto.Shachain
+namespace Lyn.Protocol.Bolt3.Shachain
 {
     /// <summary>
     /// This was ported from
@@ -10,7 +10,7 @@ namespace Lyn.Protocol.Common.Crypto.Shachain
     /// </summary>
     public class Shachain
     {
-        private UInt256 derive(ulong from, ulong to, UInt256 from_hash)
+        public UInt256 derive(ulong from, ulong to, UInt256 from_hash)
         {
             int branches;
             int i;

@@ -1,12 +1,9 @@
-using System;
-using System.Security.Cryptography;
 using Lyn.Protocol.Bolt3;
 using Lyn.Protocol.Bolt3.Types;
 using Lyn.Protocol.Common;
 using Lyn.Types;
+using Lyn.Types.Bitcoin;
 using Lyn.Types.Fundamental;
-using Microsoft.Extensions.Logging;
-using Moq;
 using Xunit;
 
 namespace Lyn.Protocol.Tests.Bolt3
@@ -80,6 +77,42 @@ namespace Lyn.Protocol.Tests.Bolt3
                 Assert.NotEqual(basepoints1.Htlc.GetSpan().ToArray(), basepoints2.Htlc.GetSpan().ToArray());
                 Assert.NotEqual(basepoints1.DelayedPayment.GetSpan().ToArray(), basepoints2.DelayedPayment.GetSpan().ToArray());
             }
+        }
+
+        [Fact]
+        public void PercommitmentSecretGenerationTest()
+        {
+            var keyDerivation = new LightningKeyDerivation();
+
+            // generate_from_seed 0 final node
+            UInt256 seed = new UInt256(Hex.FromString("0x0000000000000000000000000000000000000000000000000000000000000000"));
+            ulong index = 281474976710655;
+            Secret output = keyDerivation.PerCommitmentSecret(seed, index);
+            Assert.Equal("0x02a40c85b6f28da08dfdbe0926c53fab2de6d28c10301f8f7c4073d5e42e3148", Hex.ToString(output));
+
+            // generate_from_seed FF final node
+            seed = new UInt256(Hex.FromString("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"));
+            index = 281474976710655;
+            output = keyDerivation.PerCommitmentSecret(seed, index);
+            Assert.Equal("0x7cc854b54e3e0dcdb010d7a3fee464a9687be6e8db3be6854c475621e007a5dc", Hex.ToString(output));
+
+            // genegenerate_from_seed FF alternate bits 1
+            seed = new UInt256(Hex.FromString("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"));
+            index = 0xaaaaaaaaaaa;
+            output = keyDerivation.PerCommitmentSecret(seed, index);
+            Assert.Equal("0x56f4008fb007ca9acf0e15b054d5c9fd12ee06cea347914ddbaed70d1c13a528", Hex.ToString(output));
+
+            // generate_from_seed FF alternate bits 2
+            seed = new UInt256(Hex.FromString("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"));
+            index = 0x555555555555;
+            output = keyDerivation.PerCommitmentSecret(seed, index);
+            Assert.Equal("0x9015daaeb06dba4ccc05b91b2f73bd54405f2be9f217fbacd3c5ac2e62327d31", Hex.ToString(output));
+
+            // generate_from_seed 01 last nontrivial node
+            seed = new UInt256(Hex.FromString("0x0101010101010101010101010101010101010101010101010101010101010101"));
+            index = 1;
+            output = keyDerivation.PerCommitmentSecret(seed, index);
+            Assert.Equal("0x915c75942a26bb3a433a8ce2cb0427c29ec6c1775cfc78328b57f6ba7bfeaa9c", Hex.ToString(output));
         }
     }
 }
