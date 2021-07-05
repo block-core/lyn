@@ -4,7 +4,6 @@ using Lyn.Protocol.Bolt1.Entities;
 using Lyn.Protocol.Bolt1.Messages;
 using Lyn.Protocol.Bolt9;
 using Lyn.Protocol.Connection;
-using Lyn.Types.Bolt.Messages;
 using Lyn.Types.Fundamental;
 using Moq;
 using Xunit;
@@ -34,19 +33,22 @@ namespace Lyn.Protocol.Tests.Bolt1
         private void WithFeaturesThanAreSupportedLocally(PeerMessage<InitMessage> message)
         {
             _features.Setup(_ =>
-                    _.ValidateRemoteFeatureAreCompatible(message.Message.Features, message.Message.GlobalFeatures))
+                    _.ValidateRemoteFeatureAreCompatible(message.MessagePayload.Features, message.MessagePayload.GlobalFeatures))
                 .Returns(true);
         }
 
-        private static PeerMessage<InitMessage>? NewRandomPeerMessage()
+        private static PeerMessage<InitMessage> NewRandomPeerMessage()
         {
             var message = new PeerMessage<InitMessage>
             (
                 new PublicKey(RandomMessages.NewRandomPublicKey()),
-                new InitMessage
+                new BoltMessage
                 {
-                    Features = RandomMessages.GetRandomByteArray(2),
-                    GlobalFeatures = RandomMessages.GetRandomByteArray(1)
+                    Payload = new InitMessage
+                    {
+                        Features = RandomMessages.GetRandomByteArray(2),
+                        GlobalFeatures = RandomMessages.GetRandomByteArray(1)
+                    }
                 }
             );
             return message;
@@ -65,7 +67,7 @@ namespace Lyn.Protocol.Tests.Bolt1
         {
             var message = NewRandomPeerMessage();
 
-            var parsedFeatures = _parseFeatureFlags.ParseFeatures(message.Message.Features);
+            var parsedFeatures = _parseFeatureFlags.ParseFeatures(message.MessagePayload.Features);
             
             WithFeaturesThanAreSupportedLocally(message);
 
@@ -81,7 +83,7 @@ namespace Lyn.Protocol.Tests.Bolt1
         {
             var message = NewRandomPeerMessage();
 
-            var parsedFeatures = _parseFeatureFlags.ParseFeatures(message.Message.Features);
+            var parsedFeatures = _parseFeatureFlags.ParseFeatures(message.MessagePayload.Features);
             
             WithFeaturesThanAreSupportedLocally(message);
 

@@ -1,9 +1,9 @@
 ﻿using System.Threading.Tasks;
-using Lyn.Types.Bolt.Messages;
+using Lyn.Protocol.Bolt1.Messages;
 
 namespace Lyn.Protocol.Connection
 {
-    public interface IBoltMessageService<T> where T : BoltMessage
+    public interface IBoltMessageService<T> where T : MessagePayload
     {
         Task ProcessMessageAsync(PeerMessage<T> message);
     }

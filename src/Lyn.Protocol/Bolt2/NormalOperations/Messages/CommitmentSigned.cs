@@ -1,13 +1,12 @@
+using Lyn.Protocol.Bolt1.Messages;
 using Lyn.Types.Bolt;
-using Lyn.Types.Bolt.Messages;
 using Lyn.Types.Fundamental;
 
 namespace Lyn.Protocol.Bolt2.NormalOperations.Messages
 {
-    public class CommitmentSigned : BoltMessage
+    public class CommitmentSigned : MessagePayload
     {
-        private const string COMMAND = "132";
-        public override string Command => COMMAND;
+        public override MessageType MessageType => MessageType.CommitmentSigned;
         public ChannelId? ChannelId { get; set; }
         public ushort? NumHtlcs { get; set; }
         public CompressedSignature? Signature { get; set; }

@@ -1,11 +1,12 @@
+using Lyn.Protocol.Bolt1.Messages;
+using Lyn.Types.Bolt;
 using Lyn.Types.Fundamental;
 
-namespace Lyn.Types.Bolt.Messages
+namespace Lyn.Protocol.Bolt7.Messages
 {
     public class GossipTimestampFilter : GossipMessage
     {
-        private const string COMMAND = "265";
-        public override string Command => COMMAND;
+        public override MessageType MessageType => MessageType.GossipTimestampFilter;
 
         public ChainHash? ChainHash { get; set; }
 

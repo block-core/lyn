@@ -1,9 +1,9 @@
 using System;
 using Lyn.Protocol.Bolt7;
 using Lyn.Protocol.Bolt7.Entities;
+using Lyn.Protocol.Bolt7.Messages;
 using Lyn.Protocol.Common;
 using Lyn.Types.Bitcoin;
-using Lyn.Types.Bolt.Messages;
 using Moq;
 using Xunit;
 

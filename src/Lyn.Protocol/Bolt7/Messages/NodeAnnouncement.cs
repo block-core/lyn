@@ -1,11 +1,10 @@
+using Lyn.Protocol.Bolt1.Messages;
 using Lyn.Types.Fundamental;
 
-namespace Lyn.Types.Bolt.Messages
+namespace Lyn.Protocol.Bolt7.Messages
 {
     public class NodeAnnouncement : GossipMessage
     {
-        private const string COMMAND = "257";
-
         public NodeAnnouncement()
         {
             Signature = new CompressedSignature();
@@ -19,7 +18,7 @@ namespace Lyn.Types.Bolt.Messages
             Addresses = new byte[0];
         }
 
-        public override string Command => COMMAND;
+        public override MessageType MessageType => MessageType.NodeAnnouncement;
 
         public CompressedSignature Signature { get; set; }
 

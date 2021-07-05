@@ -1,8 +1,8 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Lyn.Protocol.Bolt1;
+using Lyn.Protocol.Bolt1.Messages;
 using Lyn.Protocol.Connection;
-using Lyn.Types.Bolt.Messages;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -29,17 +29,21 @@ namespace Lyn.Protocol.Tests.Bolt1
         public async Task ProcessMessageAsyncStoresErrorReturnsSuccess()
         {
             var message = new PeerMessage<ErrorMessage>
-                (RandomMessages.NewRandomPublicKey(),
-                new ErrorMessage
-            {
-                ChannelId = RandomMessages.NewRandomChannelId(),
-                Len = RandomMessages.GetRandomNumberUInt16(),
-                Data = RandomMessages.GetRandomByteArray(64) //64 just to keep it small it actually is a text message 
-            });
+            (RandomMessages.NewRandomPublicKey(),
+                new BoltMessage
+                {
+                    Payload = new ErrorMessage
+                    {
+                        ChannelId = RandomMessages.NewRandomChannelId(),
+                        Len = RandomMessages.GetRandomNumberUInt16(),
+                        Data = RandomMessages
+                            .GetRandomByteArray(64) //64 just to keep it small it actually is a text message 
+                    }
+                });
 
             await _sut.ProcessMessageAsync(message);
             
-            _repository.Verify(_ => _.AddErrorMessageToPeerAsync(message.NodeId,message.Message));
+            _repository.Verify(_ => _.AddErrorMessageToPeerAsync(message.NodeId,message.MessagePayload));
         }
     }
 }

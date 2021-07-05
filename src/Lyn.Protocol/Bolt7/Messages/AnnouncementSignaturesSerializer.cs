@@ -1,8 +1,8 @@
 using System.Buffers;
-using Lyn.Types.Bolt.Messages;
 using Lyn.Types.Fundamental;
+using Lyn.Types.Serialization;
 
-namespace Lyn.Types.Serialization.Serializers
+namespace Lyn.Protocol.Bolt7.Messages
 {
     public class AnnouncementSignaturesSerializer : IProtocolTypeSerializer<AnnouncementSignatures>
     {

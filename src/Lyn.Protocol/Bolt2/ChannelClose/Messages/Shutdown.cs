@@ -1,12 +1,11 @@
+using Lyn.Protocol.Bolt1.Messages;
 using Lyn.Types.Bolt;
-using Lyn.Types.Bolt.Messages;
 
 namespace Lyn.Protocol.Bolt2.ChannelClose.Messages
 {
-    public class Shutdown : BoltMessage
+    public class Shutdown : MessagePayload
     {
-        private const string COMMAND = "38";
-        public override string Command => COMMAND;
+        public override MessageType MessageType => MessageType.Shutdown;
         public ChannelId? ChannelId { get; set; }
         public ushort? Lentgh { get; set; }
         public byte[]? ScriptPubkey { get; set; }

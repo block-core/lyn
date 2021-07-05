@@ -9,11 +9,11 @@ using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages;
 using Lyn.Protocol.Bolt2.Configuration;
 using Lyn.Protocol.Bolt3;
 using Lyn.Protocol.Bolt7;
+using Lyn.Protocol.Bolt7.Messages;
 using Lyn.Protocol.Bolt8;
 using Lyn.Protocol.Bolt9;
 using Lyn.Protocol.Common.Blockchain;
 using Lyn.Protocol.Connection;
-using Lyn.Types.Bolt.Messages;
 using Lyn.Types.Serialization;
 using Microsoft.Extensions.DependencyInjection;
 

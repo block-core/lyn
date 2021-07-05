@@ -1,4 +1,5 @@
 ﻿using System.Threading.Tasks;
+using Lyn.Protocol.Bolt1.Messages;
 using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages;
 using Lyn.Protocol.Bolt2.Configuration;
 using Lyn.Protocol.Bolt2.Entities;
@@ -8,7 +9,6 @@ using Lyn.Protocol.Bolt9;
 using Lyn.Protocol.Common;
 using Lyn.Protocol.Common.Blockchain;
 using Lyn.Protocol.Connection;
-using Lyn.Types.Bolt.Messages;
 using Lyn.Types.Fundamental;
 using Microsoft.Extensions.Logging;
 
@@ -55,9 +55,9 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
         public async Task ProcessMessageAsync(PeerMessage<OpenChannel> message)
         {
-            OpenChannel openChannel = message.Message;
+            OpenChannel openChannel = message.MessagePayload;
 
-            ChannelState? currentState = _channelStateRepository.Get(message.Message.TemporaryChannelId);
+            ChannelState? currentState = _channelStateRepository.Get(message.MessagePayload.TemporaryChannelId);
 
             if (currentState != null)
             {
@@ -136,7 +136,12 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             _channelStateRepository.Create(channelState);
 
-            await _messageSender.SendMessageAsync(new PeerMessage<AcceptChannel>(message.NodeId, acceptChannel));
+            var boltMessage = new BoltMessage
+            {
+                Payload = acceptChannel
+            };
+
+            await _messageSender.SendMessageAsync(new PeerMessage<AcceptChannel>(message.NodeId, boltMessage));
         }
 
         private string CheckMessage(OpenChannel openChannel, ChainParameters chainParameters, ChannelConfig channelConfig)

@@ -1,9 +1,9 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Lyn.Protocol.Bolt7.Entities;
+using Lyn.Protocol.Bolt7.Messages;
 using Lyn.Protocol.Bolt9;
 using Lyn.Protocol.Connection;
-using Lyn.Types.Bolt.Messages;
 
 namespace Lyn.Protocol.Bolt7
 {
@@ -22,7 +22,7 @@ namespace Lyn.Protocol.Bolt7
 
       public async Task ProcessMessageAsync(PeerMessage<ChannelAnnouncement> request)
       {
-         var message = request.Message;
+         var message = request.MessagePayload;
          
          if (!_messageValidator.ValidateMessage(message))
             return; //ignore message
@@ -40,7 +40,7 @@ namespace Lyn.Protocol.Bolt7
          
          //TODO David add logic to verify P2WSH for bitcoin keys on the blockchain using short channel id
 
-         var gossipChannel = new GossipChannel(request.Message);
+         var gossipChannel = new GossipChannel(request.MessagePayload);
          
          gossipChannel.UnsupportedFeatures = _boltFeatures.ContainsUnknownRequiredFeatures(message.Features);
          

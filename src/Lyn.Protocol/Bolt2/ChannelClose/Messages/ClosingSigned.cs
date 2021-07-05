@@ -1,13 +1,12 @@
+using Lyn.Protocol.Bolt1.Messages;
 using Lyn.Types.Bolt;
-using Lyn.Types.Bolt.Messages;
 using Lyn.Types.Fundamental;
 
 namespace Lyn.Protocol.Bolt2.ChannelClose.Messages
 {
-    public class ClosingSigned : BoltMessage
+    public class ClosingSigned : MessagePayload
     {
-        private const string COMMAND = "39";
-        public override string Command => COMMAND;
+        public override MessageType MessageType => MessageType.ClosingSigned;
         public ChannelId? ChannelId { get; set; }
         public Satoshis? FeeSatoshis { get; set; }
         public CompressedSignature? Signature { get; set; }

@@ -1,11 +1,11 @@
 using System.Buffers;
-using Lyn.Types.Bolt.Messages;
+using Lyn.Protocol.Bolt1.Messages;
 
-namespace Lyn.Types.Serialization
+namespace Lyn.Protocol.Common
 {
     public interface INetworkMessageSerializer
     {
-        bool CanSerialize(string command);
+        bool CanSerialize(MessageType type);
 
         BoltMessage Deserialize(ref SequenceReader<byte> reader);
 

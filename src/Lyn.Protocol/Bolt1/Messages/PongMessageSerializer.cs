@@ -1,7 +1,7 @@
 using System.Buffers;
-using Lyn.Types.Bolt.Messages;
+using Lyn.Types.Serialization;
 
-namespace Lyn.Types.Serialization.Serializers
+namespace Lyn.Protocol.Bolt1.Messages
 {
     public class PongMessageSerializer : IProtocolTypeSerializer<PongMessage>
     {

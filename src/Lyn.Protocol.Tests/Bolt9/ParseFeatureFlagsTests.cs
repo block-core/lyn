@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
+using Lyn.Protocol.Bolt1.Messages;
 using Lyn.Protocol.Bolt9;
-using Lyn.Types.Bolt.Messages;
 using Xunit;
 
 namespace Lyn.Protocol.Tests.Bolt9

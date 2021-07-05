@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Linq;
 using Lyn.Protocol.Bolt9;
-using Lyn.Types.Bolt.Messages;
 using Xunit;
 
 namespace Lyn.Protocol.Tests.Bolt9

@@ -1,7 +1,6 @@
 ﻿using Lyn.Protocol.Bolt2.ChannelFlags;
 using Lyn.Protocol.Bolt2.Configuration;
 using Lyn.Types.Bitcoin;
-using Lyn.Types.Bolt.Messages;
 using Lyn.Types.Fundamental;
 
 namespace Lyn.Protocol.Common.Blockchain

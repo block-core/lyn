@@ -1,9 +1,9 @@
 ﻿using System.Buffers;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
-using Lyn.Types.Bolt.Messages;
 using Lyn.Types.Serialization;
 using System.Diagnostics.CodeAnalysis;
+using Lyn.Protocol.Bolt1.Messages;
 
 namespace Lyn.Protocol.Bolt1.TlvStreams
 {

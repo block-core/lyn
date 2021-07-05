@@ -3,9 +3,9 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using Lyn.Protocol.Bolt1;
+using Lyn.Protocol.Bolt1.Messages;
 using Lyn.Protocol.Common;
 using Lyn.Protocol.Connection;
-using Lyn.Types.Bolt.Messages;
 using Lyn.Types.Fundamental;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -53,14 +53,17 @@ namespace Lyn.Protocol.Tests.Bolt1
 
         private static PeerMessage<PingMessage> WithPingBoltMessage(ushort numPongBytes)
         {
-            return new 
+            return new
             (
                 RandomMessages.NewRandomPublicKey(),
-                new PingMessage
+                new BoltMessage
                 {
-                    BytesLen = PingMessage.MAX_BYTES_LEN,
-                    Ignored = RandomMessages.GetRandomByteArray(PingMessage.MAX_BYTES_LEN),
-                    NumPongBytes = numPongBytes
+                    Payload = new PingMessage
+                    {
+                        BytesLen = PingMessage.MAX_BYTES_LEN,
+                        Ignored = RandomMessages.GetRandomByteArray(PingMessage.MAX_BYTES_LEN),
+                        NumPongBytes = numPongBytes
+                    }
                 }
             );
         }
@@ -75,7 +78,7 @@ namespace Lyn.Protocol.Tests.Bolt1
         {
             _pingMessageSender.Verify(_ => _.SendMessageAsync(It.Is<PeerMessage<PingMessage>>(_
                 => _.NodeId == nodeId &&
-                   _.Message.NumPongBytes == PingMessage.MAX_BYTES_LEN - _uint16 % PingMessage.MAX_BYTES_LEN)));
+                   _.MessagePayload.NumPongBytes == PingMessage.MAX_BYTES_LEN - _uint16 % PingMessage.MAX_BYTES_LEN)));
         }
         
         [Fact]
@@ -97,8 +100,8 @@ namespace Lyn.Protocol.Tests.Bolt1
             await _sut.ProcessMessageAsync(message);
 
             _pongMessageSender.Verify(_ => _.SendMessageAsync(It.Is<PeerMessage<PongMessage>>(_ =>
-                _.Message.BytesLen == message.Message.NumPongBytes &&
-                _.Message.BytesLen == message.Message.Ignored!.Length)));
+                _.MessagePayload.BytesLen == message.MessagePayload.NumPongBytes &&
+                _.MessagePayload.BytesLen == message.MessagePayload.Ignored!.Length)));
         }
 
         [Fact]

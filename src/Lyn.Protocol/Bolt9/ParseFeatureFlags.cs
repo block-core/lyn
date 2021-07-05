@@ -2,7 +2,7 @@ using System;
 using System.Collections;
 using System.Linq;
 using System.Runtime.InteropServices;
-using Lyn.Types.Bolt.Messages;
+using Lyn.Protocol.Bolt1.Messages;
 
 namespace Lyn.Protocol.Bolt9
 {

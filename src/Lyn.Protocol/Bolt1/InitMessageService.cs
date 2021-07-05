@@ -8,7 +8,6 @@ using Lyn.Protocol.Bolt1.Messages.TlvRecords;
 using Lyn.Protocol.Bolt9;
 using Lyn.Protocol.Connection;
 using Lyn.Types;
-using Lyn.Types.Bolt.Messages;
 using Lyn.Types.Fundamental;
 
 namespace Lyn.Protocol.Bolt1
@@ -31,26 +30,29 @@ namespace Lyn.Protocol.Bolt1
 
         public async Task ProcessMessageAsync(PeerMessage<InitMessage> request)
         {
-            if (!_boltFeatures.ValidateRemoteFeatureAreCompatible(request.Message.Features, request.Message.GlobalFeatures))
-                throw new ArgumentException(nameof(request.Message.Features)); //TODO David we need to define the way to close a connection gracefully
+            if (!_boltFeatures.ValidateRemoteFeatureAreCompatible(request.MessagePayload.Features, request.MessagePayload.GlobalFeatures))
+                throw new ArgumentException(nameof(request.MessagePayload.Features)); //TODO David we need to define the way to close a connection gracefully
 
-            var peer = _repository.TryGetPeerAsync(request.NodeId)
-                ?? new Peer{ NodeId =  request.NodeId};
+            var peer = _repository.TryGetPeerAsync(request.NodeId) ?? 
+                       new Peer{ NodeId =  request.NodeId};
 
-            peer.Featurs = _featureFlags.ParseFeatures(request.Message.Features);
-            peer.GlobalFeatures = _featureFlags.ParseFeatures(request.Message.GlobalFeatures);
+            peer.Featurs = _featureFlags.ParseFeatures(request.MessagePayload.Features);
+            peer.GlobalFeatures = _featureFlags.ParseFeatures(request.MessagePayload.GlobalFeatures);
 
             await _repository.AddOrUpdatePeerAsync(peer);
 
             //TODO David add sending the gossip timestamp filter *init message MUST be sent first
         }
 
-        private InitMessage CreateInitMessage()
+        private BoltMessage CreateInitMessage()
         {
             return new()
             {
-                GlobalFeatures = _boltFeatures.GetSupportedGlobalFeatures(),
-                Features = _boltFeatures.GetSupportedFeatures(),
+                Payload = new InitMessage
+                {
+                    GlobalFeatures = _boltFeatures.GetSupportedGlobalFeatures(),
+                    Features = _boltFeatures.GetSupportedFeatures(),    
+                },
                 Extension = new TlVStream
                 {
                     Records = new List<TlvRecord>

@@ -1,12 +1,11 @@
+using Lyn.Protocol.Bolt1.Messages;
 using Lyn.Types.Bolt;
-using Lyn.Types.Bolt.Messages;
 
 namespace Lyn.Protocol.Bolt2.NormalOperations.Messages
 {
-    public class UpdateFee : BoltMessage
+    public class UpdateFee : MessagePayload
     {
-        private const string COMMAND = "134";
-        public override string Command => COMMAND;
+        public override MessageType MessageType => MessageType.UpdateFee;
         public ChannelId? ChannelId { get; set; }
         public uint? FeeratePerKw { get; set; }
     }

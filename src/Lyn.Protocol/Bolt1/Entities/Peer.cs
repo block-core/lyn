@@ -1,4 +1,4 @@
-using Lyn.Types.Bolt.Messages;
+using Lyn.Protocol.Bolt1.Messages;
 using Lyn.Types.Fundamental;
 
 namespace Lyn.Protocol.Bolt1.Entities

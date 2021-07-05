@@ -1,9 +1,9 @@
 ﻿using System.Threading.Tasks;
-using Lyn.Types.Bolt.Messages;
+using Lyn.Protocol.Bolt1.Messages;
 
 namespace Lyn.Protocol.Connection
 {
-    public interface IBoltValidationService<T> where T : BoltMessage
+    public interface IBoltValidationService<T> where T : MessagePayload
     {
         Task<bool> ValidateMessageAsync(PeerMessage<T> message);
     }

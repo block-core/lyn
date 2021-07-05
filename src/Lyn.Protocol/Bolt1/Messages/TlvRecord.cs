@@ -1,4 +1,4 @@
-﻿namespace Lyn.Types.Bolt.Messages
+﻿namespace Lyn.Protocol.Bolt1.Messages
 {
    public class TlvRecord
    {

@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
+using Lyn.Protocol.Bolt1.Messages;
 using Lyn.Protocol.Connection;
-using Lyn.Types.Bolt.Messages;
 using Microsoft.Extensions.Logging;
 
 namespace Lyn.Protocol.Bolt1
@@ -18,16 +18,16 @@ namespace Lyn.Protocol.Bolt1
 
         public async Task ProcessMessageAsync(PeerMessage<PongMessage> request)
         {
-            _logger.LogDebug($"Processing pong from {request.NodeId} with length {request.Message.BytesLen.ToString()}");
+            _logger.LogDebug($"Processing pong from {request.NodeId} with length {request.MessagePayload.BytesLen.ToString()}");
 
-            var pingExists = await _messageRepository.PendingPingExistsForIdAsync(request.NodeId,request.Message.Id); 
+            var pingExists = await _messageRepository.PendingPingExistsForIdAsync(request.NodeId,request.MessagePayload.Id); 
             
             if(!pingExists)
                 return;
 
-            await _messageRepository.MarkPongReplyForPingAsync(request.NodeId, request.Message.Id);
+            await _messageRepository.MarkPongReplyForPingAsync(request.NodeId, request.MessagePayload.Id);
             
-            _logger.LogDebug($"Ping pong has completed successfully for id {request.Message.Id}");
+            _logger.LogDebug($"Ping pong has completed successfully for id {request.MessagePayload.Id}");
         }
     }
 }

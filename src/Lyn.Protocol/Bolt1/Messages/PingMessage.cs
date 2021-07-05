@@ -1,6 +1,6 @@
-namespace Lyn.Types.Bolt.Messages
+namespace Lyn.Protocol.Bolt1.Messages
 {
-    public class PingMessage : BoltMessage
+    public class PingMessage : MessagePayload
     {
         public const ushort MAX_BYTES_LEN = 4096;// 65531; TODO David check bigger messages
 
@@ -20,9 +20,7 @@ namespace Lyn.Types.Bolt.Messages
             NumPongBytes = (ushort)(MAX_BYTES_LEN - bytesLen);
         }
 
-      private const string COMMAND = "18";
-      
-      public override string Command => COMMAND;
+      public override MessageType MessageType => MessageType.Ping;
 
       public ushort NumPongBytes { get; set; }
 

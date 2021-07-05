@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Buffers;
 using Lyn.Protocol.Bolt1.TlvStreams;
-using Lyn.Types.Bolt.Messages;
 using Lyn.Types.Serialization;
 
 namespace Lyn.Protocol.Bolt1.Messages.TlvRecords

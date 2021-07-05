@@ -1,11 +1,11 @@
+using Lyn.Protocol.Bolt1.Messages;
+using Lyn.Types.Bolt;
 using Lyn.Types.Fundamental;
 
-namespace Lyn.Types.Bolt.Messages
+namespace Lyn.Protocol.Bolt7.Messages
 {
     public class ChannelAnnouncement : GossipMessage
     {
-        private const string COMMAND = "256";
-
         public ChannelAnnouncement()
         {
             NodeSignature1 = new CompressedSignature();
@@ -21,7 +21,7 @@ namespace Lyn.Types.Bolt.Messages
             BitcoinKey2 = new PublicKey();
         }
 
-        public override string Command => COMMAND;
+        public override MessageType MessageType => MessageType.ChannelAnnouncement;
 
         public CompressedSignature NodeSignature1 { get; set; }
 

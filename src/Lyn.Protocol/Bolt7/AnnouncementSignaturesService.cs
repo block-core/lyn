@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
+using Lyn.Protocol.Bolt7.Messages;
 using Lyn.Protocol.Connection;
-using Lyn.Types.Bolt.Messages;
 
 namespace Lyn.Protocol.Bolt7
 {
@@ -19,7 +19,7 @@ namespace Lyn.Protocol.Bolt7
 
       public async Task ProcessMessageAsync(PeerMessage<AnnouncementSignatures> request)
       {
-         var message = request.Message;
+         var message = request.MessagePayload;
          
          if (!_messageValidator.ValidateMessage(message))
             throw new ArgumentException(nameof(message));

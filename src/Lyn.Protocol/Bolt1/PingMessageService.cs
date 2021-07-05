@@ -2,9 +2,9 @@ using System;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using Lyn.Protocol.Bolt1.Messages;
 using Lyn.Protocol.Common;
 using Lyn.Protocol.Connection;
-using Lyn.Types.Bolt.Messages;
 using Lyn.Types.Fundamental;
 using Microsoft.Extensions.Logging;
 
@@ -46,21 +46,23 @@ namespace Lyn.Protocol.Bolt1
                 throw new ProtocolViolationException( //TODO David this case requires failing all the channels with the node
                     $"Ping message can only be received every {PING_INTERVAL_SECS} seconds");
 
-            if (request.Message.NumPongBytes > PingMessage.MAX_BYTES_LEN)
+            if (request.MessagePayload.NumPongBytes > PingMessage.MAX_BYTES_LEN)
                 return;
 
             _lastPingReceivedDateTime = utcNow;
 
-            _logger.LogDebug($"Send pong to with length {request.Message.NumPongBytes}");
+            _logger.LogDebug($"Send pong to with length {request.MessagePayload.NumPongBytes}");
+
+            var pong = new PongMessage
+            {
+                BytesLen = request.MessagePayload.NumPongBytes,
+                Ignored = new byte[request.MessagePayload.NumPongBytes]
+            };
 
             await _pongMessageSender.SendMessageAsync(new PeerMessage<PongMessage>
             (
                 request.NodeId,
-                new PongMessage
-                {
-                    BytesLen = request.Message.NumPongBytes,
-                    Ignored = new byte[request.Message.NumPongBytes]
-                }
+                new BoltMessage {Payload = pong}
             ));
         }
 
@@ -82,7 +84,7 @@ namespace Lyn.Protocol.Bolt1
 
             _logger.LogDebug($"Ping generated ,pong length {pingMessage.NumPongBytes}");
 
-            await _pingMessageSender.SendMessageAsync(new PeerMessage<PingMessage>(nodeId, pingMessage));
+            await _pingMessageSender.SendMessageAsync(new PeerMessage<PingMessage>(nodeId, new BoltMessage{Payload = pingMessage}));
         }
     }
 }
