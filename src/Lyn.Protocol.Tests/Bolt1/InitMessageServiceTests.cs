@@ -18,15 +18,17 @@ namespace Lyn.Protocol.Tests.Bolt1
         private readonly Mock<IPeerRepository> _repository;
         private readonly Mock<IBoltMessageSender<InitMessage>> _messageSender;
         private readonly Mock<IBoltFeatures> _features;
+        private readonly ParseFeatureFlags _parseFeatureFlags;
 
         public InitMessageServiceTests()
         {
-            _repository = new Mock<IPeerRepository>();
-            _messageSender = new Mock<IBoltMessageSender<InitMessage>>();
-            _features = new Mock<IBoltFeatures>();
-
+            _repository = new ();
+            _messageSender = new ();
+            _features = new ();
+            _parseFeatureFlags = new ();
+            
             _sut = new InitMessageService(_repository.Object, _messageSender.Object,
-                _features.Object);
+                _features.Object, _parseFeatureFlags);
         }
 
         private void WithFeaturesThanAreSupportedLocally(PeerMessage<InitMessage> message)
@@ -63,17 +65,40 @@ namespace Lyn.Protocol.Tests.Bolt1
         {
             var message = NewRandomPeerMessage();
 
+            var parsedFeatures = _parseFeatureFlags.ParseFeatures(message.Message.Features);
+            
             WithFeaturesThanAreSupportedLocally(message);
 
             _sut.ProcessMessageAsync(message);
 
-            _repository.Verify(_ => _.AddNewPeerAsync(It.Is<Peer>(p
-                => p.Featurs.Equals(message.Message.Features) &&
-                   p.GlobalFeatures.Equals(message.Message.GlobalFeatures) &&
+            _repository.Verify(_ => _.AddOrUpdatePeerAsync(It.Is<Peer>(p
+                => (ulong)p.Featurs  == (ulong)parsedFeatures &&
                    p.NodeId.Equals(message.NodeId))));
+        }
+        
+        [Fact]
+        public void ProcessMessageUpdatesPeerAndSendsResponse()
+        {
+            var message = NewRandomPeerMessage();
 
-            _messageSender.Verify(_ =>
-                _.SendMessageAsync(It.IsAny<PeerMessage<InitMessage>>())); // TODO make the test more detailed
+            var parsedFeatures = _parseFeatureFlags.ParseFeatures(message.Message.Features);
+            
+            WithFeaturesThanAreSupportedLocally(message);
+
+            var peer = new Peer
+            {
+                NodeId = message.NodeId,
+                Featurs = (Features) RandomMessages.GetRandomNumberUInt16()
+            };
+
+            _repository.Setup(_ => _.TryGetPeerAsync(message.NodeId))
+                .Returns(peer);
+
+            _sut.ProcessMessageAsync(message);
+
+            _repository.Verify(_ => _.AddOrUpdatePeerAsync(peer));
+            
+            Assert.Equal(peer.Featurs,parsedFeatures);
         }
     }
 }

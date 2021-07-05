@@ -60,7 +60,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
         public async Task StartOpenChannelAsync(StartOpenChannelIn startOpenChannelIn)
         {
-            Peer peer = _peerRepository.GetPeer(startOpenChannelIn.NodeId);
+            var peer = _peerRepository.TryGetPeerAsync(startOpenChannelIn.NodeId);
 
             if (peer == null)
                 throw new ApplicationException($"Peer was not found or is not connected");
@@ -81,9 +81,10 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             openChannel.TemporaryChannelId = new ChannelId(_randomNumberGenerator.GetBytes(32));
 
-            bool localSupportLargChannels = _boltFeatures.SupportedFeatures == Features.OptionSupportLargeChannel;
-            bool remoteSupportLargChannels = _parseFeatureFlags.ParseFeatures(peer.Featurs) == Features.OptionSupportLargeChannel;
-            if (localSupportLargChannels == false || remoteSupportLargChannels == false)
+            bool localSupportLargeChannels = (_boltFeatures.SupportedFeatures & Features.OptionSupportLargeChannel) != 0;
+            bool remoteSupportLargeChannels = (peer.Featurs & Features.OptionSupportLargeChannel) != 0;
+            
+            if (localSupportLargeChannels == false || remoteSupportLargeChannels == false)
             {
                 if (startOpenChannelIn.FundingAmount > chainParameters.LargeChannelAmount) // 2^24
                     throw new ApplicationException($"Peer enforces max channel capacity of {chainParameters.LargeChannelAmount}sats");

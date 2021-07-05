@@ -43,7 +43,7 @@ namespace Lyn.Protocol.Bolt8
          _logger.LogDebug($"Transforming message to lightning output");
          
          int numOfBytesRead =  _writer.EncryptWithAd(null, message.ToArray(), // TODO David here we call to array should be replaced
-            output.GetSpan((int)message.Length));
+            output.GetSpan((int)message.Length + Aead.TAG_SIZE));
          
          output.Advance(numOfBytesRead);
          

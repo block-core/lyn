@@ -4,6 +4,7 @@ using Lyn.Types.Bitcoin;
 using Lyn.Types.Bolt;
 using Lyn.Types.Bolt.Messages;
 using Lyn.Types.Fundamental;
+using Lyn.Types.Serialization.Serializers;
 using Moq;
 using NBitcoin.Crypto;
 using Xunit;

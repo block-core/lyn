@@ -66,7 +66,7 @@ namespace Lyn.Protocol.Tests.Bolt2
                 MaxHtlcValueInFlight = 100000
             };
 
-            _peerRepository.Setup(_ => _.GetPeer(message.NodeId)).Returns(new Peer());
+            _peerRepository.Setup(_ => _.TryGetPeerAsync(message.NodeId)).Returns(new Peer());
             _chainConfigProvider.Setup(_ => _.GetConfiguration(message.ChainHash)).Returns(chainParameters);
             _channelConfigProvider.Setup(_ => _.GetConfiguration(message.ChainHash)).Returns(channelConfig);
 

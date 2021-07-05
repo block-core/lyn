@@ -21,7 +21,7 @@ namespace Lyn.Protocol.Common
 {
     public static class DefaultIoCRegistrations
     {
-        public static void AddLynComponents(this IServiceCollection serviceCollection)
+        public static IServiceCollection AddLynComponents(this IServiceCollection serviceCollection)
         {
             serviceCollection.AddGossipComponents()
                 .AddSerializationComponents()
@@ -29,12 +29,15 @@ namespace Lyn.Protocol.Common
                 .AddNoiseComponents()
                 .AddDefaultComponents()
                 .AddControlAndSetupMessageSupport();
+            return serviceCollection;
         }
 
         public static IServiceCollection AddSerializationComponents(this IServiceCollection services)
         {
             ScanAssemblyAndRegisterTypeSingleton(services, typeof(IProtocolTypeSerializer<>));
 
+            services.AddSingleton<IProtocolTypeSerializer<InitMessage>, InitMessageSerializer>(); //scan will only get whats in the same assembly for now added manually 
+            
             return services;
         }
 
@@ -65,6 +68,8 @@ namespace Lyn.Protocol.Common
             services.AddSingleton<IChannelConfigProvider, ChannelConfigProvider>();
             services.AddSingleton<IChainConfigProvider, ChainConfigProvider>(); ;
             services.AddSingleton<ISecretStore, SecretStore>();
+            
+            services.AddTransient(typeof(IBoltMessageSender<>), typeof(BoltMessageSender<>));
 
             return services;
         }
@@ -106,7 +111,8 @@ namespace Lyn.Protocol.Common
         {
             services.AddSingleton<IPeerRepository, InMemoryPeerRepository>();
             services.AddSingleton<IPingPongMessageRepository, InMemoryPingPongMessageRepository>();
-            services.AddTransient(typeof(IBoltMessageSender<>), typeof(BoltMessageSender<>));
+            services.AddTransient<IPingMessageAction,PingMessageService>();
+            services.AddTransient<IInitMessageAction, InitMessageService>();
 
             services.AddSingleton<IStartOpenChannelService, StartOpenChannelService>(); //TODO Dan this is not control and setup services
             services.AddSingleton<IChannelStateRepository, InMemoryChannelStateRepository>();

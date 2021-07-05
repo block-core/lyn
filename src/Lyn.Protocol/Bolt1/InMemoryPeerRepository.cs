@@ -34,9 +34,27 @@ namespace Lyn.Protocol.Bolt1
             return Task.CompletedTask;
         }
 
-        public Peer GetPeer(PublicKey nodeId)
+        public bool PeerExists(PublicKey nodeId)
         {
-            throw new System.NotImplementedException();
+            return Peers.ContainsKey(nodeId);
+        }
+
+        public Peer? TryGetPeerAsync(PublicKey nodeId)
+        {
+            return Peers.ContainsKey(nodeId) ? Peers[nodeId] : null;
+        }
+
+        public Task AddOrUpdatePeerAsync(Peer peer)
+        {
+            Peers.AddOrUpdate(peer.NodeId,
+                key => peer,
+                (key, existingPeer) =>
+                {
+                    peer.Id = existingPeer.Id;
+                    return existingPeer;
+                });
+            
+            return Task.CompletedTask;
         }
     }
 }
