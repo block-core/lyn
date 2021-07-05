@@ -3,6 +3,7 @@ using Lyn.Protocol.Bolt3.Types;
 using Lyn.Types.Bitcoin;
 using Lyn.Types.Bolt;
 using Lyn.Types.Fundamental;
+using ChannelConfig = Lyn.Protocol.Bolt2.Configuration.ChannelConfig;
 
 namespace Lyn.Protocol.Bolt2.Entities
 {

@@ -12,8 +12,11 @@ namespace Lyn.Types.Serialization.Serializers
             var size = 0;
             size += writer.WriteBytes(typeInstance.ChannelId);
             size += writer.WriteUShort(typeInstance.Len, true);
-            size += writer.WriteBytes(typeInstance.Data);
-
+            if (typeInstance.Data != null)
+            {
+                size += writer.WriteBytes(typeInstance.Data);    
+            }
+            
             return size;
         }
 

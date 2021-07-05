@@ -2,6 +2,7 @@ using System;
 using Lyn.Protocol.Bolt7;
 using Lyn.Protocol.Bolt7.Entities;
 using Lyn.Protocol.Common;
+using Lyn.Types.Bitcoin;
 using Lyn.Types.Bolt.Messages;
 using Moq;
 using Xunit;
@@ -71,7 +72,7 @@ namespace Lyn.Protocol.Tests.Bolt7
 
             _validationHelper.SetupSequence(_ => _.VerifySignature(gossipChannel.GetRemoteNodeId(),
                     message.NodeSignature,
-                    It.IsAny<byte[]>()))
+                    It.IsAny<UInt256>()))
                 .Returns(false);
 
             var result = _sut.ValidateMessage(message);
@@ -92,7 +93,7 @@ namespace Lyn.Protocol.Tests.Bolt7
 
             _validationHelper.Setup(_ => _.VerifySignature(gossipChannel.GetRemoteBitcoinAddress(),
                     message.BitcoinSignature,
-                    It.IsAny<byte[]>()))
+                    It.IsAny<UInt256>()))
                 .Returns(false);
 
             var result = _sut.ValidateMessage(message);
@@ -113,24 +114,22 @@ namespace Lyn.Protocol.Tests.Bolt7
 
             _validationHelper.Setup(_ => _.VerifySignature(gossipChannel.GetRemoteNodeId(),
                     message.NodeSignature,
-                    It.IsAny<byte[]>()))
+                    It.IsAny<UInt256>()))
                 .Returns(true);
 
             _validationHelper.Setup(_ => _.VerifySignature(gossipChannel.GetRemoteBitcoinAddress(),
                     message.BitcoinSignature,
-                    It.IsAny<byte[]>()))
+                    It.IsAny<UInt256>()))
                 .Returns(true);
 
             var result = _sut.ValidateMessage(message);
 
-            Assert.True(result.Item1);
-            Assert.Null(result.Item2);
+            Assert.True(result);
         }
 
-        private static void ThanTheMessageFailedWithNoError((bool, ErrorMessage?) result)
+        private static void ThanTheMessageFailedWithNoError(bool result)
         {
-            Assert.False(result.Item1);
-            Assert.Null(result.Item2);
+            Assert.False(result);
         }
     }
 }

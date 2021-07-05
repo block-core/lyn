@@ -9,13 +9,13 @@ namespace Lyn.Protocol.Bolt1
 {
     public class InMemoryPeerRepository : IPeerRepository
     {
-        public ConcurrentDictionary<PublicKey, Peer> Peers = new ();
-        
-        public ConcurrentDictionary<PublicKey, List<ErrorMessage>> ErrorMessages = new ();
-        
+        public ConcurrentDictionary<PublicKey, Peer> Peers = new();
+
+        public ConcurrentDictionary<PublicKey, List<ErrorMessage>> ErrorMessages = new();
+
         public Task AddNewPeerAsync(Peer peer)
         {
-            Peers.TryAdd(peer.NodeId,peer);
+            Peers.TryAdd(peer.NodeId, peer);
 
             return Task.CompletedTask;
         }
@@ -28,9 +28,32 @@ namespace Lyn.Protocol.Bolt1
             }
             else
             {
-                ErrorMessages.TryAdd(peerId, new List<ErrorMessage>{errorMessage});
+                ErrorMessages.TryAdd(peerId, new List<ErrorMessage> { errorMessage });
             }
 
+            return Task.CompletedTask;
+        }
+
+        public bool PeerExists(PublicKey nodeId)
+        {
+            return Peers.ContainsKey(nodeId);
+        }
+
+        public Peer? TryGetPeerAsync(PublicKey nodeId)
+        {
+            return Peers.ContainsKey(nodeId) ? Peers[nodeId] : null;
+        }
+
+        public Task AddOrUpdatePeerAsync(Peer peer)
+        {
+            Peers.AddOrUpdate(peer.NodeId,
+                key => peer,
+                (key, existingPeer) =>
+                {
+                    peer.Id = existingPeer.Id;
+                    return existingPeer;
+                });
+            
             return Task.CompletedTask;
         }
     }

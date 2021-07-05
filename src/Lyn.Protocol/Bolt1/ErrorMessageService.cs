@@ -2,6 +2,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Lyn.Protocol.Common;
 using Lyn.Protocol.Connection;
+using Lyn.Types;
 using Lyn.Types.Bolt.Messages;
 using Microsoft.Extensions.Logging;
 

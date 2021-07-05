@@ -21,7 +21,8 @@ namespace Lyn.Protocol.Tests.Bolt1
         private readonly Mock<IDateTimeProvider> _dateTimeProvider;
         private readonly Mock<IRandomNumberGenerator> _randomNumberGenerator;
         private readonly Mock<IPingPongMessageRepository> _messageRepository;
-        private readonly Mock<IBoltMessageSender<PongMessage>> _boltMessageSender;
+        private readonly Mock<IBoltMessageSender<PongMessage>> _pongMessageSender;
+        private readonly Mock<IBoltMessageSender<PingMessage>> _pingMessageSender;
 
         private DateTime _utcNow;
         private ushort _uint16;
@@ -32,10 +33,12 @@ namespace Lyn.Protocol.Tests.Bolt1
             _dateTimeProvider = new Mock<IDateTimeProvider>();
             _randomNumberGenerator = new Mock<IRandomNumberGenerator>();
             _messageRepository = new Mock<IPingPongMessageRepository>();
-            _boltMessageSender = new Mock<IBoltMessageSender<PongMessage>>();
-
+            _pongMessageSender = new Mock<IBoltMessageSender<PongMessage>>();
+            _pingMessageSender = new Mock<IBoltMessageSender<PingMessage>>();
+            
             _sut = new PingMessageService(_logger.Object, _dateTimeProvider.Object,
-                _randomNumberGenerator.Object, _messageRepository.Object, _boltMessageSender.Object);
+                _randomNumberGenerator.Object, _messageRepository.Object, _pongMessageSender.Object,
+                _pingMessageSender.Object);
 
             _utcNow = DateTime.UtcNow;
 
@@ -43,23 +46,36 @@ namespace Lyn.Protocol.Tests.Bolt1
                 .Returns(() => _utcNow);
 
             _uint16 = RandomMessages.GetRandomNumberUInt16();
-            
+
             _randomNumberGenerator.Setup(_ => _.GetUint16())
                 .Returns(() => _uint16);
         }
 
         private static PeerMessage<PingMessage> WithPingBoltMessage(ushort numPongBytes)
         {
-            return new PeerMessage<PingMessage>
-            {
-                Message = new PingMessage
+            return new 
+            (
+                RandomMessages.NewRandomPublicKey(),
+                new PingMessage
                 {
                     BytesLen = PingMessage.MAX_BYTES_LEN,
                     Ignored = RandomMessages.GetRandomByteArray(PingMessage.MAX_BYTES_LEN),
                     NumPongBytes = numPongBytes
-                },
-                NodeId = RandomMessages.NewRandomPublicKey()
-            };
+                }
+            );
+        }
+
+        private void ThanTheMessageWasAddedToTheRepository(PublicKey? nodeId)
+        {
+            _messageRepository.Verify(_ => _.AddPingMessageAsync(nodeId, _utcNow,
+                It.Is<PingMessage>(_ => _.BytesLen == _uint16 % PingMessage.MAX_BYTES_LEN)));
+        }
+
+        private void ThenTheMessageWithTheWritePongLengthWasSent(PublicKey? nodeId)
+        {
+            _pingMessageSender.Verify(_ => _.SendMessageAsync(It.Is<PeerMessage<PingMessage>>(_
+                => _.NodeId == nodeId &&
+                   _.Message.NumPongBytes == PingMessage.MAX_BYTES_LEN - _uint16 % PingMessage.MAX_BYTES_LEN)));
         }
         
         [Fact]
@@ -68,31 +84,31 @@ namespace Lyn.Protocol.Tests.Bolt1
             var message = WithPingBoltMessage(PingMessage.MAX_BYTES_LEN + 1);
 
             await _sut.ProcessMessageAsync(message);
-            
-            _boltMessageSender.VerifyNoOtherCalls();
+
+            _pongMessageSender.VerifyNoOtherCalls();
         }
 
-        
+
         [Fact]
         public async Task ProcessMessageAsyncReturnsSuccessWithAPongMessage()
         {
             var message = WithPingBoltMessage(PingMessage.MAX_BYTES_LEN);
 
             await _sut.ProcessMessageAsync(message);
-            
-            _boltMessageSender.Verify(_ => _.SendMessageAsync(It.Is<PeerMessage<PongMessage>>(_ => 
-                _.Message.BytesLen == message.Message.NumPongBytes && 
+
+            _pongMessageSender.Verify(_ => _.SendMessageAsync(It.Is<PeerMessage<PongMessage>>(_ =>
+                _.Message.BytesLen == message.Message.NumPongBytes &&
                 _.Message.BytesLen == message.Message.Ignored!.Length)));
         }
-        
+
         [Fact]
         public async Task ProcessMessageAsyncThrowsIfPingWasReceivedBeforeTheAllowedTime()
         {
             var message = WithPingBoltMessage(PingMessage.MAX_BYTES_LEN);
 
             await _sut.ProcessMessageAsync(message);
- 
-            await Assert.ThrowsAsync<ProtocolViolationException>(() 
+
+            await Assert.ThrowsAsync<ProtocolViolationException>(()
                 => _sut.ProcessMessageAsync(message));
         }
 
@@ -100,31 +116,32 @@ namespace Lyn.Protocol.Tests.Bolt1
         public async Task CreateNewMessageAsyncReturnsPingMessageAndStoresInRepo()
         {
             var nodeId = RandomMessages.NewRandomPublicKey();
-            
-            var result = await _sut.CreateNewMessageAsync(nodeId);
 
-            _messageRepository.Verify(_ => _.AddPingMessageAsync(nodeId,_utcNow, result));
+            await _sut.SendPingAsync(nodeId,CancellationToken.None);
 
-            Assert.Equal(PingMessage.MAX_BYTES_LEN - _uint16 % PingMessage.MAX_BYTES_LEN, result.NumPongBytes);
+            ThanTheMessageWasAddedToTheRepository(nodeId);
+
+            ThenTheMessageWithTheWritePongLengthWasSent(nodeId);
         }
-        
+
+
         [Fact]
         public async Task CreateNewMessageAsyncWhenThePingLengthExistsCreatesNewOne()
         {
             var nodeId = RandomMessages.NewRandomPublicKey();
 
-            _messageRepository.SetupSequence(_ 
-                    => _.PendingPingExistsForIdAsync(nodeId, (ushort)(_uint16 % PingMessage.MAX_BYTES_LEN)))
+            _messageRepository.SetupSequence(_
+                    => _.PendingPingExistsForIdAsync(nodeId, (ushort) (_uint16 % PingMessage.MAX_BYTES_LEN)))
                 .Returns(() => new ValueTask<bool>(true))
                 .Returns(() => new ValueTask<bool>(false));
-            
-            var result = await _sut.CreateNewMessageAsync(nodeId);
 
-            _messageRepository.Verify(_ => _.AddPingMessageAsync(nodeId, _utcNow, result));
+            await _sut.SendPingAsync(nodeId,CancellationToken.None);
+
+            ThanTheMessageWasAddedToTheRepository(nodeId);
 
             _messageRepository.VerifyAll();
-            
-            Assert.Equal(PingMessage.MAX_BYTES_LEN - _uint16 % PingMessage.MAX_BYTES_LEN, result.NumPongBytes);
+
+            ThenTheMessageWithTheWritePongLengthWasSent(nodeId);
         }
     }
 }

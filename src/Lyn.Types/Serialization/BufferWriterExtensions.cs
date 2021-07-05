@@ -3,6 +3,7 @@ using System.Buffers;
 using System.Buffers.Binary;
 using System.Runtime.CompilerServices;
 using System.Text;
+using Lyn.Types.Bitcoin;
 
 namespace Lyn.Types.Serialization
 {
@@ -129,6 +130,14 @@ namespace Lyn.Types.Serialization
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int WriteUint256(this IBufferWriter<byte> writer, UInt256 value)
+        {
+            ReadOnlySpan<byte> span = value.GetBytes();
+            writer.Write(span);
+            return span.Length;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int WriteVarString(this IBufferWriter<byte> writer, string value)
         {
             int stringLength = value?.Length ?? 0;
@@ -210,6 +219,34 @@ namespace Lyn.Types.Serialization
                 BinaryPrimitives.WriteUInt64LittleEndian(span.Slice(1, size - 1), value);
                 writer.Advance(size);
                 return size;
+            }
+        }
+
+        /// <summary>
+        /// For details information on BigSize see BOLT 1
+        /// https://github.com/lightningnetwork/lightning-rfc/blob/master/01-messaging.md#appendix-a-bigsize-test-vectors
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int WriteBigSize(this IBufferWriter<byte> writer, ulong value)
+        {
+            if (value < 0xFD)
+            {
+                return writer.WriteByte((byte)value) + 1;
+            }
+            else if (value < 0x10000)
+            {
+                writer.WriteByte(0xFD);
+                return writer.WriteUShort((ushort)value, isBigEndian: true) + 1;
+            }
+            else if (value < 0x100000000)
+            {
+                writer.WriteByte(0xFE);
+                return writer.WriteUInt((uint)value, isBigEndian: true) + 1;
+            }
+            else  // == 0xFF
+            {
+                writer.WriteByte(0xFF);
+                return writer.WriteULong(value, isBigEndian: true) + 1;
             }
         }
 

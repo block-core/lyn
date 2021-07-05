@@ -29,20 +29,20 @@ namespace Lyn.Protocol.Tests.Bolt8
         }
         
         public static Key Initiator =>
-                new Key(INITIATOR_PRIVATE_KEY_HEX.ToByteArray(),
-                INITIATOR_PUBLIC_KEY_HEX.ToByteArray());
+                new Key(Hex.FromString(INITIATOR_PRIVATE_KEY_HEX),
+                    Hex.FromString(INITIATOR_PUBLIC_KEY_HEX));
 
         public static Key InitiatorEphemeralKeyPair =>
-            new Key(INITIATOR_EPHEMERAL_PRIVATE_KEY_HEX.ToByteArray(),
-                INITIATOR_EPHEMERAL_PUBLIC_KEY_HEX.ToByteArray());
+            new Key(Hex.FromString(INITIATOR_EPHEMERAL_PRIVATE_KEY_HEX),
+                Hex.FromString(INITIATOR_EPHEMERAL_PUBLIC_KEY_HEX));
         
         public static Key Responder =>
-            new Key(RESPONDER_PRIVATE_KEY_HEX.ToByteArray(),
-                RESPONDER_PUBLIC_KEY_HEX.ToByteArray());
+            new Key(Hex.FromString(RESPONDER_PRIVATE_KEY_HEX),
+                Hex.FromString(RESPONDER_PUBLIC_KEY_HEX));
         
         public static Key ResponderEphemeralKeyPair =>
-            new Key(RESPONDER_EPHEMERAL_PRIVATE_KEY_HEX.ToByteArray(),
-                RESPONDER_EPHEMERAL_PUBLIC_KEY_HEX.ToByteArray());
+            new Key(Hex.FromString(RESPONDER_EPHEMERAL_PRIVATE_KEY_HEX),
+                Hex.FromString(RESPONDER_EPHEMERAL_PUBLIC_KEY_HEX));
 
         public static class ActOne
         {

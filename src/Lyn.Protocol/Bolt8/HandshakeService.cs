@@ -97,7 +97,7 @@ namespace Lyn.Protocol.Bolt8
          _logger.LogInformation("{0} Responder handshake: started act three", _sessionId);
          
          if (!handshakeRequest.FirstSpan.StartsWith(LightningNetworkConfig.NoiseProtocolVersionPrefix))
-            throw new AggregateException("Unsupported version in request");
+            throw new ArgumentException("Unsupported version in request");
          
          var cipher = handshakeRequest.Slice(1, 49);
 

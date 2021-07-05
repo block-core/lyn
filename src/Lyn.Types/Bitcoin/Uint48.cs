@@ -41,7 +41,7 @@ namespace Lyn.Types.Bitcoin
         /// </returns>
         public override string ToString()
         {
-            return StringUtilities.ToHexString(GetBytes());
+            return Hex.ToString(GetBytes());
 
             //return string.Create(EXPECTED_SIZE * 2, this, (dst, src) =>
             //{

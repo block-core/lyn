@@ -5,7 +5,7 @@ namespace Lyn.Protocol.Bolt1.Entities
 {
     public class TrackedPingPong
     {
-        public DateTime Received { get; set; }
+        public DateTime Created { get; set; }
         
         public PingMessage PingMessage { get; set; }
 

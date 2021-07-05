@@ -1,8 +1,10 @@
 using Lyn.Protocol.Bolt7;
 using Lyn.Protocol.Common;
+using Lyn.Types.Bitcoin;
 using Lyn.Types.Bolt;
 using Lyn.Types.Bolt.Messages;
 using Lyn.Types.Fundamental;
+using Lyn.Types.Serialization.Serializers;
 using Moq;
 using NBitcoin.Crypto;
 using Xunit;
@@ -12,25 +14,21 @@ namespace Lyn.Protocol.Tests.Bolt7
     public class NodeAnnouncementValidatorTests : RandomGossipMessages
     {
         private NodeAnnouncementValidator _sut;
-
-        private Mock<IGossipRepository> _gossipRepository;
+        
         private Mock<ISerializationFactory> _serializationFactory;
         private Mock<IValidationHelper> _validationHelper;
 
         public NodeAnnouncementValidatorTests()
         {
-            _gossipRepository = new Mock<IGossipRepository>();
             _serializationFactory = new Mock<ISerializationFactory>();
             _validationHelper = new Mock<IValidationHelper>();
 
             _sut = new NodeAnnouncementValidator(_validationHelper.Object, _serializationFactory.Object);
         }
 
-        private void ThanTheValidationFailedWithNoErrorMessage((bool, ErrorMessage?) result)
+        private void ThanTheValidationFailedWithNoErrorMessage(bool isValid)
         {
-            var (isValid, errorMessage) = result;
             Assert.False(isValid);
-            Assert.Null(errorMessage);
 
             _validationHelper.VerifyAll();
         }
@@ -76,8 +74,8 @@ namespace Lyn.Protocol.Tests.Bolt7
 
             var doubleHash = Hashes.DoubleSHA256RawBytes(serializedMessage, 0, serializedMessage.Length);
 
-            _validationHelper.Setup(_ => _.VerifySignature(message.NodeId, message.Signature,
-                    doubleHash))
+            _validationHelper.Setup(_ => _.VerifySignature(message.NodeId, message.Signature, 
+                    new UInt256(doubleHash)))
                 .Returns(false)
                 .Verifiable();
 
@@ -98,14 +96,13 @@ namespace Lyn.Protocol.Tests.Bolt7
             var doubleHash = Hashes.DoubleSHA256RawBytes(serializedMessage, 0, serializedMessage.Length);
 
             _validationHelper.Setup(_ => _.VerifySignature(message.NodeId, message.Signature,
-                    doubleHash))
+                    new UInt256(doubleHash)))
                 .Returns(true)
                 .Verifiable();
 
             var result = _sut.ValidateMessage(message);
 
-            Assert.True(result.Item1);
-            Assert.Null(result.Item2);
+            Assert.True(result);
 
             _validationHelper.VerifyAll();
         }

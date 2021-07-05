@@ -15,7 +15,7 @@ namespace Lyn.Types
          {SupportedChains.Bitcoin, Bitcoin}
       };
 
-      public static ChainHash Bitcoin => (ChainHash)BITCOIN_HEX_CHAIN_HASH.ToByteArray();  
+      public static ChainHash Bitcoin => Hex.FromString(BITCOIN_HEX_CHAIN_HASH);  
       
       public const string BITCOIN_HEX_CHAIN_HASH = "6fe28c0ab6f1b372c1a6a246ae63f74f931e8365e15a089c68d6190000000000";
    }

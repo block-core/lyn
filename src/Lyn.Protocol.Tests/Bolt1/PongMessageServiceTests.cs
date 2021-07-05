@@ -29,7 +29,7 @@ namespace Lyn.Protocol.Tests.Bolt1
         private static PeerMessage<T> NewBoltMessage<T>(T message, PublicKey id)
         where T : BoltMessage
         {
-            return new PeerMessage<T>() {Message = message, NodeId = id};
+            return new (id,message);
         }
         
         private static PeerMessage<PongMessage> WithPongBoltMessage()

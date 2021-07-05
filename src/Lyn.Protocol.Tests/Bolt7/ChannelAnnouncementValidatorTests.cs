@@ -1,7 +1,7 @@
 using Lyn.Protocol.Bolt7;
 using Lyn.Protocol.Common;
 using Lyn.Types;
-using Lyn.Types.Bolt;
+using Lyn.Types.Bitcoin;
 using Lyn.Types.Bolt.Messages;
 using Lyn.Types.Fundamental;
 using Moq;
@@ -92,10 +92,10 @@ namespace Lyn.Protocol.Tests.Bolt7
             var doubleHash = Hashes.DoubleSHA256RawBytes(serializedMessage, 0, serializedMessage.Length);
 
             _validationHelper.Verify(_ => _.VerifySignature(It.IsAny<PublicKey>(),
-                    It.IsAny<CompressedSignature>(), It.IsAny<byte[]>()), Times.Never);
+                    It.IsAny<CompressedSignature>(), It.IsAny<UInt256>()), Times.Never);
 
             _validationHelper.Setup(_ => _.VerifySignature(channelAnnouncement.NodeId1, channelAnnouncement.NodeSignature1,
-                    doubleHash))
+                   new UInt256(doubleHash)))
                 .Returns(false)
                 .Verifiable();
 
@@ -223,8 +223,7 @@ namespace Lyn.Protocol.Tests.Bolt7
 
             var result = _sut.ValidateMessage(channelAnnouncement);
 
-            Assert.True(result.Item1);
-            Assert.Null(result.Item2);
+            Assert.True(result);
 
             _validationHelper.VerifyAll();
         }
@@ -236,7 +235,7 @@ namespace Lyn.Protocol.Tests.Bolt7
 
             var doubleHash = Hashes.DoubleSHA256RawBytes(serializedMessage, 0, serializedMessage.Length);
 
-            _validationHelper.Setup(_ => _.VerifySignature(nodeId, signature, doubleHash))
+            _validationHelper.Setup(_ => _.VerifySignature(nodeId, signature, new UInt256(doubleHash)))
                 .Returns(false)
                 .Verifiable();
         }
@@ -246,7 +245,7 @@ namespace Lyn.Protocol.Tests.Bolt7
             var doubleHash = Hashes.DoubleSHA256RawBytes(serializedMessage, 0, serializedMessage.Length);
 
             _validationHelper.Setup(_ => _.VerifySignature(It.IsAny<PublicKey>(),
-                    It.IsAny<CompressedSignature>(), doubleHash))
+                    It.IsAny<CompressedSignature>(), new UInt256(doubleHash)))
                 .Returns(true)
                 .Verifiable();
         }
@@ -277,12 +276,10 @@ namespace Lyn.Protocol.Tests.Bolt7
                 .Returns(true);
         }
 
-        private void ThanTheValidationFailedWithNoErrorMessage((bool, ErrorMessage?) result)
+        private void ThanTheValidationFailedWithNoErrorMessage(bool result)
         {
-            var (isValid, errorMessage) = result;
-            Assert.False(isValid);
-            Assert.Null(errorMessage);
-
+            Assert.False(result);
+            
             _validationHelper.VerifyAll();
         }
     }

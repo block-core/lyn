@@ -8,13 +8,15 @@ namespace Lyn.Protocol.Bolt7.Entities
    {
       private readonly LocalNode? _localNode;
 
-      public GossipChannel(ChannelAnnouncement channelAnnouncement, LocalNode? localNode)
+      public GossipChannel(ChannelAnnouncement channelAnnouncement, LocalNode? localNode = null)
       {
          ChannelAnnouncement = channelAnnouncement;
          _localNode = localNode;
       }
 
       public ChannelAnnouncement ChannelAnnouncement { get; set; }
+
+      public bool UnsupportedFeatures { get; set; }
 
       public bool IsChannelWithLocalNode() => _localNode != null;
 

@@ -24,11 +24,11 @@ namespace Lyn.Protocol.Tests.Bolt8
 
          NoiseProtocol.StartNewInitiatorHandshake(Bolt8TestVectorParameters.Responder.PublicKey, buffer);
 
-         var expectedOutput = expectedOutputHex.ToByteArray();
+         var expectedOutput = Hex.FromString(expectedOutputHex);
 
          Assert.Equal(buffer.WrittenCount, expectedOutput.Length);
          Assert.Equal(buffer.WrittenSpan.ToArray(), expectedOutput);
-         Assert.Equal(expectedHashHex.ToByteArray(), NoiseProtocol.HandshakeContext.Hash);
+         Assert.Equal(Hex.FromString(expectedHashHex), NoiseProtocol.HandshakeContext.Hash);
       }
 
 
@@ -42,13 +42,13 @@ namespace Lyn.Protocol.Tests.Bolt8
 
          var buffer = new ArrayBufferWriter<byte>(50);
 
-         NoiseProtocol.ProcessHandshakeRequest(new ReadOnlySequence<Byte>(actOneValidInput.ToByteArray()), buffer);
+         NoiseProtocol.ProcessHandshakeRequest(new ReadOnlySequence<Byte>(Hex.FromString(actOneValidInput)), buffer);
 
-         var expectedOutput = expectedOutputHex.ToByteArray();
+         var expectedOutput = Hex.FromString(expectedOutputHex);
 
          Assert.Equal(expectedOutput.Length, buffer.WrittenCount);
          Assert.Equal(expectedOutput,buffer.WrittenSpan.ToArray());
-         Assert.Equal(expectedHashHex.ToByteArray(), NoiseProtocol.HandshakeContext.Hash);
+         Assert.Equal(Hex.FromString(expectedHashHex), NoiseProtocol.HandshakeContext.Hash);
       }
 
       [Theory]
@@ -63,12 +63,12 @@ namespace Lyn.Protocol.Tests.Bolt8
 
          var buffer = new ArrayBufferWriter<byte>();
 
-         NoiseProtocol.ProcessHandshakeRequest(new ReadOnlySequence<Byte>(validInputHex.ToByteArray()), buffer);
+         NoiseProtocol.ProcessHandshakeRequest(new ReadOnlySequence<Byte>(Hex.FromString(validInputHex)), buffer);
          
-         var expectedOutput = expectedOutputHex.ToByteArray();
+         var expectedOutput = Hex.FromString(expectedOutputHex);
 
          Assert.Equal(expectedOutput.Length, buffer.WrittenCount);
-         Assert.Equal(expectedHashHex.ToByteArray(),NoiseProtocol.HandshakeContext.Hash);
+         Assert.Equal(Hex.FromString(expectedHashHex),NoiseProtocol.HandshakeContext.Hash);
          Assert.Equal(buffer.WrittenSpan.ToArray(), expectedOutput);
       }
    }

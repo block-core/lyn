@@ -1,5 +1,6 @@
 using System;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 using Lyn.Protocol.Common;
 using Lyn.Protocol.Connection;
@@ -9,7 +10,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Lyn.Protocol.Bolt1
 {
-    public class PingMessageService : IBoltMessageService<PingMessage>
+    public class PingMessageService : IBoltMessageService<PingMessage>, IPingMessageAction
     {
         private readonly ILogger<PingMessageService> _logger;
 
@@ -21,17 +22,20 @@ namespace Lyn.Protocol.Bolt1
         private DateTime? _lastPingReceivedDateTime; // the service lifetime will be associated with a node so no need to store in repo
         private readonly IPingPongMessageRepository _messageRepository;
 
-        private readonly IBoltMessageSender<PongMessage> _boltMessageSender;
+        private readonly IBoltMessageSender<PongMessage> _pongMessageSender;
+        private readonly IBoltMessageSender<PingMessage> _pingMessageSender;
         
         
         public PingMessageService(ILogger<PingMessageService> logger, IDateTimeProvider dateTimeProvider, 
-            IRandomNumberGenerator numberGenerator, IPingPongMessageRepository messageRepository, IBoltMessageSender<PongMessage> boltMessageSender)
+            IRandomNumberGenerator numberGenerator, IPingPongMessageRepository messageRepository, 
+            IBoltMessageSender<PongMessage> pongMessageSender, IBoltMessageSender<PingMessage> pingMessageSender)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _dateTimeProvider = dateTimeProvider;
             _numberGenerator = numberGenerator;
             _messageRepository = messageRepository;
-            _boltMessageSender = boltMessageSender;
+            _pongMessageSender = pongMessageSender;
+            _pingMessageSender = pingMessageSender;
         }
 
         public async Task ProcessMessageAsync(PeerMessage<PingMessage> request)
@@ -48,19 +52,24 @@ namespace Lyn.Protocol.Bolt1
             _lastPingReceivedDateTime = utcNow;
 
             _logger.LogDebug($"Send pong to with length {request.Message.NumPongBytes}");
-            
-            await _boltMessageSender.SendMessageAsync(new PeerMessage<PongMessage>
-            {
-                NodeId = request.NodeId,
-                Message = new PongMessage
+
+            await _pongMessageSender.SendMessageAsync(new PeerMessage<PongMessage>
+            (
+                request.NodeId,
+                new PongMessage
                 {
                     BytesLen = request.Message.NumPongBytes,
                     Ignored = new byte[request.Message.NumPongBytes]
                 }
-            });
+            ));
         }
 
-        public async ValueTask<PingMessage> CreateNewMessageAsync(PublicKey nodeId)
+        public int ActionTimeIntervalSeconds()
+        {
+            return PING_INTERVAL_SECS;
+        }
+
+        public async Task SendPingAsync(PublicKey nodeId, CancellationToken token)
         {
             var bytesLength = _numberGenerator.GetUint16() % PingMessage.MAX_BYTES_LEN;
          
@@ -73,7 +82,7 @@ namespace Lyn.Protocol.Bolt1
 
             _logger.LogDebug($"Ping generated ,pong length {pingMessage.NumPongBytes}");
 
-            return pingMessage;
+            await _pingMessageSender.SendMessageAsync(new PeerMessage<PingMessage>(nodeId, pingMessage));
         }
     }
 }
