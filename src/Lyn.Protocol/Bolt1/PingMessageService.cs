@@ -72,11 +72,11 @@ namespace Lyn.Protocol.Bolt1
             return PING_INTERVAL_SECS;
         }
 
-        public async Task SendPingAsync(PublicKey nodeId, CancellationToken token)
+        public async Task<MessageProcessingOutput> GeneratePingMessageAsync(PublicKey nodeId, CancellationToken token)
         {
             var bytesLength = _numberGenerator.GetUint16() % PingMessage.MAX_BYTES_LEN;
          
-            while(await _messageRepository.PendingPingExistsForIdAsync(nodeId,(ushort) bytesLength))
+            while(await _messageRepository.PendingPingExistsForIdAsync(nodeId,(ushort) bytesLength)) //TODO David need to get all pending from repo and check locally *but chances of more than one attempt are very small
                 bytesLength = _numberGenerator.GetUint16() % PingMessage.MAX_BYTES_LEN;
          
             var pingMessage = new PingMessage((ushort)bytesLength);
@@ -84,8 +84,12 @@ namespace Lyn.Protocol.Bolt1
             await _messageRepository.AddPingMessageAsync(nodeId, _dateTimeProvider.GetUtcNow(),pingMessage);
 
             _logger.LogDebug($"Ping generated ,pong length {pingMessage.NumPongBytes}");
-
-            await _pingMessageSender.SendMessageAsync(new PeerMessage<PingMessage>(nodeId, new BoltMessage{Payload = pingMessage}));
+            
+            return new MessageProcessingOutput
+            {
+                Success = true,
+                ResponseMessages = new []{new BoltMessage {Payload = pingMessage}}
+            };
         }
     }
 }

@@ -77,13 +77,13 @@ namespace Lyn.Protocol.Tests.Bolt1
                 It.Is<PingMessage>(_ => _.BytesLen == _uint16 % PingMessage.MAX_BYTES_LEN)));
         }
 
-        private void ThenTheMessageWithTheWritePongLengthWasSent(PublicKey? nodeId)
+        private void ThanTheMessageForPingWasReturnedFromTheService(MessageProcessingOutput output)
         {
-            _pingMessageSender.Verify(_ => _.SendMessageAsync(It.Is<PeerMessage<PingMessage>>(_
-                => _.NodeId == nodeId &&
-                   _.MessagePayload.NumPongBytes == PingMessage.MAX_BYTES_LEN - _uint16 % PingMessage.MAX_BYTES_LEN)));
+            output.Success.Should().BeTrue();
+            output.ResponseMessages.Should().ContainSingle()
+                .Which.Payload.Should().BeEquivalentTo(new PingMessage((ushort)(_uint16 % PingMessage.MAX_BYTES_LEN)));
         }
-
+        
         [Fact]
         public async Task ProcessMessageAsyncWhenMessageIsLongerThanAllowedFailsTheMessage()
         {
@@ -133,11 +133,11 @@ namespace Lyn.Protocol.Tests.Bolt1
         {
             var nodeId = RandomMessages.NewRandomPublicKey();
 
-            await _sut.SendPingAsync(nodeId, CancellationToken.None);
+            var result = await _sut.GeneratePingMessageAsync(nodeId, CancellationToken.None);
 
             ThanTheMessageWasAddedToTheRepository(nodeId);
 
-            ThenTheMessageWithTheWritePongLengthWasSent(nodeId);
+            ThanTheMessageForPingWasReturnedFromTheService(result);
         }
 
 
@@ -151,13 +151,13 @@ namespace Lyn.Protocol.Tests.Bolt1
                 .Returns(() => new ValueTask<bool>(true))
                 .Returns(() => new ValueTask<bool>(false));
 
-            await _sut.SendPingAsync(nodeId, CancellationToken.None);
+            var result = await _sut.GeneratePingMessageAsync(nodeId, CancellationToken.None);
 
             ThanTheMessageWasAddedToTheRepository(nodeId);
 
             _messageRepository.VerifyAll();
 
-            ThenTheMessageWithTheWritePongLengthWasSent(nodeId);
+            ThanTheMessageForPingWasReturnedFromTheService(result);
         }
     }
 }
