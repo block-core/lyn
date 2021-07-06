@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.Serialization;
 using Lyn.Types.Serialization;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using Lyn.Protocol.Bolt1.Messages;
 
 namespace Lyn.Protocol.Bolt1.TlvStreams
@@ -10,24 +11,11 @@ namespace Lyn.Protocol.Bolt1.TlvStreams
     public class TlvStreamSerializer : ITlvStreamSerializer
     {
         private const int MAX_RECORD_SIZE = 65535; // 65KB
-        private readonly IEnumerable<ITlvRecordSerializer> _recordSerializers;
-
         private readonly Dictionary<ulong, ITlvRecordSerializer> _tlvRecordTypeMappings;
 
         public TlvStreamSerializer(IEnumerable<ITlvRecordSerializer> recordSerializers)
         {
-            _recordSerializers = recordSerializers;
-            _tlvRecordTypeMappings = new Dictionary<ulong, ITlvRecordSerializer>();
-
-            InitializeMessageSerializers();
-        }
-
-        private void InitializeMessageSerializers()
-        {
-            foreach (ITlvRecordSerializer tlvRecordSerializer in _recordSerializers)
-            {
-                _tlvRecordTypeMappings.Add(tlvRecordSerializer.RecordTlvType, tlvRecordSerializer);
-            }
+            _tlvRecordTypeMappings = recordSerializers.ToDictionary(serializer => serializer.RecordTlvType);
         }
 
         public bool TryGetType(ulong recordType, [MaybeNullWhen(false)] out ITlvRecordSerializer tlvRecordSerializer)

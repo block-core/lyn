@@ -33,7 +33,7 @@ namespace Lyn.Protocol.Common
             var tlv = _tlvStreamSerializer.DeserializeTlvStream(ref reader);
             
             return new BoltMessage
-            {
+            { 
                 Payload = payload,
                 Extension = tlv
             };
@@ -41,7 +41,7 @@ namespace Lyn.Protocol.Common
 
         public byte[] Serialize(BoltMessage message)
         {
-            if (message is not TMessage messageBase)
+            if (message.Payload is not TMessage messageBase)
                 throw new InvalidCastException();
 
             var buffer = new ArrayBufferWriter<byte>();

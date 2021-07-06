@@ -15,7 +15,7 @@ namespace Lyn.Protocol.Connection
 
         public PublicKey NodeId { get; set; }
 
-        private BoltMessage Message { get; set; }
+        public BoltMessage Message { get; set; }
 
         public T MessagePayload { get; set; }
     }

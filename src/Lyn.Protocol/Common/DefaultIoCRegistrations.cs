@@ -3,6 +3,8 @@ using System.Linq;
 using System.Reflection;
 using Lyn.Protocol.Bolt1;
 using Lyn.Protocol.Bolt1.Messages;
+using Lyn.Protocol.Bolt1.Messages.TlvRecords;
+using Lyn.Protocol.Bolt1.TlvStreams;
 using Lyn.Protocol.Bolt2;
 using Lyn.Protocol.Bolt2.ChannelEstablishment;
 using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages;
@@ -35,8 +37,10 @@ namespace Lyn.Protocol.Common
         public static IServiceCollection AddSerializationComponents(this IServiceCollection services)
         {
             ScanAssemblyAndRegisterTypeSingleton(services, typeof(IProtocolTypeSerializer<>));
+            
+            ScanAssemblyAndRegisterTypeSingleton(services, typeof(IProtocolTypeSerializer<>),typeof(InitMessageSerializer).Assembly);
 
-            services.AddSingleton<IProtocolTypeSerializer<InitMessage>, InitMessageSerializer>(); //scan will only get whats in the same assembly for now added manually 
+            services.AddTransient<ITlvRecordSerializer, NetworksTlvSerializer>();
             
             return services;
         }
@@ -114,6 +118,8 @@ namespace Lyn.Protocol.Common
             services.AddTransient<IPingMessageAction,PingMessageService>();
             services.AddTransient<IInitMessageAction, InitMessageService>();
 
+            services.AddTransient<ITlvStreamSerializer, TlvStreamSerializer>();
+
             services.AddSingleton<IStartOpenChannelService, StartOpenChannelService>(); //TODO Dan this is not control and setup services
             services.AddSingleton<IChannelStateRepository, InMemoryChannelStateRepository>();
  
@@ -123,8 +129,14 @@ namespace Lyn.Protocol.Common
         
         private static void ScanAssemblyAndRegisterTypeSingleton(IServiceCollection services, Type protocolSerializerInterface)
         {
+            ScanAssemblyAndRegisterTypeSingleton(services, protocolSerializerInterface,
+                protocolSerializerInterface.Assembly);
+        }
+        
+        private static void ScanAssemblyAndRegisterTypeSingleton(IServiceCollection services, Type protocolSerializerInterface,Assembly assembly)
+        {
             // Discovers and registers all type implementation in this assembly.
-            var implementations = from type in protocolSerializerInterface.Assembly.GetTypes()
+            var implementations = from type in assembly.GetTypes()
                 from typeInterface in type.GetInterfaces()
                 where typeInterface.IsGenericType &&
                       protocolSerializerInterface.IsAssignableFrom(typeInterface.GetGenericTypeDefinition())
