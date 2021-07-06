@@ -57,7 +57,7 @@ namespace Lyn.Protocol.Bolt1
                 {
                     Records = new List<TlvRecord>
                     {
-                        new NetworksTlvRecord {Type = 1, Payload = ChainHashes.Bitcoin}
+                        new NetworksTlvRecord {Type = 1, Payload = ChainHashes.Bitcoin, Size = 32}
                     }
                 }
             };
