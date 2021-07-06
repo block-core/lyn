@@ -52,12 +52,10 @@ namespace Lyn.Protocol.Bolt3
         {
             var buffer = shaseed.GetBytes().ToArray().AsSpan();
 
-            for (int i = 47; i >= 0; i--)
+            for (int position = 47; position >= 0; position--)
             {
-                byte position = (byte)i;
-
                 // find bit on index at position.
-                var byteAtPosition = (byte)((perCommitIndex >> position) & 1);
+                var byteAtPosition = ((perCommitIndex >> position) & 1);
 
                 if (byteAtPosition == 1)
                 {

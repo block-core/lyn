@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Linq;
 using Lyn.Protocol.Common.Hashing;
 using Lyn.Types.Bitcoin;
+using Lyn.Types.Fundamental;
 
 namespace Lyn.Protocol.Bolt3.Shachain
 {
@@ -10,72 +12,115 @@ namespace Lyn.Protocol.Bolt3.Shachain
     /// </summary>
     public class Shachain
     {
-        public UInt256 derive(ulong from, ulong to, UInt256 from_hash)
+        public const int MAX_HEIGHT = 48;
+
+        public UInt256 DeriveSecret(UInt256 secret, int bits, ulong index)
         {
-            int branches;
-            int i;
+            if (bits > MAX_HEIGHT)
+                throw new InvalidOperationException($"The bits = {bits} is above limit {MAX_HEIGHT}");
 
-            if (!can_derive(from, to)) throw new Exception();
+            var buffer = secret.GetBytes().ToArray().AsSpan();
 
-            /* We start with the first hash. */
-            //UInt256 hash = from_hash;
-
-            byte[] hash = from_hash.GetBytes().ToArray();
-
-            /* This represents the bits set in to, and not from. */
-            branches = (int)(from ^ to);
-            for (i = branches - 1; i >= 0; i--)
+            for (int position = bits - 1; position >= 0; position--)
             {
-                if (((branches >> i) & 1) == 0)
-                {
-                    change_bit(hash, i);
+                // find bit on index at position.
+                var byteAtPosition = GetByeAtPosition(index, position);
 
-                    // todo this could potentially be optimized to use only a single span for the entire calculations
-                    var span = hash.AsSpan();
-                    ReadOnlySpan<byte> res = HashGenerator.Sha256(span);
-                    hash = res.ToArray();
+                if (byteAtPosition == 1)
+                {
+                    FlipByte(buffer, position);
+                    HashBuffer(ref buffer);
                 }
             }
 
-            return new UInt256(hash);
+            return new UInt256(buffer);
         }
 
-        private void change_bit(byte[] arr, int index)
+        public bool InsertSecret(ShachainItems chain, UInt256 secret, ulong index)
         {
-            byte a = arr[index / CHAR_BIT];
-            byte b = (byte)(index % CHAR_BIT);
+            if (chain.Secrets.Last().Value.Index - 1 != index)
+                throw new InvalidOperationException("Invalid order");
 
-            a ^= (byte)(1 << b);
+            int position = CountTrailingZeroes(index);
+
+            for (int i = 0; i < position; i++)
+            {
+                ShachainItem shachainItem = chain.Secrets[i];
+                UInt256 newSecret = DeriveSecret(secret, position, shachainItem.Index);
+
+                if (newSecret != shachainItem.Secret)
+                {
+                    return false;
+                }
+            }
+
+            if (chain.Secrets.TryGetValue(position, out ShachainItem? item))
+            {
+                item.Secret = secret;
+                item.Index = index;
+            }
+            else
+            {
+                chain.Secrets.Add(position, new ShachainItem(secret, index));
+            }
+
+            return true;
         }
 
-        private bool can_derive(ulong from, ulong to)
+        public UInt256? DeriveOldSecret(ShachainItems chain, ulong index)
         {
-            ulong mask;
+            foreach (var item in chain.Secrets)
+            {
+                var mask = ~((1 << item.Key) - 1);
 
-            /* Corner case: can always derive from seed. */
-            if (from == 0)
-                return true;
+                if ((index & (ulong)mask) == item.Value.Index)
+                {
+                    return DeriveSecret(item.Value.Secret, item.Key, item.Value.Index);
+                }
+            }
 
-            /* Leading bits must be the same */
-            mask = ~(((ulong)1 << count_trailing_zeroes(from)) - 1);
-            return ((from ^ to) & mask) == 0;
+            return null;
         }
 
-        private const byte CHAR_BIT = 8;
-        private const int SHACHAIN_BITS = 8;//(sizeof(ulong) * 8)
-
-        private int count_trailing_zeroes(ulong index)
+        private int CountTrailingZeroes(ulong index)
         {
-            var ret = System.Numerics.BitOperations.TrailingZeroCount(index);
-            //uint i;
+            var retTest = System.Numerics.BitOperations.TrailingZeroCount(index);
 
-            //for (i = 0; i < SHACHAIN_BITS; i++)
-            //{
-            //    if (index & (1ULL << i))
-            //break;
-            //}
+            for (int position = 0; position < MAX_HEIGHT; position++)
+            {
+                if (GetByeAtPosition(index, position) != 0)
+                {
+                    if (retTest != position) throw new Exception(); // todo: delete this test code
 
-            return ret;
+                    return position;
+                }
+            }
+
+            return 0;
+        }
+
+        private void FlipByte(Span<byte> buffer, int position)
+        {
+            var byteNumber = position / 8;
+            var bitNumber = position % 8;
+
+            int byteContent = buffer[byteNumber];
+
+            byteContent ^= (1 << bitNumber);
+
+            buffer[byteNumber] = (byte)byteContent;
+        }
+
+        private void HashBuffer(ref Span<byte> buffer)
+        {
+            // todo: optimize by using a Span<byte> instead of a ReadOnlySpan<byte> on the HashGenerator
+            var hashed = HashGenerator.Sha256(buffer);
+            buffer = hashed.ToArray();
+        }
+
+        private byte GetByeAtPosition(ulong index, int position)
+        {
+            return (byte)((index >> position) & 1);
         }
     }
 }
