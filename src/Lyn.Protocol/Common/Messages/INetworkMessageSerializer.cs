@@ -1,7 +1,7 @@
 using System.Buffers;
 using Lyn.Protocol.Bolt1.Messages;
 
-namespace Lyn.Protocol.Common
+namespace Lyn.Protocol.Common.Messages
 {
     public interface INetworkMessageSerializer
     {

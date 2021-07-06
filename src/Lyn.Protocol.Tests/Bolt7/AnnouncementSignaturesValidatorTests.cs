@@ -3,6 +3,7 @@ using Lyn.Protocol.Bolt7;
 using Lyn.Protocol.Bolt7.Entities;
 using Lyn.Protocol.Bolt7.Messages;
 using Lyn.Protocol.Common;
+using Lyn.Protocol.Common.Messages;
 using Lyn.Types.Bitcoin;
 using Moq;
 using Xunit;

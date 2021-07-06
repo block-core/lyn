@@ -1,4 +1,6 @@
-﻿namespace Lyn.Protocol.Bolt1.Messages
+﻿using Lyn.Protocol.Bolt1.Messages;
+
+namespace Lyn.Protocol.Common.Messages
 {
     public abstract class MessagePayload
     {

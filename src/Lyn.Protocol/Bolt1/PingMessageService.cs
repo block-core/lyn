@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Lyn.Protocol.Bolt1.Messages;
 using Lyn.Protocol.Common;
+using Lyn.Protocol.Common.Messages;
 using Lyn.Protocol.Connection;
 using Lyn.Types.Fundamental;
 using Microsoft.Extensions.Logging;

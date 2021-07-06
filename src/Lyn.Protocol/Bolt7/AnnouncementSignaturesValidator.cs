@@ -1,6 +1,7 @@
 using Lyn.Protocol.Bolt7.Messages;
 using Lyn.Protocol.Common;
 using Lyn.Protocol.Common.Hashing;
+using Lyn.Protocol.Common.Messages;
 
 namespace Lyn.Protocol.Bolt7
 {

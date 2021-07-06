@@ -1,5 +1,6 @@
 ﻿using System;
 using Lyn.Protocol.Bolt1.Messages;
+using Lyn.Protocol.Common.Messages;
 using Lyn.Types.Fundamental;
 
 namespace Lyn.Protocol.Connection

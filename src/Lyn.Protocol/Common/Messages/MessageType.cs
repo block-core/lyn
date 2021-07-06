@@ -1,4 +1,4 @@
-namespace Lyn.Protocol.Bolt1.Messages
+namespace Lyn.Protocol.Common.Messages
 {
     public enum MessageType : ushort
     {

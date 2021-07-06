@@ -16,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Lyn.Protocol.Bolt1.Messages;
+using Lyn.Protocol.Common.Messages;
 
 namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 {

@@ -1,6 +1,7 @@
 using Lyn.Protocol.Bolt7;
 using Lyn.Protocol.Bolt7.Messages;
 using Lyn.Protocol.Common;
+using Lyn.Protocol.Common.Messages;
 using Lyn.Types;
 using Lyn.Types.Bitcoin;
 using Lyn.Types.Fundamental;

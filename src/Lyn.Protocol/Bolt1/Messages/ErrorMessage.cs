@@ -1,3 +1,4 @@
+using Lyn.Protocol.Common.Messages;
 using Lyn.Types.Bolt;
 
 namespace Lyn.Protocol.Bolt1.Messages

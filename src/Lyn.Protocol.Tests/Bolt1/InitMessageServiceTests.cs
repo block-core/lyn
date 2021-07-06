@@ -3,6 +3,7 @@ using Lyn.Protocol.Bolt1;
 using Lyn.Protocol.Bolt1.Entities;
 using Lyn.Protocol.Bolt1.Messages;
 using Lyn.Protocol.Bolt9;
+using Lyn.Protocol.Common.Messages;
 using Lyn.Protocol.Connection;
 using Lyn.Types.Fundamental;
 using Moq;

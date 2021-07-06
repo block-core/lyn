@@ -4,7 +4,7 @@ using Lyn.Protocol.Bolt1.Messages;
 using Lyn.Protocol.Bolt1.TlvStreams;
 using Lyn.Types.Serialization;
 
-namespace Lyn.Protocol.Common
+namespace Lyn.Protocol.Common.Messages
 {
     public class NetworkMessageSerializer<TMessage> : INetworkMessageSerializer
         where TMessage : MessagePayload, new()
