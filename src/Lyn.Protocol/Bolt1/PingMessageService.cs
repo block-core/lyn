@@ -23,20 +23,14 @@ namespace Lyn.Protocol.Bolt1
         private DateTime? _lastPingReceivedDateTime; // the service lifetime will be associated with a node so no need to store in repo
         private readonly IPingPongMessageRepository _messageRepository;
 
-        private readonly IBoltMessageSender<PongMessage> _pongMessageSender;
-        private readonly IBoltMessageSender<PingMessage> _pingMessageSender;
-        
-        
+
         public PingMessageService(ILogger<PingMessageService> logger, IDateTimeProvider dateTimeProvider, 
-            IRandomNumberGenerator numberGenerator, IPingPongMessageRepository messageRepository, 
-            IBoltMessageSender<PongMessage> pongMessageSender, IBoltMessageSender<PingMessage> pingMessageSender)
+            IRandomNumberGenerator numberGenerator, IPingPongMessageRepository messageRepository)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _dateTimeProvider = dateTimeProvider;
             _numberGenerator = numberGenerator;
             _messageRepository = messageRepository;
-            _pongMessageSender = pongMessageSender;
-            _pingMessageSender = pingMessageSender;
         }
 
         public async Task<MessageProcessingOutput> ProcessMessageAsync(PeerMessage<PingMessage> request)

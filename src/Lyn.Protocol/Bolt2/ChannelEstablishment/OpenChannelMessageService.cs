@@ -26,11 +26,8 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
         private readonly IChannelConfigProvider _channelConfigProvider;
         private readonly ISecretStore _secretStore;
         private readonly IBoltFeatures _boltFeatures;
-        private readonly IParseFeatureFlags _parseFeatureFlags;
-        private readonly IBoltMessageSender<AcceptChannel> _messageSender;
 
         public OpenChannelMessageService(ILogger<OpenChannelMessageService> logger,
-            IBoltMessageSender<AcceptChannel> messageSender,
             ILightningTransactions lightningTransactions,
             IRandomNumberGenerator randomNumberGenerator,
             ILightningKeyDerivation lightningKeyDerivation,
@@ -38,8 +35,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             IChainConfigProvider chainConfigProvider,
             IChannelConfigProvider channelConfigProvider,
             ISecretStore secretStore,
-            IBoltFeatures boltFeatures,
-            IParseFeatureFlags parseFeatureFlags)
+            IBoltFeatures boltFeatures)
         {
             _logger = logger;
             _lightningTransactions = lightningTransactions;
@@ -50,8 +46,6 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             _channelConfigProvider = channelConfigProvider;
             _secretStore = secretStore;
             _boltFeatures = boltFeatures;
-            _parseFeatureFlags = parseFeatureFlags;
-            _messageSender = messageSender;
         }
 
         public async Task<MessageProcessingOutput> ProcessMessageAsync(PeerMessage<OpenChannel> message)
@@ -141,8 +135,6 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             {
                 Payload = acceptChannel
             };
-
-            //await _messageSender.SendMessageAsync(new PeerMessage<AcceptChannel>(message.NodeId, boltMessage));
 
             return new MessageProcessingOutput {Success = true, ResponseMessages = new[] {boltMessage}};
         }

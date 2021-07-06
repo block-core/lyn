@@ -24,8 +24,6 @@ namespace Lyn.Protocol.Tests.Bolt1
         private readonly Mock<IDateTimeProvider> _dateTimeProvider;
         private readonly Mock<IRandomNumberGenerator> _randomNumberGenerator;
         private readonly Mock<IPingPongMessageRepository> _messageRepository;
-        private readonly Mock<IBoltMessageSender<PongMessage>> _pongMessageSender;
-        private readonly Mock<IBoltMessageSender<PingMessage>> _pingMessageSender;
 
         private DateTime _utcNow;
         private ushort _uint16;
@@ -36,12 +34,9 @@ namespace Lyn.Protocol.Tests.Bolt1
             _dateTimeProvider = new Mock<IDateTimeProvider>();
             _randomNumberGenerator = new Mock<IRandomNumberGenerator>();
             _messageRepository = new Mock<IPingPongMessageRepository>();
-            _pongMessageSender = new Mock<IBoltMessageSender<PongMessage>>();
-            _pingMessageSender = new Mock<IBoltMessageSender<PingMessage>>();
 
             _sut = new PingMessageService(_logger.Object, _dateTimeProvider.Object,
-                _randomNumberGenerator.Object, _messageRepository.Object, _pongMessageSender.Object,
-                _pingMessageSender.Object);
+                _randomNumberGenerator.Object, _messageRepository.Object);
 
             _utcNow = DateTime.UtcNow;
 
@@ -89,9 +84,10 @@ namespace Lyn.Protocol.Tests.Bolt1
         {
             var message = WithPingBoltMessage(PingMessage.MAX_BYTES_LEN + 1);
 
-            await _sut.ProcessMessageAsync(message);
+            var result =  await _sut.ProcessMessageAsync(message);
 
-            _pongMessageSender.VerifyNoOtherCalls();
+            result.Success.Should().BeFalse();
+            result.ResponseMessages.Should().BeNull();
         }
 
 
