@@ -3,6 +3,8 @@ using System.Threading.Tasks;
 using Lyn.Protocol.Bolt7.Entities;
 using Lyn.Protocol.Bolt7.Messages;
 using Lyn.Protocol.Bolt9;
+using Lyn.Protocol.Common;
+using Lyn.Protocol.Common.Messages;
 using Lyn.Protocol.Connection;
 
 namespace Lyn.Protocol.Bolt7
@@ -20,20 +22,20 @@ namespace Lyn.Protocol.Bolt7
          _boltFeatures = boltFeatures;
       }
 
-      public async Task ProcessMessageAsync(PeerMessage<ChannelAnnouncement> request)
+      public async Task<MessageProcessingOutput> ProcessMessageAsync(PeerMessage<ChannelAnnouncement> request)
       {
          var message = request.MessagePayload;
          
          if (!_messageValidator.ValidateMessage(message))
-            return; //ignore message
+            return new MessageProcessingOutput(); //ignore message
 
-         var existingChannel = _gossipRepository.GetGossipChannel(message.ShortChannelId);
+         var existingChannel = await _gossipRepository.GetGossipChannelAsync(message.ShortChannelId);
 
          if (existingChannel != null)
          {
             if (existingChannel.ChannelAnnouncement.NodeId1 != message.NodeId1 || existingChannel.ChannelAnnouncement.NodeId2 != message.NodeId2)
             {
-               BlacklistNodesAndForgetChannels(message, existingChannel.ChannelAnnouncement);
+               await BlacklistNodesAndForgetChannels(message, existingChannel.ChannelAnnouncement);
             }
          }
             
@@ -44,23 +46,25 @@ namespace Lyn.Protocol.Bolt7
          
          gossipChannel.UnsupportedFeatures = _boltFeatures.ContainsUnknownRequiredFeatures(message.Features);
          
-         _gossipRepository.AddGossipChannel(gossipChannel);
+         await _gossipRepository.AddGossipChannelAsync(gossipChannel);
+
+         return new EmptySuccessResponse();
       }
 
-      private void BlacklistNodesAndForgetChannels(ChannelAnnouncement message, ChannelAnnouncement existingChannel)
+      private async Task BlacklistNodesAndForgetChannels(ChannelAnnouncement message, ChannelAnnouncement existingChannel)
       {
-         var nodes = _gossipRepository.GetNodes(existingChannel.NodeId1, existingChannel.NodeId2,
+         var nodes = await _gossipRepository.GetNodesAsync(existingChannel.NodeId1, existingChannel.NodeId2,
             message.NodeId1, message.NodeId2);
 
          var nodeIds = nodes.Select(_ => _.NodeAnnouncement.NodeId).ToArray()
             .Union(new[] {message.NodeId1, message.NodeId2, existingChannel.NodeId1, existingChannel.NodeId2})
             .ToArray();
 
-         _gossipRepository.AddNodeToBlacklist(nodeIds);
+         await _gossipRepository.AddNodeToBlacklistAsync(nodeIds);
 
          var channelsToForget = nodes.SelectMany(_ => _.Channels);
 
-         _gossipRepository.RemoveGossipChannels(channelsToForget
+         await _gossipRepository.RemoveGossipChannelsAsync(channelsToForget
             .Select(_ => _.ChannelAnnouncement.ShortChannelId).ToArray());
       }
    }

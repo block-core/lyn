@@ -39,7 +39,7 @@ namespace Lyn.Protocol.Bolt1
             _pingMessageSender = pingMessageSender;
         }
 
-        public async Task ProcessMessageAsync(PeerMessage<PingMessage> request)
+        public async Task<MessageProcessingOutput> ProcessMessageAsync(PeerMessage<PingMessage> request)
         {
             var utcNow = _dateTimeProvider.GetUtcNow();
             
@@ -48,7 +48,7 @@ namespace Lyn.Protocol.Bolt1
                     $"Ping message can only be received every {PING_INTERVAL_SECS} seconds");
 
             if (request.MessagePayload.NumPongBytes > PingMessage.MAX_BYTES_LEN)
-                return;
+                return new MessageProcessingOutput();
 
             _lastPingReceivedDateTime = utcNow;
 
@@ -60,11 +60,11 @@ namespace Lyn.Protocol.Bolt1
                 Ignored = new byte[request.MessagePayload.NumPongBytes]
             };
 
-            await _pongMessageSender.SendMessageAsync(new PeerMessage<PongMessage>
-            (
-                request.NodeId,
-                new BoltMessage {Payload = pong}
-            ));
+            return new MessageProcessingOutput
+            {
+                Success = true,
+                ResponseMessages = new[] {new BoltMessage {Payload = pong}}
+            };
         }
 
         public int ActionTimeIntervalSeconds()

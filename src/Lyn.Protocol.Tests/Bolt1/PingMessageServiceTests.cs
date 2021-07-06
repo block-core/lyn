@@ -1,7 +1,9 @@
 using System;
+using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using FluentAssertions;
 using Lyn.Protocol.Bolt1;
 using Lyn.Protocol.Bolt1.Messages;
 using Lyn.Protocol.Common;
@@ -36,7 +38,7 @@ namespace Lyn.Protocol.Tests.Bolt1
             _messageRepository = new Mock<IPingPongMessageRepository>();
             _pongMessageSender = new Mock<IBoltMessageSender<PongMessage>>();
             _pingMessageSender = new Mock<IBoltMessageSender<PingMessage>>();
-            
+
             _sut = new PingMessageService(_logger.Object, _dateTimeProvider.Object,
                 _randomNumberGenerator.Object, _messageRepository.Object, _pongMessageSender.Object,
                 _pingMessageSender.Object);
@@ -81,7 +83,7 @@ namespace Lyn.Protocol.Tests.Bolt1
                 => _.NodeId == nodeId &&
                    _.MessagePayload.NumPongBytes == PingMessage.MAX_BYTES_LEN - _uint16 % PingMessage.MAX_BYTES_LEN)));
         }
-        
+
         [Fact]
         public async Task ProcessMessageAsyncWhenMessageIsLongerThanAllowedFailsTheMessage()
         {
@@ -98,12 +100,22 @@ namespace Lyn.Protocol.Tests.Bolt1
         {
             var message = WithPingBoltMessage(PingMessage.MAX_BYTES_LEN);
 
-            await _sut.ProcessMessageAsync(message);
+            var result = await _sut.ProcessMessageAsync(message);
 
-            _pongMessageSender.Verify(_ => _.SendMessageAsync(It.Is<PeerMessage<PongMessage>>(_ =>
-                _.MessagePayload.BytesLen == message.MessagePayload.NumPongBytes &&
-                _.MessagePayload.BytesLen == message.MessagePayload.Ignored!.Length)));
+            result.Should().NotBeNull();
+
+            result.Success.Should().BeTrue();
+            
+            result.ResponseMessages.Should()
+                .ContainSingle()
+                .Which.Payload.Should()
+                .BeEquivalentTo(new PongMessage
+                {
+                    BytesLen = message.MessagePayload.NumPongBytes,
+                    Ignored = new byte[message.MessagePayload.NumPongBytes]
+                });
         }
+
 
         [Fact]
         public async Task ProcessMessageAsyncThrowsIfPingWasReceivedBeforeTheAllowedTime()
@@ -121,7 +133,7 @@ namespace Lyn.Protocol.Tests.Bolt1
         {
             var nodeId = RandomMessages.NewRandomPublicKey();
 
-            await _sut.SendPingAsync(nodeId,CancellationToken.None);
+            await _sut.SendPingAsync(nodeId, CancellationToken.None);
 
             ThanTheMessageWasAddedToTheRepository(nodeId);
 
@@ -139,7 +151,7 @@ namespace Lyn.Protocol.Tests.Bolt1
                 .Returns(() => new ValueTask<bool>(true))
                 .Returns(() => new ValueTask<bool>(false));
 
-            await _sut.SendPingAsync(nodeId,CancellationToken.None);
+            await _sut.SendPingAsync(nodeId, CancellationToken.None);
 
             ThanTheMessageWasAddedToTheRepository(nodeId);
 

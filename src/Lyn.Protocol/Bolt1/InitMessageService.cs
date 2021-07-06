@@ -6,6 +6,7 @@ using Lyn.Protocol.Bolt1.Entities;
 using Lyn.Protocol.Bolt1.Messages;
 using Lyn.Protocol.Bolt1.Messages.TlvRecords;
 using Lyn.Protocol.Bolt9;
+using Lyn.Protocol.Common;
 using Lyn.Protocol.Common.Messages;
 using Lyn.Protocol.Connection;
 using Lyn.Types;
@@ -29,18 +30,27 @@ namespace Lyn.Protocol.Bolt1
             _featureFlags = featureFlags;
         }
 
-        public async Task ProcessMessageAsync(PeerMessage<InitMessage> request)
+        public async Task<MessageProcessingOutput> ProcessMessageAsync(PeerMessage<InitMessage> request)
         {
             if (!_boltFeatures.ValidateRemoteFeatureAreCompatible(request.MessagePayload.Features, request.MessagePayload.GlobalFeatures))
                 throw new ArgumentException(nameof(request.MessagePayload.Features)); //TODO David we need to define the way to close a connection gracefully
 
-            var peer = _repository.TryGetPeerAsync(request.NodeId) ?? 
-                       new Peer{ NodeId =  request.NodeId};
+            var peer = _repository.TryGetPeerAsync(request.NodeId);
+            
+            var peerExists = peer != null;
+
+            peer ??= new Peer {NodeId = request.NodeId};
 
             peer.Featurs = _featureFlags.ParseFeatures(request.MessagePayload.Features);
             peer.GlobalFeatures = _featureFlags.ParseFeatures(request.MessagePayload.GlobalFeatures);
 
             await _repository.AddOrUpdatePeerAsync(peer);
+
+            return new MessageProcessingOutput
+            {
+                Success = true,
+                ResponseMessages = peerExists ? null : new[] {CreateInitMessage()}
+            };
 
             //TODO David add sending the gossip timestamp filter *init message MUST be sent first
         }

@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using Lyn.Protocol.Bolt7;
 using Lyn.Protocol.Bolt7.Entities;
 using Lyn.Protocol.Bolt7.Messages;
@@ -52,8 +53,8 @@ namespace Lyn.Protocol.Tests.Bolt7
         {
             var message = NewAnnouncementSignatures();
 
-            _gossipRepository.Setup(_ => _.GetGossipChannel(message.ShortChannelId))
-                .Returns(new GossipChannel(NewChannelAnnouncement(), null));
+            _gossipRepository.Setup(_ => _.GetGossipChannelAsync(message.ShortChannelId))
+                .Returns(Task.FromResult(new GossipChannel(NewChannelAnnouncement())));
 
             var result = _sut.ValidateMessage(message);
 
@@ -66,8 +67,8 @@ namespace Lyn.Protocol.Tests.Bolt7
             var message = NewAnnouncementSignatures();
             var gossipChannel = new GossipChannel(NewChannelAnnouncement(), GossipChannel.LocalNode.Node2);
 
-            _gossipRepository.Setup(_ => _.GetGossipChannel(message.ShortChannelId))
-                .Returns(gossipChannel);
+            _gossipRepository.Setup(_ => _.GetGossipChannelAsync(message.ShortChannelId))
+                .Returns(Task.FromResult<GossipChannel?>(gossipChannel));
 
             WithSerializedChannelAnnouncement(gossipChannel.ChannelAnnouncement);
 
@@ -87,8 +88,8 @@ namespace Lyn.Protocol.Tests.Bolt7
             var message = NewAnnouncementSignatures();
             var gossipChannel = new GossipChannel(NewChannelAnnouncement(), GossipChannel.LocalNode.Node1);
 
-            _gossipRepository.Setup(_ => _.GetGossipChannel(message.ShortChannelId))
-                .Returns(gossipChannel);
+            _gossipRepository.Setup(_ => _.GetGossipChannelAsync(message.ShortChannelId))
+                .Returns(Task.FromResult<GossipChannel?>(gossipChannel));
 
             WithSerializedChannelAnnouncement(gossipChannel.ChannelAnnouncement);
 
@@ -108,8 +109,8 @@ namespace Lyn.Protocol.Tests.Bolt7
             var message = NewAnnouncementSignatures();
             var gossipChannel = new GossipChannel(NewChannelAnnouncement(), GossipChannel.LocalNode.Node1);
 
-            _gossipRepository.Setup(_ => _.GetGossipChannel(message.ShortChannelId))
-                .Returns(gossipChannel);
+            _gossipRepository.Setup(_ => _.GetGossipChannelAsync(message.ShortChannelId))
+                .Returns(Task.FromResult<GossipChannel?>(gossipChannel));
 
             WithSerializedChannelAnnouncement(gossipChannel.ChannelAnnouncement);
 

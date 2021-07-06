@@ -2,6 +2,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Lyn.Protocol.Bolt1.Messages;
 using Lyn.Protocol.Common;
+using Lyn.Protocol.Common.Messages;
 using Lyn.Protocol.Connection;
 using Lyn.Types;
 using Microsoft.Extensions.Logging;
@@ -19,7 +20,7 @@ namespace Lyn.Protocol.Bolt1
             _repository = repository;
         }
 
-        public async Task ProcessMessageAsync(PeerMessage<ErrorMessage> request)
+        public async Task<MessageProcessingOutput> ProcessMessageAsync(PeerMessage<ErrorMessage> request)
         {
             _logger.LogDebug($"Received error message from {0}");//PeerContext.PeerId//
             
@@ -35,6 +36,8 @@ namespace Lyn.Protocol.Bolt1
             else
                 _logger.Log(LogLevel.Information,
                     $"Need to fail channel {Hex.ToString(request.MessagePayload.ChannelId)}"); // TODO fail the channel
+
+            return new EmptySuccessResponse();
         }
     }
 }

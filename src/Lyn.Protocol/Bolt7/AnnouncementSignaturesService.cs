@@ -1,6 +1,8 @@
 using System;
 using System.Threading.Tasks;
 using Lyn.Protocol.Bolt7.Messages;
+using Lyn.Protocol.Common;
+using Lyn.Protocol.Common.Messages;
 using Lyn.Protocol.Connection;
 
 namespace Lyn.Protocol.Bolt7
@@ -17,7 +19,7 @@ namespace Lyn.Protocol.Bolt7
          _repository = repository;
       }
 
-      public async Task ProcessMessageAsync(PeerMessage<AnnouncementSignatures> request)
+      public async Task<MessageProcessingOutput> ProcessMessageAsync(PeerMessage<AnnouncementSignatures> request)
       {
          var message = request.MessagePayload;
          
@@ -28,7 +30,7 @@ namespace Lyn.Protocol.Bolt7
          
          //TODO David - add check for funding transaction announce channel bit, and received funding locked message with 6 confirmations before sending a response
 
-         var channel = _repository.GetGossipChannel(message.ShortChannelId)
+         var channel = await _repository.GetGossipChannelAsync(message.ShortChannelId)
                        ?? throw new InvalidOperationException("Channel details not found in the repository"); // the channel must be added when commitment is completed
 
          var reply = new AnnouncementSignatures(message.ChannelId, message.ShortChannelId,null,null);// TODO get the correct signatures not the first ones 
@@ -56,6 +58,12 @@ namespace Lyn.Protocol.Bolt7
          }
          
          //TODO David - add gossip message broadcasting to all connected nodes (raise event?)
+
+         return new MessageProcessingOutput
+         {
+            Success = true,
+            ResponseMessages = new []{new BoltMessage {Payload = reply}}
+         };
       }
    }
 }

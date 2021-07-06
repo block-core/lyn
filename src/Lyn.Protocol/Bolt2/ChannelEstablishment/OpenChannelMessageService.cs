@@ -54,7 +54,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             _messageSender = messageSender;
         }
 
-        public async Task ProcessMessageAsync(PeerMessage<OpenChannel> message)
+        public async Task<MessageProcessingOutput> ProcessMessageAsync(PeerMessage<OpenChannel> message)
         {
             OpenChannel openChannel = message.MessagePayload;
 
@@ -63,7 +63,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             if (currentState != null)
             {
                 // todo: dan write this logic
-                return;
+                return new MessageProcessingOutput();
             }
 
             ChainParameters? chainParameters = _chainConfigProvider.GetConfiguration(openChannel.ChainHash);
@@ -71,7 +71,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             if (chainParameters == null)
             {
                 // todo: fail the channel.
-                return;
+                return new MessageProcessingOutput{CloseChannel = true};
             }
 
             ChannelConfig? channelConfig = _channelConfigProvider.GetConfiguration(openChannel.ChainHash);
@@ -79,7 +79,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             if (channelConfig == null)
             {
                 // todo: fail the channel.
-                return;
+                return new MessageProcessingOutput{CloseChannel = true};
             }
 
             string failReason = CheckMessage(openChannel, chainParameters, channelConfig);
@@ -87,7 +87,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             if (!string.IsNullOrEmpty(failReason))
             {
                 // todo: fail the channel.
-                return;
+                return new MessageProcessingOutput{CloseChannel = true};
             }
 
             ChannelState channelState = new()
@@ -142,7 +142,9 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                 Payload = acceptChannel
             };
 
-            await _messageSender.SendMessageAsync(new PeerMessage<AcceptChannel>(message.NodeId, boltMessage));
+            //await _messageSender.SendMessageAsync(new PeerMessage<AcceptChannel>(message.NodeId, boltMessage));
+
+            return new MessageProcessingOutput {Success = true, ResponseMessages = new[] {boltMessage}};
         }
 
         private string CheckMessage(OpenChannel openChannel, ChainParameters chainParameters, ChannelConfig channelConfig)

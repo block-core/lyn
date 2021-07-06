@@ -20,7 +20,9 @@ namespace Lyn.Protocol.Bolt7
 
       public bool ValidateMessage(AnnouncementSignatures networkMessage)
       {
-         var channel = _repository.GetGossipChannel(networkMessage.ShortChannelId);
+         var channel = _repository.GetGossipChannelAsync(networkMessage.ShortChannelId)
+            .GetAwaiter()
+            .GetResult();
 
          if (channel?.IsChannelWithLocalNode() != true)
             return false;
