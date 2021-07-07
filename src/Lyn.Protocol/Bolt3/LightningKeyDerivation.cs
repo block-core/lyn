@@ -50,30 +50,11 @@ namespace Lyn.Protocol.Bolt3
 
         public Secret PerCommitmentSecret(UInt256 shaseed, ulong perCommitIndex)
         {
-            var buffer = shaseed.GetBytes().ToArray().AsSpan();
+            Shachain.Shachain shachain = new();
 
-            for (int position = 47; position >= 0; position--)
-            {
-                // find bit on index at position.
-                var byteAtPosition = ((perCommitIndex >> position) & 1);
+            var secret = shachain.GenerateFromSeed(shaseed, perCommitIndex);
 
-                if (byteAtPosition == 1)
-                {
-                    var byteNumber = position / 8;
-                    var bitNumber = position % 8;
-
-                    int byteContent = buffer[byteNumber];
-
-                    byteContent ^= (1 << bitNumber);
-
-                    buffer[byteNumber] = (byte)byteContent;
-
-                    var hashed = HashGenerator.Sha256(buffer);
-                    buffer = hashed.ToArray();
-                }
-            }
-
-            return new Secret(buffer.ToArray());
+            return new Secret(secret.GetBytes().ToArray());
         }
 
         public PublicKey PerCommitmentPoint(UInt256 shaseed, ulong perCommitIndex)

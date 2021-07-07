@@ -13,6 +13,12 @@ namespace Lyn.Protocol.Bolt3.Shachain
     public class Shachain
     {
         public const int MAX_HEIGHT = 48;
+        public const ulong INDEX_ROOT = 281474976710655;
+
+        public UInt256 GenerateFromSeed(UInt256 secret, ulong index)
+        {
+            return DeriveSecret(secret, MAX_HEIGHT, index);
+        }
 
         public UInt256 DeriveSecret(UInt256 secret, int bits, ulong index)
         {
@@ -24,7 +30,7 @@ namespace Lyn.Protocol.Bolt3.Shachain
             for (int position = bits - 1; position >= 0; position--)
             {
                 // find bit on index at position.
-                var byteAtPosition = GetByeAtPosition(index, position);
+                var byteAtPosition = GetByteAtPosition(index, position);
 
                 if (byteAtPosition == 1)
                 {
@@ -38,8 +44,7 @@ namespace Lyn.Protocol.Bolt3.Shachain
 
         public bool InsertSecret(ShachainItems chain, UInt256 secret, ulong index)
         {
-            if (chain.Secrets.Last().Value.Index - 1 != index)
-                throw new InvalidOperationException("Invalid order");
+            if (chain.Index - 1 != index) throw new InvalidOperationException("Invalid order");
 
             int position = CountTrailingZeroes(index);
 
@@ -64,12 +69,14 @@ namespace Lyn.Protocol.Bolt3.Shachain
                 chain.Secrets.Add(position, new ShachainItem(secret, index));
             }
 
+            chain.Index = index;
+
             return true;
         }
 
         public UInt256? DeriveOldSecret(ShachainItems chain, ulong index)
         {
-            foreach (var item in chain.Secrets)
+            foreach (var item in chain.Secrets.OrderBy(o => o.Key))
             {
                 var mask = ~((1 << item.Key) - 1);
 
@@ -84,14 +91,12 @@ namespace Lyn.Protocol.Bolt3.Shachain
 
         private int CountTrailingZeroes(ulong index)
         {
-            var retTest = System.Numerics.BitOperations.TrailingZeroCount(index);
+            // return System.Numerics.BitOperations.TrailingZeroCount(index); // is this more optimized?
 
             for (int position = 0; position < MAX_HEIGHT; position++)
             {
-                if (GetByeAtPosition(index, position) != 0)
+                if (GetByteAtPosition(index, position) != 0)
                 {
-                    if (retTest != position) throw new Exception(); // todo: delete this test code
-
                     return position;
                 }
             }
@@ -118,7 +123,7 @@ namespace Lyn.Protocol.Bolt3.Shachain
             buffer = hashed.ToArray();
         }
 
-        private byte GetByeAtPosition(ulong index, int position)
+        private byte GetByteAtPosition(ulong index, int position)
         {
             return (byte)((index >> position) & 1);
         }
