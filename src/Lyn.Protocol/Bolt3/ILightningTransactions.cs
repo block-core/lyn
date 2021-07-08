@@ -18,6 +18,8 @@ namespace Lyn.Protocol.Bolt3
 
         Satoshis HtlcSuccessFee(bool optionAnchorOutputs, Satoshis feeratePerKw);
 
+        Satoshis GetBaseFee(Satoshis feeratePerKw, bool optionAnchorOutputs, int htlcCount);
+
         Transaction ClosingTransaction(ClosingTransactionIn closingTransactionIn);
     }
 }

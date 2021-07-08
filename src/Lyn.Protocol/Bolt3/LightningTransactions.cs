@@ -129,29 +129,10 @@ namespace Lyn.Protocol.Bolt3
             // BOLT3 Commitment Transaction Construction
             // 1. Calculate the base commitment transaction fee.
 
-            ulong weight;
-            Satoshis baseFee;
-            ulong numUntrimmedHtlcs = (ulong)htlcsUntrimmed.Count;
-            /* BOLT #3:
-             *
-             * The base fee for a commitment transaction:
-             *  - MUST be calculated to match:
-             *    1. Start with `weight` = 724 (1124 if `option_anchor_outputs` applies).
-             */
-            if (commitmentTransactionIn.OptionAnchorOutputs)
-                weight = 1124;
-            else
-                weight = 724;
-
-            /* BOLT #3:
-             *
-             *    2. For each committed HTLC, if that output is not trimmed as
-             *       specified in [Trimmed Outputs](#trimmed-outputs), add 172
-             *       to `weight`.
-             */
-            weight += 172 * numUntrimmedHtlcs;
-
-            baseFee = commitmentTransactionIn.FeeratePerKw * weight / 1000;
+            Satoshis baseFee = GetBaseFee(
+                commitmentTransactionIn.FeeratePerKw,
+                commitmentTransactionIn.OptionAnchorOutputs,
+                htlcsUntrimmed.Count);
 
             /* BOLT #3:
              * If `option_anchor_outputs` applies to the commitment
@@ -536,6 +517,35 @@ namespace Lyn.Protocol.Bolt3
             ulong baseSuccessFee = optionAnchorOutputs ? (ulong)706 : (ulong)703;
             Satoshis htlcFeeSuccessFee = feeratePerKw * baseSuccessFee / 1000;
             return htlcFeeSuccessFee;
+        }
+
+        public Satoshis GetBaseFee(Satoshis feeratePerKw, bool optionAnchorOutputs, int htlcCount)
+        {
+            ulong weight;
+            ulong numUntrimmedHtlcs = (ulong)htlcCount;
+
+            /* BOLT #3:
+             *
+             * The base fee for a commitment transaction:
+             *  - MUST be calculated to match:
+             *    1. Start with `weight` = 724 (1124 if `option_anchor_outputs` applies).
+             */
+            if (optionAnchorOutputs)
+                weight = 1124;
+            else
+                weight = 724;
+
+            /* BOLT #3:
+             *
+             *    2. For each committed HTLC, if that output is not trimmed as
+             *       specified in [Trimmed Outputs](#trimmed-outputs), add 172
+             *       to `weight`.
+             */
+            weight += 172 * numUntrimmedHtlcs;
+
+            Satoshis baseFee = feeratePerKw * weight / 1000;
+
+            return baseFee;
         }
 
         public Transaction ClosingTransaction(ClosingTransactionIn closingTransactionIn)
