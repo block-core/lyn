@@ -1,14 +1,8 @@
-using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Linq;
-using Lyn.Protocol.Bolt3;
 using Lyn.Protocol.Bolt3.Shachain;
-using Lyn.Protocol.Bolt3.Types;
-using Lyn.Protocol.Common;
 using Lyn.Types;
 using Lyn.Types.Bitcoin;
-using Lyn.Types.Fundamental;
 using Xunit;
 
 namespace Lyn.Protocol.Tests.Bolt3
@@ -38,10 +32,6 @@ namespace Lyn.Protocol.Tests.Bolt3
                 {
                     var oldsecret = shachain.DeriveOldSecret(shachainItems, j);
                     Assert.NotNull(oldsecret);
-                    if (expected[j] != oldsecret)
-                    {
-                    }
-
                     Assert.Equal(expected[j], oldsecret);
                 }
             }
