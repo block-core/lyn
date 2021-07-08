@@ -26,7 +26,6 @@ namespace Lyn.Protocol.Tests.Bolt2
         private StartOpenChannelService _sut;
 
         private readonly Mock<IPeerRepository> _peerRepository = new();
-        private readonly Mock<IBoltMessageSender<OpenChannel>> _messageSender = new();
         private readonly Mock<IBoltFeatures> _features = new();
         private readonly Mock<ILogger<OpenChannelMessageService>> _logger = new();
         private readonly Mock<IRandomNumberGenerator> _randomNumberGenerator = new();
@@ -41,7 +40,7 @@ namespace Lyn.Protocol.Tests.Bolt2
 
         public StartOpenChannelServiceTests()
         {
-            _sut = new StartOpenChannelService(_logger.Object, _messageSender.Object,
+            _sut = new StartOpenChannelService(_logger.Object,
                 _randomNumberGenerator.Object, _lightningKeyDerivation,
                 _channelStateRepository.Object, _peerRepository.Object,
                 _chainConfigProvider.Object, _channelConfigProvider.Object,
@@ -52,7 +51,7 @@ namespace Lyn.Protocol.Tests.Bolt2
             _secretProvider.Setup(_ => _.GetSeed()).Returns(new Secret(_randomSecret));
         }
 
-        private (ChainParameters chainParameters, ChannelConfig channelConfig) WithExistingPeerAndChainParameters(StartOpenChannelIn message)
+        private (ChainParameters chainParameters, ChannelConfig channelConfig) WithExistingPeerAndChainParameters(CreateOpenChannelIn message)
         {
             var chainParameters = new ChainParameters { GenesisBlockhash = message.ChainHash };
 
@@ -73,9 +72,9 @@ namespace Lyn.Protocol.Tests.Bolt2
             return (chainParameters, channelConfig);
         }
 
-        private static StartOpenChannelIn NewStartChannelMessage()
+        private static CreateOpenChannelIn NewStartChannelMessage()
         {
-            var message = new StartOpenChannelIn(
+            var message = new CreateOpenChannelIn(
                 new PublicKey(RandomMessages.NewRandomPublicKey()),
                 RandomMessages.NewRandomUint256(),
                 1000000,
@@ -99,25 +98,22 @@ namespace Lyn.Protocol.Tests.Bolt2
 
             var config = WithExistingPeerAndChainParameters(message);
 
-            await _sut.StartOpenChannelAsync(message);
+            var result = await _sut.CreateOpenChannelAsync(message);
+
+            // todo: dan add more checks
+
+            Assert.IsType<OpenChannel>(result.Payload);
+            OpenChannel openChannel = (OpenChannel)result.Payload;
+            Assert.Equal(message.FundingAmount, openChannel.FundingSatoshis);
 
             var channelStates = new List<ChannelState>();
             _channelStateRepository.Verify(_ =>
                 _.Create(Capture.In(channelStates)), Times.Once);
 
-            var openChannels = new List<PeerMessage<OpenChannel>>();
-            _messageSender.Verify(_ =>
-                _.SendMessageAsync(Capture.In(openChannels)), Times.Once);
-
-            // todo: dan add more checks
-
             Assert.Single(channelStates);
             Assert.Equal(message.FundingAmount, channelStates.First().FundingAmount);
             Assert.Equal(GetBasepointsFromSecret().fundingKey.ToString(), channelStates.First().LocalPublicKey.ToString());
             Assert.Equal(config.channelConfig.DustLimit, channelStates.First().LocalConfig.DustLimit);
-
-            Assert.Single(openChannels);
-            Assert.Equal(message.FundingAmount, openChannels.First().MessagePayload.FundingSatoshis);
         }
     }
 }
