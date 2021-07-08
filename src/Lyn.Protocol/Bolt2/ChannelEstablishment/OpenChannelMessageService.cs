@@ -1,4 +1,6 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
+using Lyn.Protocol.Bolt1;
 using Lyn.Protocol.Bolt1.Messages;
 using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages;
 using Lyn.Protocol.Bolt2.Configuration;
@@ -24,6 +26,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
         private readonly IChannelStateRepository _channelStateRepository;
         private readonly IChainConfigProvider _chainConfigProvider;
         private readonly IChannelConfigProvider _channelConfigProvider;
+        private readonly IPeerRepository _peerRepository;
         private readonly ISecretStore _secretStore;
         private readonly IBoltFeatures _boltFeatures;
 
@@ -34,6 +37,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             IChannelStateRepository channelStateRepository,
             IChainConfigProvider chainConfigProvider,
             IChannelConfigProvider channelConfigProvider,
+            IPeerRepository peerRepository,
             ISecretStore secretStore,
             IBoltFeatures boltFeatures)
         {
@@ -44,6 +48,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             _channelStateRepository = channelStateRepository;
             _chainConfigProvider = chainConfigProvider;
             _channelConfigProvider = channelConfigProvider;
+            _peerRepository = peerRepository;
             _secretStore = secretStore;
             _boltFeatures = boltFeatures;
         }
@@ -51,6 +56,14 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
         public async Task<MessageProcessingOutput> ProcessMessageAsync(PeerMessage<OpenChannel> message)
         {
             OpenChannel openChannel = message.MessagePayload;
+
+            var peer = _peerRepository.TryGetPeerAsync(message.NodeId);
+
+            if (peer == null) // todo: dan asked himself wtf
+            {
+                // todo: dan write this logic
+                return new MessageProcessingOutput();
+            }
 
             ChannelState? currentState = _channelStateRepository.Get(message.MessagePayload.TemporaryChannelId);
 
@@ -65,7 +78,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             if (chainParameters == null)
             {
                 // todo: fail the channel.
-                return new MessageProcessingOutput{CloseChannel = true};
+                return new MessageProcessingOutput { CloseChannel = true };
             }
 
             ChannelConfig? channelConfig = _channelConfigProvider.GetConfiguration(openChannel.ChainHash);
@@ -73,15 +86,17 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             if (channelConfig == null)
             {
                 // todo: fail the channel.
-                return new MessageProcessingOutput{CloseChannel = true};
+                return new MessageProcessingOutput { CloseChannel = true };
             }
 
-            string failReason = CheckMessage(openChannel, chainParameters, channelConfig);
+            bool optionAnchorOutputs = (peer.Featurs & Features.OptionAnchorOutputs) != 0;
+
+            string failReason = CheckMessage(openChannel, chainParameters, channelConfig, optionAnchorOutputs);
 
             if (!string.IsNullOrEmpty(failReason))
             {
                 // todo: fail the channel.
-                return new MessageProcessingOutput{CloseChannel = true};
+                return new MessageProcessingOutput { CloseChannel = true };
             }
 
             ChannelState channelState = new()
@@ -136,10 +151,10 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                 Payload = acceptChannel
             };
 
-            return new MessageProcessingOutput {Success = true, ResponseMessages = new[] {boltMessage}};
+            return new MessageProcessingOutput { Success = true, ResponseMessages = new[] { boltMessage } };
         }
 
-        private string CheckMessage(OpenChannel openChannel, ChainParameters chainParameters, ChannelConfig channelConfig)
+        private string CheckMessage(OpenChannel openChannel, ChainParameters chainParameters, ChannelConfig channelConfig, bool optionAnchorOutputs)
         {
             if (openChannel.FundingSatoshis < chainParameters.MinFundingAmount) return "funding_satoshis is too small";
             if (openChannel.HtlcMinimumMsat > channelConfig.HtlcMinimum) return "htlc_minimum_msat too large";
@@ -163,10 +178,8 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             if (openChannel.DustLimitSatoshis > openChannel.ChannelReserveSatoshis) return "dust_limit_satoshis is greater than channel_reserve_satoshis";
 
-            // the funder's amount for the initial commitment transaction is not sufficient for full fee payment.
-            // todo: dan calculate the full fee payment
-            // todo: what needs to be doen here is we need to use the helper methods in bol3 to calculate
-            // todo: the commitment transaction base fee and check that its above the channel capacity.
+            Satoshis baseFee = _lightningTransactions.GetBaseFee(openChannel.FeeratePerKw, optionAnchorOutputs, 0);
+            if (openChannel.FundingSatoshis < openChannel.ChannelReserveSatoshis + baseFee) return "the funder's amount for the initial commitment transaction is not sufficient for full fee payment.";
 
             if ((openChannel.FundingSatoshis > chainParameters.LargeChannelAmount)
                 && _boltFeatures.SupportedFeatures != Features.OptionSupportLargeChannel) return "funding_satoshis too big for option_support_large_channel";
