@@ -13,7 +13,7 @@ using Xunit;
 
 namespace Lyn.Protocol.Tests.Bolt3
 {
-    public class Bolt3PercommitmenSecret
+    public class Bolt3PercommitmenSecretTest
     {
         [Fact]
         public void ShachainLongTest()
