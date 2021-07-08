@@ -28,7 +28,7 @@ namespace Lyn.Protocol.Tests.Bolt3
             {
                 bool inserted = shachain.InsertSecret(shachainItems, expected[i], i);
                 Assert.True(inserted);
-                for (ulong j = i; j != Shachain.INDEX_ROOT; j++)
+                for (ulong j = i; j != Shachain.INDEX_ROOT + 1; j++)
                 {
                     var oldsecret = shachain.DeriveOldSecret(shachainItems, j);
                     Assert.NotNull(oldsecret);
@@ -43,14 +43,14 @@ namespace Lyn.Protocol.Tests.Bolt3
         {
             Shachain shachain = new Shachain();
             ShachainItems shachainItems = new();
-            ulong startIndex = 281474976710655;
+            ulong startIndex = Shachain.INDEX_ROOT;
 
             foreach (var item in items)
             {
                 Assert.Equal(item.success, shachain.InsertSecret(shachainItems, new UInt256(Hex.FromString(item.hash)), startIndex--));
 
-                ulong retestIndex = 281474976710655;
-                foreach (var innerItem in items.TakeWhile(t => t.hash == item.hash))
+                ulong retestIndex = Shachain.INDEX_ROOT;
+                foreach (var innerItem in items.TakeWhile(t => t.success && retestIndex > startIndex))
                 {
                     Assert.Equal(new UInt256(Hex.FromString(innerItem.hash)), shachain.DeriveOldSecret(shachainItems, retestIndex--));
                 }
