@@ -11,7 +11,7 @@ namespace Lyn.Types
         {
             if (string.IsNullOrEmpty(hex)) return null;
 
-            int startIndex = hex.ToLower().StartsWith("0x") ? 2 : 0;
+            var startIndex = hex.StartsWith("0x") || hex.StartsWith("0X") ? 2 : 0;
 
             return Enumerable.Range(startIndex, hex.Length - startIndex)
                 .Where(x => x % 2 == 0)
