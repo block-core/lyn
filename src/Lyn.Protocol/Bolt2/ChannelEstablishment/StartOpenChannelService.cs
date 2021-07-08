@@ -16,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Lyn.Protocol.Bolt1.Messages;
+using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages.TlvRecords;
 using Lyn.Protocol.Common.Messages;
 
 namespace Lyn.Protocol.Bolt2.ChannelEstablishment
@@ -32,10 +33,8 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
         private readonly IBoltFeatures _boltFeatures;
         private readonly IParseFeatureFlags _parseFeatureFlags;
         private readonly ISecretStore _secretStore;
-        private readonly IBoltMessageSender<OpenChannel> _messageSender;
 
         public StartOpenChannelService(ILogger<OpenChannelMessageService> logger,
-            IBoltMessageSender<OpenChannel> messageSender,
             IRandomNumberGenerator randomNumberGenerator,
             ILightningKeyDerivation lightningKeyDerivation,
             IChannelStateRepository channelStateRepository,
@@ -56,26 +55,25 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             _boltFeatures = boltFeatures;
             _parseFeatureFlags = parseFeatureFlags;
             _secretStore = secretStore;
-            _messageSender = messageSender;
         }
 
-        public async Task StartOpenChannelAsync(StartOpenChannelIn startOpenChannelIn)
+        public async Task<BoltMessage> CreateOpenChannelAsync(CreateOpenChannelIn createOpenChannelIn)
         {
-            var peer = _peerRepository.TryGetPeerAsync(startOpenChannelIn.NodeId);
+            var peer = _peerRepository.TryGetPeerAsync(createOpenChannelIn.NodeId);
 
             if (peer == null)
                 throw new ApplicationException($"Peer was not found or is not connected");
 
-            ChainParameters? chainParameters = _chainConfigProvider.GetConfiguration(startOpenChannelIn.ChainHash);
+            ChainParameters? chainParameters = _chainConfigProvider.GetConfiguration(createOpenChannelIn.ChainHash);
 
             if (chainParameters == null)
                 throw new ApplicationException($"Invalid chain hash");
 
-            ChannelConfig? channelConfig = _channelConfigProvider.GetConfiguration(startOpenChannelIn.ChainHash);
+            ChannelConfig? channelConfig = _channelConfigProvider.GetConfiguration(createOpenChannelIn.ChainHash);
 
             if (channelConfig == null)
                 throw new ApplicationException($"Invalid chain hash");
-            
+
             OpenChannel openChannel = new();
 
             openChannel.ChainHash = chainParameters.GenesisBlockhash;
@@ -84,20 +82,20 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             bool localSupportLargeChannels = (_boltFeatures.SupportedFeatures & Features.OptionSupportLargeChannel) != 0;
             bool remoteSupportLargeChannels = (peer.Featurs & Features.OptionSupportLargeChannel) != 0;
-            
+
             if (localSupportLargeChannels == false || remoteSupportLargeChannels == false)
             {
-                if (startOpenChannelIn.FundingAmount > chainParameters.LargeChannelAmount) // 2^24
+                if (createOpenChannelIn.FundingAmount > chainParameters.LargeChannelAmount) // 2^24
                     throw new ApplicationException($"Peer enforces max channel capacity of {chainParameters.LargeChannelAmount}sats");
             }
 
-            openChannel.FundingSatoshis = startOpenChannelIn.FundingAmount;
+            openChannel.FundingSatoshis = createOpenChannelIn.FundingAmount;
 
-            MiliSatoshis fundingMiliSatoshis = startOpenChannelIn.FundingAmount;
-            if (startOpenChannelIn.PushOnOpen > fundingMiliSatoshis)
-                throw new ApplicationException($"Not enough capacity to pay peer {startOpenChannelIn.PushOnOpen}msat on opening of the channel with capacity {fundingMiliSatoshis}msat");
+            MiliSatoshis fundingMiliSatoshis = createOpenChannelIn.FundingAmount;
+            if (createOpenChannelIn.PushOnOpen > fundingMiliSatoshis)
+                throw new ApplicationException($"Not enough capacity to pay peer {createOpenChannelIn.PushOnOpen}msat on opening of the channel with capacity {fundingMiliSatoshis}msat");
 
-            openChannel.PushMsat = startOpenChannelIn.PushOnOpen;
+            openChannel.PushMsat = createOpenChannelIn.PushOnOpen;
 
             Secret seed = _secretStore.GetSeed();
             Secrets secrets = _lightningKeyDerivation.DeriveSecrets(seed);
@@ -112,18 +110,29 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             openChannel.FirstPerCommitmentPoint = _lightningKeyDerivation.PerCommitmentPoint(secrets.Shaseed, 0);
 
+            // c-lightning sets this to be 1% of the funding amount, should we do the same?
+            openChannel.ChannelReserveSatoshis = channelConfig.ChannelReserve; // todo: discuss whether this should be a configuration of the % of the funding amount
+
             if (channelConfig.ChannelReserve < channelConfig.DustLimit)
-                throw new ApplicationException($"ChannelReserve = {channelConfig.ChannelReserve}sat must be greater then DustLimit = {channelConfig.DustLimit}sat");
+                channelConfig.ChannelReserve = channelConfig.DustLimit;
 
-            openChannel.ChannelReserveSatoshis = channelConfig.ChannelReserve;
-
-            openChannel.ChannelFlags = startOpenChannelIn.PrivateChannel ? (byte)0 : (byte)ChannelFlags.ChannelFlags.AnnounceChannel;
+            openChannel.ChannelFlags = createOpenChannelIn.PrivateChannel ? (byte)0 : (byte)ChannelFlags.ChannelFlags.AnnounceChannel;
             openChannel.ToSelfDelay = channelConfig.ToSelfDelay;
-            openChannel.FeeratePerKw = startOpenChannelIn.FeeRate;
+            openChannel.FeeratePerKw = createOpenChannelIn.FeeRate;
             openChannel.DustLimitSatoshis = channelConfig.DustLimit;
             openChannel.HtlcMinimumMsat = channelConfig.HtlcMinimum;
+            openChannel.MaxHtlcValueInFlightMsat = channelConfig.MaxHtlcValueInFlight;
+            openChannel.MaxAcceptedHtlcs = channelConfig.MaxAcceptedHtlcs;
 
-            // todo: dan create the shutdown_scriptpubkey once tlv is done.
+            byte[]? upfrontShutdownScript = channelConfig.UpfrontShutdownScript;
+            bool localSupportUpfrontShutdownScript = (_boltFeatures.SupportedFeatures & Features.OptionUpfrontShutdownScript) != 0;
+            bool remoteSupportUpfrontShutdownScript = (peer.Featurs & Features.OptionUpfrontShutdownScript) != 0;
+
+            if (localSupportUpfrontShutdownScript && remoteSupportUpfrontShutdownScript)
+            {
+                if (upfrontShutdownScript == null || upfrontShutdownScript.Length == 0)
+                    upfrontShutdownScript = new byte[] { 0x0000 };
+            }
 
             var boltMessage = new BoltMessage
             {
@@ -132,10 +141,11 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                 {
                     Records = new List<TlvRecord>
                     {
+                        new UpfrontShutdownScriptTlvRecord{ ShutdownScriptpubkey = upfrontShutdownScript}
                     }
                 }
             };
-            
+
             ChannelState channelState = new()
             {
                 FundingAmount = openChannel.FundingSatoshis,
@@ -145,12 +155,12 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                 PushMsat = openChannel.PushMsat,
                 LocalFirstPerCommitmentPoint = openChannel.FirstPerCommitmentPoint,
                 LocalConfig = channelConfig,
-                FeeratePerKw = startOpenChannelIn.FeeRate,
+                FeeratePerKw = createOpenChannelIn.FeeRate,
             };
 
             _channelStateRepository.Create(channelState);
 
-            await _messageSender.SendMessageAsync(new PeerMessage<OpenChannel>(startOpenChannelIn.NodeId, boltMessage));
+            return boltMessage;
         }
     }
 }

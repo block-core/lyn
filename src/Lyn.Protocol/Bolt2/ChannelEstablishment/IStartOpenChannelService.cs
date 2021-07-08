@@ -1,13 +1,14 @@
 ﻿using Lyn.Protocol.Common.Blockchain;
 using Lyn.Types.Fundamental;
 using System.Threading.Tasks;
+using Lyn.Protocol.Common.Messages;
 using Lyn.Types.Bitcoin;
 
 namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 {
-    public class StartOpenChannelIn
+    public class CreateOpenChannelIn
     {
-        public StartOpenChannelIn(PublicKey nodeId, UInt256 chainHash, Satoshis fundingAmount, MiliSatoshis pushOnOpen, Satoshis feeRate, bool privateChannel)
+        public CreateOpenChannelIn(PublicKey nodeId, UInt256 chainHash, Satoshis fundingAmount, MiliSatoshis pushOnOpen, Satoshis feeRate, bool privateChannel)
         {
             NodeId = nodeId;
             ChainHash = chainHash;
@@ -27,6 +28,6 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
     public interface IStartOpenChannelService
     {
-        Task StartOpenChannelAsync(StartOpenChannelIn startOpenChannelIn);
+        Task<BoltMessage> CreateOpenChannelAsync(CreateOpenChannelIn createOpenChannelIn);
     }
 }

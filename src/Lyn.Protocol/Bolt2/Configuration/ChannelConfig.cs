@@ -42,5 +42,7 @@ namespace Lyn.Protocol.Bolt2.Configuration
          * similarly, `max_accepted_htlcs` limits the number of outstanding
          * HTLCs the other node can offer. */
         public ushort MaxAcceptedHtlcs { get; set; }
+
+        public byte[]? UpfrontShutdownScript { get; set; } // todo: this really goes here?
     }
 }
