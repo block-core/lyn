@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Linq;
 using Lyn.Protocol.Common.Hashing;
+using Lyn.Types;
 using Lyn.Types.Bitcoin;
-using Lyn.Types.Fundamental;
 
 namespace Lyn.Protocol.Bolt3.Shachain
 {
@@ -20,21 +20,21 @@ namespace Lyn.Protocol.Bolt3.Shachain
             return DeriveSecret(secret, MAX_HEIGHT, index);
         }
 
-        public UInt256 DeriveSecret(UInt256 secret, int bits, ulong index)
+        public UInt256 DeriveSecret(UInt256 secret, byte bits, ulong from_index)
         {
             if (bits > MAX_HEIGHT)
                 throw new InvalidOperationException($"The bits = {bits} is above limit {MAX_HEIGHT}");
 
             var buffer = secret.GetBytes().ToArray().AsSpan();
 
-            for (int position = bits - 1; position >= 0; position--)
+            for (byte position = (byte) (bits - 1); position < byte.MaxValue; position--)
             {
                 // find bit on index at position.
-                var byteAtPosition = GetByteAtPosition(index, position);
+                var bitAtPosition = GetBitAtPositionAsBoolean(from_index, position);
 
-                if (byteAtPosition == 1)
+                if (bitAtPosition)
                 {
-                    FlipByte(buffer, position);
+                    FlipBit(buffer, position);
                     HashBuffer(ref buffer);
                 }
             }
@@ -46,7 +46,7 @@ namespace Lyn.Protocol.Bolt3.Shachain
         {
             if (chain.Index - 1 != index) throw new InvalidOperationException("Invalid order");
 
-            int position = CountTrailingZeroes(index);
+            byte position = CountTrailingZeroes(index);
 
             for (int i = 0; i < position; i++)
             {
@@ -66,7 +66,7 @@ namespace Lyn.Protocol.Bolt3.Shachain
             }
             else
             {
-                chain.Secrets.Add(position, new ShachainItem(secret, index));
+                chain.Secrets.Add(position, new ShachainItem(secret, index)); 
             }
 
             chain.Index = index;
@@ -82,20 +82,20 @@ namespace Lyn.Protocol.Bolt3.Shachain
 
                 if ((index & (ulong)mask) == item.Value.Index)
                 {
-                    return DeriveSecret(item.Value.Secret, item.Key, item.Value.Index);
+                    return DeriveSecret(item.Value.Secret, CountTrailingZeroes(item.Value.Index), index);
                 }
             }
 
             return null;
         }
 
-        private int CountTrailingZeroes(ulong index)
+        private byte CountTrailingZeroes(ulong index)
         {
             // return System.Numerics.BitOperations.TrailingZeroCount(index); // is this more optimized?
 
-            for (int position = 0; position < MAX_HEIGHT; position++)
+            for (byte position = 0; position < MAX_HEIGHT; position++)
             {
-                if (GetByteAtPosition(index, position) != 0)
+                if (GetBitAtPositionAsBoolean(index, position))
                 {
                     return position;
                 }
@@ -104,28 +104,28 @@ namespace Lyn.Protocol.Bolt3.Shachain
             return 0;
         }
 
-        private void FlipByte(Span<byte> buffer, int position)
+        private static void FlipBit(Span<byte> buffer, byte position)
         {
             var byteNumber = position / 8;
             var bitNumber = position % 8;
 
-            int byteContent = buffer[byteNumber];
+            var byteContent = buffer[byteNumber];
 
-            byteContent ^= (1 << bitNumber);
+            byteContent ^= (byte) (1 << bitNumber);
 
-            buffer[byteNumber] = (byte)byteContent;
+            buffer[byteNumber] = byteContent;
         }
 
-        private void HashBuffer(ref Span<byte> buffer)
+        private static void HashBuffer(ref Span<byte> buffer)
         {
             // todo: optimize by using a Span<byte> instead of a ReadOnlySpan<byte> on the HashGenerator
-            var hashed = HashGenerator.Sha256(buffer);
-            buffer = hashed.ToArray();
+            HashGenerator.Sha256(buffer)
+                .CopyTo(buffer);
         }
 
-        private byte GetByteAtPosition(ulong index, int position)
+        private static bool GetBitAtPositionAsBoolean(ulong index, byte position)
         {
-            return (byte)((index >> position) & 1);
+            return ((index >> position) & 1) > 0;
         }
     }
 }
