@@ -117,7 +117,7 @@ namespace Lyn.Protocol.Tests.Bolt2
             Assert.Equal(config.channelConfig.DustLimit, channelStates.First().LocalConfig.DustLimit);
 
             Assert.Single(openChannels);
-            Assert.Equal(message.FundingAmount, openChannels.First().Message.FundingSatoshis);
+            Assert.Equal(message.FundingAmount, openChannels.First().MessagePayload.FundingSatoshis);
         }
     }
 }

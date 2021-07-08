@@ -1,13 +1,13 @@
+using Lyn.Protocol.Bolt1.Messages;
+using Lyn.Protocol.Common.Messages;
 using Lyn.Types.Bolt;
-using Lyn.Types.Bolt.Messages;
 using Lyn.Types.Fundamental;
 
 namespace Lyn.Protocol.Bolt2.ChannelEstablishment.Messages
 {
-    public class AcceptChannel : BoltMessage
+    public class AcceptChannel : MessagePayload
     {
-        private const string COMMAND = "33";
-        public override string Command => COMMAND;
+        public override MessageType MessageType => MessageType.AcceptChannel;
         public ChannelId? TemporaryChannelId { get; set; }
         public Satoshis? DustLimitSatoshis { get; set; }
         public MiliSatoshis? MaxHtlcValueInFlightMsat { get; set; }

@@ -1,6 +1,7 @@
 ﻿using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
-using Lyn.Types.Bolt.Messages;
+using Lyn.Protocol.Bolt1.Messages;
+using Lyn.Protocol.Common.Messages;
 
 namespace Lyn.Protocol.Bolt1.TlvStreams
 {

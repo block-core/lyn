@@ -1,11 +1,14 @@
 using System;
+using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using FluentAssertions;
 using Lyn.Protocol.Bolt1;
+using Lyn.Protocol.Bolt1.Messages;
 using Lyn.Protocol.Common;
+using Lyn.Protocol.Common.Messages;
 using Lyn.Protocol.Connection;
-using Lyn.Types.Bolt.Messages;
 using Lyn.Types.Fundamental;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -21,8 +24,6 @@ namespace Lyn.Protocol.Tests.Bolt1
         private readonly Mock<IDateTimeProvider> _dateTimeProvider;
         private readonly Mock<IRandomNumberGenerator> _randomNumberGenerator;
         private readonly Mock<IPingPongMessageRepository> _messageRepository;
-        private readonly Mock<IBoltMessageSender<PongMessage>> _pongMessageSender;
-        private readonly Mock<IBoltMessageSender<PingMessage>> _pingMessageSender;
 
         private DateTime _utcNow;
         private ushort _uint16;
@@ -33,12 +34,9 @@ namespace Lyn.Protocol.Tests.Bolt1
             _dateTimeProvider = new Mock<IDateTimeProvider>();
             _randomNumberGenerator = new Mock<IRandomNumberGenerator>();
             _messageRepository = new Mock<IPingPongMessageRepository>();
-            _pongMessageSender = new Mock<IBoltMessageSender<PongMessage>>();
-            _pingMessageSender = new Mock<IBoltMessageSender<PingMessage>>();
-            
+
             _sut = new PingMessageService(_logger.Object, _dateTimeProvider.Object,
-                _randomNumberGenerator.Object, _messageRepository.Object, _pongMessageSender.Object,
-                _pingMessageSender.Object);
+                _randomNumberGenerator.Object, _messageRepository.Object);
 
             _utcNow = DateTime.UtcNow;
 
@@ -53,14 +51,17 @@ namespace Lyn.Protocol.Tests.Bolt1
 
         private static PeerMessage<PingMessage> WithPingBoltMessage(ushort numPongBytes)
         {
-            return new 
+            return new
             (
                 RandomMessages.NewRandomPublicKey(),
-                new PingMessage
+                new BoltMessage
                 {
-                    BytesLen = PingMessage.MAX_BYTES_LEN,
-                    Ignored = RandomMessages.GetRandomByteArray(PingMessage.MAX_BYTES_LEN),
-                    NumPongBytes = numPongBytes
+                    Payload = new PingMessage
+                    {
+                        BytesLen = PingMessage.MAX_BYTES_LEN,
+                        Ignored = RandomMessages.GetRandomByteArray(PingMessage.MAX_BYTES_LEN),
+                        NumPongBytes = numPongBytes
+                    }
                 }
             );
         }
@@ -71,11 +72,11 @@ namespace Lyn.Protocol.Tests.Bolt1
                 It.Is<PingMessage>(_ => _.BytesLen == _uint16 % PingMessage.MAX_BYTES_LEN)));
         }
 
-        private void ThenTheMessageWithTheWritePongLengthWasSent(PublicKey? nodeId)
+        private void ThanTheMessageForPingWasReturnedFromTheService(MessageProcessingOutput output)
         {
-            _pingMessageSender.Verify(_ => _.SendMessageAsync(It.Is<PeerMessage<PingMessage>>(_
-                => _.NodeId == nodeId &&
-                   _.Message.NumPongBytes == PingMessage.MAX_BYTES_LEN - _uint16 % PingMessage.MAX_BYTES_LEN)));
+            output.Success.Should().BeTrue();
+            output.ResponseMessages.Should().ContainSingle()
+                .Which.Payload.Should().BeEquivalentTo(new PingMessage((ushort)(_uint16 % PingMessage.MAX_BYTES_LEN)));
         }
         
         [Fact]
@@ -83,9 +84,10 @@ namespace Lyn.Protocol.Tests.Bolt1
         {
             var message = WithPingBoltMessage(PingMessage.MAX_BYTES_LEN + 1);
 
-            await _sut.ProcessMessageAsync(message);
+            var result =  await _sut.ProcessMessageAsync(message);
 
-            _pongMessageSender.VerifyNoOtherCalls();
+            result.Success.Should().BeFalse();
+            result.ResponseMessages.Should().BeNull();
         }
 
 
@@ -94,12 +96,22 @@ namespace Lyn.Protocol.Tests.Bolt1
         {
             var message = WithPingBoltMessage(PingMessage.MAX_BYTES_LEN);
 
-            await _sut.ProcessMessageAsync(message);
+            var result = await _sut.ProcessMessageAsync(message);
 
-            _pongMessageSender.Verify(_ => _.SendMessageAsync(It.Is<PeerMessage<PongMessage>>(_ =>
-                _.Message.BytesLen == message.Message.NumPongBytes &&
-                _.Message.BytesLen == message.Message.Ignored!.Length)));
+            result.Should().NotBeNull();
+
+            result.Success.Should().BeTrue();
+            
+            result.ResponseMessages.Should()
+                .ContainSingle()
+                .Which.Payload.Should()
+                .BeEquivalentTo(new PongMessage
+                {
+                    BytesLen = message.MessagePayload.NumPongBytes,
+                    Ignored = new byte[message.MessagePayload.NumPongBytes]
+                });
         }
+
 
         [Fact]
         public async Task ProcessMessageAsyncThrowsIfPingWasReceivedBeforeTheAllowedTime()
@@ -117,11 +129,11 @@ namespace Lyn.Protocol.Tests.Bolt1
         {
             var nodeId = RandomMessages.NewRandomPublicKey();
 
-            await _sut.SendPingAsync(nodeId,CancellationToken.None);
+            var result = await _sut.GeneratePingMessageAsync(nodeId, CancellationToken.None);
 
             ThanTheMessageWasAddedToTheRepository(nodeId);
 
-            ThenTheMessageWithTheWritePongLengthWasSent(nodeId);
+            ThanTheMessageForPingWasReturnedFromTheService(result);
         }
 
 
@@ -135,13 +147,13 @@ namespace Lyn.Protocol.Tests.Bolt1
                 .Returns(() => new ValueTask<bool>(true))
                 .Returns(() => new ValueTask<bool>(false));
 
-            await _sut.SendPingAsync(nodeId,CancellationToken.None);
+            var result = await _sut.GeneratePingMessageAsync(nodeId, CancellationToken.None);
 
             ThanTheMessageWasAddedToTheRepository(nodeId);
 
             _messageRepository.VerifyAll();
 
-            ThenTheMessageWithTheWritePongLengthWasSent(nodeId);
+            ThanTheMessageForPingWasReturnedFromTheService(result);
         }
     }
 }

@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Lyn.Protocol.Bolt7.Entities;
 using Lyn.Types.Bolt;
 using Lyn.Types.Fundamental;
@@ -6,19 +7,19 @@ namespace Lyn.Protocol.Bolt7
 {
    public interface IGossipRepository
    {
-      GossipNode AddNode(GossipNode node);
+      Task<GossipNode> AddNodeAsync(GossipNode node);
 
-      GossipNode? GetNode(PublicKey nodeId);
-      GossipNode[] GetNodes(params PublicKey[] keys);
+      Task<GossipNode?> GetNodeAsync(PublicKey nodeId);
+      Task<GossipNode[]> GetNodesAsync(params PublicKey[] keys);
       
-      GossipChannel AddGossipChannel(GossipChannel channel);
+      Task<GossipChannel> AddGossipChannelAsync(GossipChannel channel);
 
-      GossipChannel? GetGossipChannel(ShortChannelId shortChannelId);
+      Task<GossipChannel?> GetGossipChannelAsync(ShortChannelId shortChannelId);
 
-      void RemoveGossipChannels(params ShortChannelId[] channelIds);
+      Task RemoveGossipChannelsAsync(params ShortChannelId[] channelIds);
       
       bool IsNodeInBlacklistedList(PublicKey nodeId);
 
-      void AddNodeToBlacklist(params PublicKey[] publicKeys);
+      Task AddNodeToBlacklistAsync(params PublicKey[] publicKeys);
    }
 }

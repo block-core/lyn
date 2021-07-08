@@ -1,4 +1,5 @@
 ﻿using System.Threading.Tasks;
+using Lyn.Protocol.Bolt1.Messages;
 using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages;
 using Lyn.Protocol.Bolt2.Configuration;
 using Lyn.Protocol.Bolt2.Entities;
@@ -7,8 +8,8 @@ using Lyn.Protocol.Bolt3.Types;
 using Lyn.Protocol.Bolt9;
 using Lyn.Protocol.Common;
 using Lyn.Protocol.Common.Blockchain;
+using Lyn.Protocol.Common.Messages;
 using Lyn.Protocol.Connection;
-using Lyn.Types.Bolt.Messages;
 using Lyn.Types.Fundamental;
 using Microsoft.Extensions.Logging;
 
@@ -25,11 +26,8 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
         private readonly IChannelConfigProvider _channelConfigProvider;
         private readonly ISecretStore _secretStore;
         private readonly IBoltFeatures _boltFeatures;
-        private readonly IParseFeatureFlags _parseFeatureFlags;
-        private readonly IBoltMessageSender<AcceptChannel> _messageSender;
 
         public OpenChannelMessageService(ILogger<OpenChannelMessageService> logger,
-            IBoltMessageSender<AcceptChannel> messageSender,
             ILightningTransactions lightningTransactions,
             IRandomNumberGenerator randomNumberGenerator,
             ILightningKeyDerivation lightningKeyDerivation,
@@ -37,8 +35,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             IChainConfigProvider chainConfigProvider,
             IChannelConfigProvider channelConfigProvider,
             ISecretStore secretStore,
-            IBoltFeatures boltFeatures,
-            IParseFeatureFlags parseFeatureFlags)
+            IBoltFeatures boltFeatures)
         {
             _logger = logger;
             _lightningTransactions = lightningTransactions;
@@ -49,20 +46,18 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             _channelConfigProvider = channelConfigProvider;
             _secretStore = secretStore;
             _boltFeatures = boltFeatures;
-            _parseFeatureFlags = parseFeatureFlags;
-            _messageSender = messageSender;
         }
 
-        public async Task ProcessMessageAsync(PeerMessage<OpenChannel> message)
+        public async Task<MessageProcessingOutput> ProcessMessageAsync(PeerMessage<OpenChannel> message)
         {
-            OpenChannel openChannel = message.Message;
+            OpenChannel openChannel = message.MessagePayload;
 
-            ChannelState? currentState = _channelStateRepository.Get(message.Message.TemporaryChannelId);
+            ChannelState? currentState = _channelStateRepository.Get(message.MessagePayload.TemporaryChannelId);
 
             if (currentState != null)
             {
                 // todo: dan write this logic
-                return;
+                return new MessageProcessingOutput();
             }
 
             ChainParameters? chainParameters = _chainConfigProvider.GetConfiguration(openChannel.ChainHash);
@@ -70,7 +65,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             if (chainParameters == null)
             {
                 // todo: fail the channel.
-                return;
+                return new MessageProcessingOutput{CloseChannel = true};
             }
 
             ChannelConfig? channelConfig = _channelConfigProvider.GetConfiguration(openChannel.ChainHash);
@@ -78,7 +73,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             if (channelConfig == null)
             {
                 // todo: fail the channel.
-                return;
+                return new MessageProcessingOutput{CloseChannel = true};
             }
 
             string failReason = CheckMessage(openChannel, chainParameters, channelConfig);
@@ -86,7 +81,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             if (!string.IsNullOrEmpty(failReason))
             {
                 // todo: fail the channel.
-                return;
+                return new MessageProcessingOutput{CloseChannel = true};
             }
 
             ChannelState channelState = new()
@@ -136,7 +131,12 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             _channelStateRepository.Create(channelState);
 
-            await _messageSender.SendMessageAsync(new PeerMessage<AcceptChannel>(message.NodeId, acceptChannel));
+            var boltMessage = new BoltMessage
+            {
+                Payload = acceptChannel
+            };
+
+            return new MessageProcessingOutput {Success = true, ResponseMessages = new[] {boltMessage}};
         }
 
         private string CheckMessage(OpenChannel openChannel, ChainParameters chainParameters, ChannelConfig channelConfig)

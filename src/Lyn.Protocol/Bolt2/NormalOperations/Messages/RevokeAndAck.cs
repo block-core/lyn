@@ -1,13 +1,13 @@
+using Lyn.Protocol.Bolt1.Messages;
+using Lyn.Protocol.Common.Messages;
 using Lyn.Types.Bolt;
-using Lyn.Types.Bolt.Messages;
 using Lyn.Types.Fundamental;
 
 namespace Lyn.Protocol.Bolt2.NormalOperations.Messages
 {
-    public class RevokeAndAck : BoltMessage
+    public class RevokeAndAck : MessagePayload
     {
-        private const string COMMAND = "133";
-        public override string Command => COMMAND;
+        public override MessageType MessageType => MessageType.RevokeAndAck;
         public ChannelId? ChannelId { get; set; }
         public Secret? PerCommitmentSecret { get; set; }
         public PublicKey? NextPerCommitmentPoint { get; set; }

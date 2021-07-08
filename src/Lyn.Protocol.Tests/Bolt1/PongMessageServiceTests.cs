@@ -2,8 +2,9 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Lyn.Protocol.Bolt1;
+using Lyn.Protocol.Bolt1.Messages;
+using Lyn.Protocol.Common.Messages;
 using Lyn.Protocol.Connection;
-using Lyn.Types.Bolt.Messages;
 using Lyn.Types.Fundamental;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -27,9 +28,9 @@ namespace Lyn.Protocol.Tests.Bolt1
         }
 
         private static PeerMessage<T> NewBoltMessage<T>(T message, PublicKey id)
-        where T : BoltMessage
+        where T : MessagePayload
         {
-            return new (id,message);
+            return new (id,new BoltMessage{Payload = message});
         }
         
         private static PeerMessage<PongMessage> WithPongBoltMessage()
@@ -49,7 +50,7 @@ namespace Lyn.Protocol.Tests.Bolt1
             await _sut.ProcessMessageAsync(pong);
             
             _messageRepository.Verify(_ 
-                    => _.MarkPongReplyForPingAsync(pong.NodeId,((PongMessage)pong.Message).Id)
+                    => _.MarkPongReplyForPingAsync(pong.NodeId,((PongMessage)pong.MessagePayload).Id)
             ,Times.Never);
         }
         
@@ -58,13 +59,13 @@ namespace Lyn.Protocol.Tests.Bolt1
         {
             var pong = WithPongBoltMessage();
 
-            _messageRepository.Setup(_ => _.PendingPingExistsForIdAsync(pong.NodeId,pong.Message.Id))
+            _messageRepository.Setup(_ => _.PendingPingExistsForIdAsync(pong.NodeId,pong.MessagePayload.Id))
                 .Returns(() => new ValueTask<bool>(true))
                 .Verifiable();
             
             await _sut.ProcessMessageAsync(pong);
 
-            _messageRepository.Verify(_ => _.MarkPongReplyForPingAsync(pong.NodeId, pong.Message.Id));
+            _messageRepository.Verify(_ => _.MarkPongReplyForPingAsync(pong.NodeId, pong.MessagePayload.Id));
         }
     }
 }

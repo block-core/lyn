@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Lyn.Types.Bolt.Messages
+namespace Lyn.Protocol.Common.Messages
 {
    public class TlVStream
    {

@@ -1,14 +1,14 @@
 ﻿using System.Threading.Tasks;
-using Lyn.Types.Bolt.Messages;
+using Lyn.Protocol.Common.Messages;
 
 namespace Lyn.Protocol.Connection
 {
-    public interface IBoltMessageSender<T> where T : BoltMessage
+    public interface IBoltMessageSender<T> where T : MessagePayload
     {
         Task SendMessageAsync(PeerMessage<T> message);
     }
 
-    public class BoltMessageSender<T> : IBoltMessageSender<T> where T : BoltMessage
+    public class BoltMessageSender<T> : IBoltMessageSender<T> where T : MessagePayload
     {
         public Task SendMessageAsync(PeerMessage<T> message)
         {

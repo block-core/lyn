@@ -1,6 +1,6 @@
 using System;
 
-namespace Lyn.Types.Bolt.Messages
+namespace Lyn.Protocol.Bolt1.Messages
 {
     [Flags]
     public enum Features : ulong 

@@ -1,12 +1,10 @@
-﻿using Lyn.Types.Bolt.Messages;
+﻿using Lyn.Protocol.Common.Messages;
 
 namespace Lyn.Protocol.Bolt1.Messages
 {
-    public sealed class InitMessage : BoltMessage
+    public sealed class InitMessage : MessagePayload
     {
-        private const string COMMAND = "16";
-
-        public override string Command => COMMAND;
+        public override MessageType MessageType => MessageType.Init;
 
         public byte[] GlobalFeatures { get; set; } = new byte[0];
         public byte[] Features { get; set; } = new byte[0];

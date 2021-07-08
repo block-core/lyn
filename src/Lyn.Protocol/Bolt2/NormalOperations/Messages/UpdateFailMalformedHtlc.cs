@@ -1,13 +1,13 @@
+using Lyn.Protocol.Bolt1.Messages;
+using Lyn.Protocol.Common.Messages;
 using Lyn.Types.Bitcoin;
 using Lyn.Types.Bolt;
-using Lyn.Types.Bolt.Messages;
 
 namespace Lyn.Protocol.Bolt2.NormalOperations.Messages
 {
-    public class UpdateFailMalformedHtlc : BoltMessage
+    public class UpdateFailMalformedHtlc : MessagePayload
     {
-        private const string COMMAND = "135";
-        public override string Command => COMMAND;
+        public override MessageType MessageType => MessageType.UpdateFailMalformedHtlc;
         public ChannelId? ChannelId { get; set; }
         public ulong? Id { get; set; }
         public UInt256? Sha256OfOnion { get; set; }

@@ -10,12 +10,13 @@ using Lyn.Protocol.Common;
 using Lyn.Protocol.Common.Blockchain;
 using Lyn.Protocol.Connection;
 using Lyn.Types.Bolt;
-using Lyn.Types.Bolt.Messages;
 using Lyn.Types.Fundamental;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Lyn.Protocol.Bolt1.Messages;
+using Lyn.Protocol.Common.Messages;
 
 namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 {
@@ -74,7 +75,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             if (channelConfig == null)
                 throw new ApplicationException($"Invalid chain hash");
-
+            
             OpenChannel openChannel = new();
 
             openChannel.ChainHash = chainParameters.GenesisBlockhash;
@@ -124,13 +125,17 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             // todo: dan create the shutdown_scriptpubkey once tlv is done.
 
-            openChannel.Extension = new TlVStream
+            var boltMessage = new BoltMessage
             {
-                Records = new List<TlvRecord>
+                Payload = openChannel,
+                Extension = new TlVStream
                 {
+                    Records = new List<TlvRecord>
+                    {
+                    }
                 }
             };
-
+            
             ChannelState channelState = new()
             {
                 FundingAmount = openChannel.FundingSatoshis,
@@ -145,7 +150,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             _channelStateRepository.Create(channelState);
 
-            await _messageSender.SendMessageAsync(new PeerMessage<OpenChannel>(startOpenChannelIn.NodeId, openChannel));
+            await _messageSender.SendMessageAsync(new PeerMessage<OpenChannel>(startOpenChannelIn.NodeId, boltMessage));
         }
     }
 }

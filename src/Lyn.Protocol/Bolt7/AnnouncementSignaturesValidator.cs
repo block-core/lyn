@@ -1,6 +1,7 @@
+using Lyn.Protocol.Bolt7.Messages;
 using Lyn.Protocol.Common;
 using Lyn.Protocol.Common.Hashing;
-using Lyn.Types.Bolt.Messages;
+using Lyn.Protocol.Common.Messages;
 
 namespace Lyn.Protocol.Bolt7
 {
@@ -19,7 +20,9 @@ namespace Lyn.Protocol.Bolt7
 
       public bool ValidateMessage(AnnouncementSignatures networkMessage)
       {
-         var channel = _repository.GetGossipChannel(networkMessage.ShortChannelId);
+         var channel = _repository.GetGossipChannelAsync(networkMessage.ShortChannelId)
+            .GetAwaiter()
+            .GetResult();
 
          if (channel?.IsChannelWithLocalNode() != true)
             return false;

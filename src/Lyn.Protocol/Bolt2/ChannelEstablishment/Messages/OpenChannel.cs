@@ -1,14 +1,14 @@
+using Lyn.Protocol.Bolt1.Messages;
+using Lyn.Protocol.Common.Messages;
 using Lyn.Types.Bitcoin;
 using Lyn.Types.Bolt;
-using Lyn.Types.Bolt.Messages;
 using Lyn.Types.Fundamental;
 
 namespace Lyn.Protocol.Bolt2.ChannelEstablishment.Messages
 {
-    public class OpenChannel : BoltMessage
+    public class OpenChannel : MessagePayload
     {
-        private const string COMMAND = "32";
-        public override string Command => COMMAND;
+        public override MessageType MessageType => MessageType.OpenChannel;
         public ChannelId TemporaryChannelId { get; set; }
         public UInt256 ChainHash { get; set; }
         public Satoshis FundingSatoshis { get; set; }

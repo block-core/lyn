@@ -1,8 +1,10 @@
 using System;
 using System.Threading.Tasks;
 using Lyn.Protocol.Bolt7.Entities;
+using Lyn.Protocol.Bolt7.Messages;
+using Lyn.Protocol.Common;
+using Lyn.Protocol.Common.Messages;
 using Lyn.Protocol.Connection;
-using Lyn.Types.Bolt.Messages;
 
 namespace Lyn.Protocol.Bolt7
 {
@@ -18,9 +20,9 @@ namespace Lyn.Protocol.Bolt7
          _gossipRepository = gossipRepository;
       }
 
-      public Task ProcessMessageAsync(PeerMessage<NodeAnnouncement> request)
+      public async Task<MessageProcessingOutput> ProcessMessageAsync(PeerMessage<NodeAnnouncement> request)
       {
-         var message = request.Message;
+         var message = request.MessagePayload;
 
          if (!_messageValidator.ValidateMessage(message))
             throw new ArgumentException(nameof(message)); //Close connection when failed validation
@@ -30,9 +32,9 @@ namespace Lyn.Protocol.Bolt7
 
          var node = new GossipNode(message);
 
-         _gossipRepository.AddNode(node);
+         await _gossipRepository.AddNodeAsync(node);
          
-         return Task.CompletedTask;
+         return new EmptySuccessResponse();
       }
    }
 }

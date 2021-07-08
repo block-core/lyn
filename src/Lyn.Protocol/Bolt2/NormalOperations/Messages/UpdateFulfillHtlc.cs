@@ -1,13 +1,13 @@
+using Lyn.Protocol.Bolt1.Messages;
+using Lyn.Protocol.Common.Messages;
 using Lyn.Types.Bolt;
-using Lyn.Types.Bolt.Messages;
 using Lyn.Types.Fundamental;
 
 namespace Lyn.Protocol.Bolt2.NormalOperations.Messages
 {
-    public class UpdateFulfillHtlc : BoltMessage
+    public class UpdateFulfillHtlc : MessagePayload
     {
-        private const string COMMAND = "130";
-        public override string Command => COMMAND;
+        public override MessageType MessageType => MessageType.UpdateFulfillHtlc;
         public ChannelId? ChannelId { get; set; }
         public ulong? Id { get; set; }
         public Preimage? PaymentPreimage { get; set; }

@@ -6,9 +6,9 @@ using Lyn.Protocol.Bolt1.Entities;
 using Lyn.Protocol.Bolt1.Messages;
 using Lyn.Protocol.Bolt1.Messages.TlvRecords;
 using Lyn.Protocol.Bolt9;
+using Lyn.Protocol.Common.Messages;
 using Lyn.Protocol.Connection;
 using Lyn.Types;
-using Lyn.Types.Bolt.Messages;
 using Lyn.Types.Fundamental;
 
 namespace Lyn.Protocol.Bolt1
@@ -16,63 +16,79 @@ namespace Lyn.Protocol.Bolt1
     public class InitMessageService : IBoltMessageService<InitMessage>, IInitMessageAction
     {
         private readonly IPeerRepository _repository;
-        private readonly IBoltMessageSender<InitMessage> _messageSender;
         private readonly IBoltFeatures _boltFeatures;
         private readonly IParseFeatureFlags _featureFlags;
 
-        public InitMessageService(IPeerRepository repository, IBoltMessageSender<InitMessage> messageSender,
+        public InitMessageService(IPeerRepository repository,
         IBoltFeatures boltFeatures, IParseFeatureFlags featureFlags)
         {
             _repository = repository;
-            _messageSender = messageSender;
             _boltFeatures = boltFeatures;
             _featureFlags = featureFlags;
         }
 
-        public async Task ProcessMessageAsync(PeerMessage<InitMessage> request)
+        public async Task<MessageProcessingOutput> ProcessMessageAsync(PeerMessage<InitMessage> request)
         {
-            if (!_boltFeatures.ValidateRemoteFeatureAreCompatible(request.Message.Features, request.Message.GlobalFeatures))
-                throw new ArgumentException(nameof(request.Message.Features)); //TODO David we need to define the way to close a connection gracefully
+            if (!_boltFeatures.ValidateRemoteFeatureAreCompatible(request.MessagePayload.Features, request.MessagePayload.GlobalFeatures))
+                throw new ArgumentException(nameof(request.MessagePayload.Features)); //TODO David we need to define the way to close a connection gracefully
 
-            var peer = _repository.TryGetPeerAsync(request.NodeId)
-                ?? new Peer{ NodeId =  request.NodeId};
+            var peer = _repository.TryGetPeerAsync(request.NodeId);
+            
+            var peerExists = peer != null;
 
-            peer.Featurs = _featureFlags.ParseFeatures(request.Message.Features);
-            peer.GlobalFeatures = _featureFlags.ParseFeatures(request.Message.GlobalFeatures);
+            peer ??= new Peer {NodeId = request.NodeId};
+
+            peer.Featurs = _featureFlags.ParseFeatures(request.MessagePayload.Features);
+            peer.GlobalFeatures = _featureFlags.ParseFeatures(request.MessagePayload.GlobalFeatures);
 
             await _repository.AddOrUpdatePeerAsync(peer);
+
+            return new MessageProcessingOutput
+            {
+                Success = true,
+                ResponseMessages = peerExists
+                    ? null
+                    : new[] {CreateInitMessage()}
+            };
 
             //TODO David add sending the gossip timestamp filter *init message MUST be sent first
         }
 
-        private InitMessage CreateInitMessage()
+        private BoltMessage CreateInitMessage()
         {
             return new()
             {
-                GlobalFeatures = _boltFeatures.GetSupportedGlobalFeatures(),
-                Features = _boltFeatures.GetSupportedFeatures(),
+                Payload = new InitMessage
+                {
+                    GlobalFeatures = _boltFeatures.GetSupportedGlobalFeatures(),
+                    Features = _boltFeatures.GetSupportedFeatures(),    
+                },
                 Extension = new TlVStream
                 {
                     Records = new List<TlvRecord>
                     {
-                        new NetworksTlvRecord {Type = 1, Payload = ChainHashes.Bitcoin}
+                        new NetworksTlvRecord {Type = 1, Payload = ChainHashes.Bitcoin, Size = 32}
                     }
                 }
             };
         }
 
-        public async Task SendInitAsync(PublicKey nodeId, CancellationToken token)
+        public async Task<MessageProcessingOutput> GenerateInitAsync(PublicKey nodeId, CancellationToken token)
         {
-            if (!_repository.PeerExists(nodeId)) //Completed handshake and sending first init or replying to init from responder
+            var response = new MessageProcessingOutput
             {
-                var peer = new Peer {NodeId = nodeId};
+                Success = true,
+                ResponseMessages = new[] {CreateInitMessage()}
+            };
 
-                await _repository.AddNewPeerAsync(peer);                
-            }
-            
-            var peerMessage = new PeerMessage<InitMessage>(nodeId, CreateInitMessage());
+            if (_repository.PeerExists(nodeId)) 
+                return response;
 
-            await _messageSender.SendMessageAsync(peerMessage);
+            var peer = new Peer {NodeId = nodeId};
+
+            await _repository.AddNewPeerAsync(peer);
+
+            return response;
         }
     }
 }

@@ -1,13 +1,13 @@
+using Lyn.Protocol.Bolt1.Messages;
+using Lyn.Protocol.Common.Messages;
 using Lyn.Types.Bolt;
-using Lyn.Types.Bolt.Messages;
 using Lyn.Types.Fundamental;
 
 namespace Lyn.Protocol.Bolt2.ChannelEstablishment.Messages
 {
-    public class FundingSigned : BoltMessage
+    public class FundingSigned : MessagePayload
     {
-        private const string COMMAND = "35";
-        public override string Command => COMMAND;
+        public override MessageType MessageType => MessageType.FundingSigned;
         public ChannelId? ChannelId { get; set; }
         public CompressedSignature? Signature { get; set; }
     }

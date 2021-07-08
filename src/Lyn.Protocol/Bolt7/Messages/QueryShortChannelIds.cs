@@ -1,11 +1,13 @@
 using System;
+using Lyn.Protocol.Bolt1.Messages;
+using Lyn.Protocol.Common.Messages;
+using Lyn.Types;
+using Lyn.Types.Bolt;
 
-namespace Lyn.Types.Bolt.Messages
+namespace Lyn.Protocol.Bolt7.Messages
 {
     public class QueryShortChannelIds : GossipMessage
     {
-        private const string COMMAND = "261";
-
         public QueryShortChannelIds()
         {
             ChainHash = ChainHashes.Bitcoin;
@@ -20,7 +22,7 @@ namespace Lyn.Types.Bolt.Messages
             EncodedShortIds = encodedShortIds;
         }
 
-        public override string Command => COMMAND;
+        public override MessageType MessageType => MessageType.QueryShortChannelIds;
 
         public ChainHash ChainHash { get; set; }
 
