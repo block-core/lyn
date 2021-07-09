@@ -27,6 +27,7 @@
 
     <ItemGroup>
       <Folder Include="Bolt8" />
+      <Folder Include="Common" />
     </ItemGroup>
 
     <ItemGroup>

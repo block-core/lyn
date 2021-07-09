@@ -51,13 +51,13 @@ namespace Lyn.Protocol.Bolt3
                 Version = 2,
                 LockTime = (uint)(0x20000000 | (obscured & 0xffffff)),
                 Inputs = new[]
-               {
-               new TransactionInput
-               {
-                  PreviousOutput = commitmentTransactionIn.FundingTxout,
-                  Sequence = (uint)(0x80000000 | ((obscured>>24) & 0xFFFFFF)),
-               }
-            }
+                {
+                    new TransactionInput
+                    {
+                        PreviousOutput = commitmentTransactionIn.FundingTxout,
+                        Sequence = (uint) (0x80000000 | ((obscured >> 24) & 0xFFFFFF)),
+                    }
+                }
             };
 
             _logger.LogDebug("Initialize the commitment transaction input {Obscured}, {LockTime}, {Sequence}", obscured, transaction.LockTime, transaction.Inputs[0].Sequence);

@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Linq;
 using Lyn.Protocol.Bolt3.Types;
+using Lyn.Protocol.Common.Hashing;
 using Lyn.Types.Bitcoin;
 using Lyn.Types.Fundamental;
 using NBitcoin;
@@ -48,7 +50,11 @@ namespace Lyn.Protocol.Bolt3
 
         public Secret PerCommitmentSecret(UInt256 shaseed, ulong perCommitIndex)
         {
-            throw new NotImplementedException();
+            Shachain.Shachain shachain = new();
+
+            var secret = shachain.GenerateFromSeed(shaseed, perCommitIndex);
+
+            return new Secret(secret.GetBytes().ToArray());
         }
 
         public PublicKey PerCommitmentPoint(UInt256 shaseed, ulong perCommitIndex)
