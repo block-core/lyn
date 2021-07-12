@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Lyn.Protocol.Bolt1;
 using Lyn.Protocol.Bolt1.Messages;
+using Lyn.Protocol.Bolt2.ChannelEstablishment.Entities;
 using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages;
 using Lyn.Protocol.Bolt2.Configuration;
 using Lyn.Protocol.Bolt2.Entities;
@@ -23,7 +24,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
         private readonly ILightningTransactions _lightningTransactions;
         private readonly IRandomNumberGenerator _randomNumberGenerator;
         private readonly ILightningKeyDerivation _lightningKeyDerivation;
-        private readonly IChannelStateRepository _channelStateRepository;
+        private readonly IChannelCandidateRepository _channelStateRepository;
         private readonly IChainConfigProvider _chainConfigProvider;
         private readonly IChannelConfigProvider _channelConfigProvider;
         private readonly IPeerRepository _peerRepository;
@@ -34,7 +35,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             ILightningTransactions lightningTransactions,
             IRandomNumberGenerator randomNumberGenerator,
             ILightningKeyDerivation lightningKeyDerivation,
-            IChannelStateRepository channelStateRepository,
+            IChannelCandidateRepository channelStateRepository,
             IChainConfigProvider chainConfigProvider,
             IChannelConfigProvider channelConfigProvider,
             IPeerRepository peerRepository,
@@ -65,7 +66,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                 return new MessageProcessingOutput();
             }
 
-            ChannelState? currentState = _channelStateRepository.Get(message.MessagePayload.TemporaryChannelId);
+            ChannelCandidate? currentState = await _channelStateRepository.GetAsync(message.MessagePayload.TemporaryChannelId);
 
             if (currentState != null)
             {
@@ -99,31 +100,6 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                 return new MessageProcessingOutput { CloseChannel = true };
             }
 
-            ChannelState channelState = new()
-            {
-                FundingAmount = openChannel.FundingSatoshis,
-                ChannelId = openChannel.TemporaryChannelId,
-                RemotePublicKey = openChannel.FundingPubkey,
-                PushMsat = openChannel.PushMsat,
-                RemoteFirstPerCommitmentPoint = openChannel.FirstPerCommitmentPoint,
-                RemotePoints = new Basepoints
-                {
-                    Payment = openChannel.PaymentBasepoint,
-                    Htlc = openChannel.HtlcBasepoint,
-                    DelayedPayment = openChannel.DelayedPaymentBasepoint,
-                    Revocation = openChannel.RevocationBasepoint,
-                },
-                RemoteConfig = new ChannelConfig
-                {
-                    ToSelfDelay = openChannel.ToSelfDelay,
-                    ChannelReserve = openChannel.ChannelReserveSatoshis,
-                    DustLimit = openChannel.DustLimitSatoshis,
-                    HtlcMinimum = openChannel.HtlcMinimumMsat,
-                    MaxAcceptedHtlcs = openChannel.MaxAcceptedHtlcs,
-                    MaxHtlcValueInFlight = openChannel.MaxHtlcValueInFlightMsat
-                },
-            };
-
             AcceptChannel acceptChannel = new();
 
             Secret seed = _secretStore.GetSeed();
@@ -139,12 +115,15 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             acceptChannel.FirstPerCommitmentPoint = _lightningKeyDerivation.PerCommitmentPoint(secrets.Shaseed, 0);
 
-            channelState.LocalPublicKey = acceptChannel.FundingPubkey;
-            channelState.LocalPoints = basepoints;
-            channelState.LocalConfig = channelConfig;
-            channelState.LocalFirstPerCommitmentPoint = acceptChannel.FirstPerCommitmentPoint;
+            ChannelCandidate channelCandidate = new()
+            {
+                ChannelOpener = ChannelSide.Remote,
+                ChannelId = openChannel.TemporaryChannelId,
+                OpenChannel = openChannel,
+                AcceptChannel = acceptChannel
+            };
 
-            _channelStateRepository.Create(channelState);
+            await _channelStateRepository.CreateAsync(channelCandidate);
 
             var boltMessage = new BoltMessage
             {

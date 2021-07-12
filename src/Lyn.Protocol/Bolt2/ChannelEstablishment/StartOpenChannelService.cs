@@ -16,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Lyn.Protocol.Bolt1.Messages;
+using Lyn.Protocol.Bolt2.ChannelEstablishment.Entities;
 using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages.TlvRecords;
 using Lyn.Protocol.Common.Messages;
 
@@ -26,7 +27,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
         private readonly ILogger<OpenChannelMessageService> _logger;
         private readonly IRandomNumberGenerator _randomNumberGenerator;
         private readonly ILightningKeyDerivation _lightningKeyDerivation;
-        private readonly IChannelStateRepository _channelStateRepository;
+        private readonly IChannelCandidateRepository _channelStateRepository;
         private readonly IPeerRepository _peerRepository;
         private readonly IChainConfigProvider _chainConfigProvider;
         private readonly IChannelConfigProvider _channelConfigProvider;
@@ -37,7 +38,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
         public StartOpenChannelService(ILogger<OpenChannelMessageService> logger,
             IRandomNumberGenerator randomNumberGenerator,
             ILightningKeyDerivation lightningKeyDerivation,
-            IChannelStateRepository channelStateRepository,
+            IChannelCandidateRepository channelStateRepository,
             IPeerRepository peerRepository,
             IChainConfigProvider chainConfigProvider,
             IChannelConfigProvider channelConfigProvider,
@@ -146,19 +147,14 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                 }
             };
 
-            ChannelState channelState = new()
+            ChannelCandidate channelCandidate = new()
             {
-                FundingAmount = openChannel.FundingSatoshis,
+                ChannelOpener = ChannelSide.Local,
                 ChannelId = openChannel.TemporaryChannelId,
-                LocalPublicKey = openChannel.FundingPubkey,
-                LocalPoints = basepoints,
-                PushMsat = openChannel.PushMsat,
-                LocalFirstPerCommitmentPoint = openChannel.FirstPerCommitmentPoint,
-                LocalConfig = channelConfig,
-                FeeratePerKw = createOpenChannelIn.FeeRate,
+                OpenChannel = openChannel
             };
 
-            _channelStateRepository.Create(channelState);
+            await _channelStateRepository.CreateAsync(channelCandidate);
 
             return boltMessage;
         }

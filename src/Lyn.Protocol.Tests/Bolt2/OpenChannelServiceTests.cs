@@ -5,6 +5,7 @@ using Lyn.Protocol.Bolt1;
 using Lyn.Protocol.Bolt1.Entities;
 using Lyn.Protocol.Bolt2;
 using Lyn.Protocol.Bolt2.ChannelEstablishment;
+using Lyn.Protocol.Bolt2.ChannelEstablishment.Entities;
 using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages;
 using Lyn.Protocol.Bolt2.Configuration;
 using Lyn.Protocol.Bolt2.Entities;
@@ -30,7 +31,7 @@ namespace Lyn.Protocol.Tests.Bolt2
         private readonly Mock<ILogger<OpenChannelMessageService>> _logger = new();
         private readonly Mock<IRandomNumberGenerator> _randomNumberGenerator = new();
         private readonly LightningKeyDerivation _lightningKeyDerivation = new();
-        private readonly Mock<IChannelStateRepository> _channelStateRepository = new();
+        private readonly Mock<IChannelCandidateRepository> _channelStateRepository = new();
         private readonly Mock<IChainConfigProvider> _chainConfigProvider = new();
         private readonly Mock<IChannelConfigProvider> _channelConfigProvider = new();
         private readonly Mock<IParseFeatureFlags> _parseFeatureFlags = new();
@@ -106,14 +107,14 @@ namespace Lyn.Protocol.Tests.Bolt2
             OpenChannel openChannel = (OpenChannel)result.Payload;
             Assert.Equal(message.FundingAmount, openChannel.FundingSatoshis);
 
-            var channelStates = new List<ChannelState>();
+            var channelStates = new List<ChannelCandidate>();
             _channelStateRepository.Verify(_ =>
-                _.Create(Capture.In(channelStates)), Times.Once);
+                _.CreateAsync(Capture.In(channelStates)), Times.Once);
 
             Assert.Single(channelStates);
-            Assert.Equal(message.FundingAmount, channelStates.First().FundingAmount);
-            Assert.Equal(GetBasepointsFromSecret().fundingKey.ToString(), channelStates.First().LocalPublicKey.ToString());
-            Assert.Equal(config.channelConfig.DustLimit, channelStates.First().LocalConfig.DustLimit);
+            Assert.Equal(message.FundingAmount, channelStates.First().OpenChannel.FundingSatoshis);
+            Assert.Equal(GetBasepointsFromSecret().fundingKey.ToString(), channelStates.First().OpenChannel.FundingPubkey.ToString());
+            Assert.Equal(config.channelConfig.DustLimit, channelStates.First().OpenChannel.DustLimitSatoshis);
         }
     }
 }
