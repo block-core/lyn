@@ -30,7 +30,6 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
         private readonly ILightningKeyDerivation _lightningKeyDerivation;
         private readonly IChannelCandidateRepository _channelStateRepository;
         private readonly IChainConfigProvider _chainConfigProvider;
-        private readonly IChannelConfigProvider _channelConfigProvider;
         private readonly IPeerRepository _peerRepository;
         private readonly ISecretStore _secretStore;
         private readonly IBoltFeatures _boltFeatures;
@@ -41,7 +40,6 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             ILightningKeyDerivation lightningKeyDerivation,
             IChannelCandidateRepository channelStateRepository,
             IChainConfigProvider chainConfigProvider,
-            IChannelConfigProvider channelConfigProvider,
             IPeerRepository peerRepository,
             ISecretStore secretStore,
             IBoltFeatures boltFeatures)
@@ -52,7 +50,6 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             _lightningKeyDerivation = lightningKeyDerivation;
             _channelStateRepository = channelStateRepository;
             _chainConfigProvider = chainConfigProvider;
-            _channelConfigProvider = channelConfigProvider;
             _peerRepository = peerRepository;
             _secretStore = secretStore;
             _boltFeatures = boltFeatures;
@@ -85,16 +82,9 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                 return MessageProcessingOutput.CreateErrorMessage(openChannel.TemporaryChannelId, true, "chainhash is unknowen");
             }
 
-            ChannelConfig? channelConfig = _channelConfigProvider.GetConfiguration(openChannel.ChainHash);
-
-            if (channelConfig == null)
-            {
-                return MessageProcessingOutput.CreateErrorMessage(openChannel.TemporaryChannelId, true, "failed to open channel");
-            }
-
             bool optionAnchorOutputs = (peer.Featurs & Features.OptionAnchorOutputs) != 0;
 
-            string failReason = CheckMessage(openChannel, chainParameters, channelConfig, optionAnchorOutputs);
+            string failReason = CheckMessage(openChannel, chainParameters, optionAnchorOutputs);
 
             if (!string.IsNullOrEmpty(failReason))
             {
@@ -102,7 +92,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             }
 
             byte[]? remoteUpfrontShutdownScript = null;
-            byte[]? localUpfrontShutdownScript = channelConfig.UpfrontShutdownScript;
+            byte[]? localUpfrontShutdownScript = chainParameters.ChannelConfig.UpfrontShutdownScript;
             bool localSupportUpfrontShutdownScript = (_boltFeatures.SupportedFeatures & Features.OptionUpfrontShutdownScript) != 0;
             bool remoteSupportUpfrontShutdownScript = (peer.Featurs & Features.OptionUpfrontShutdownScript) != 0;
 
@@ -138,14 +128,14 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             acceptChannel.FirstPerCommitmentPoint = _lightningKeyDerivation.PerCommitmentPoint(secrets.Shaseed, 0);
 
-            acceptChannel.DustLimitSatoshis = channelConfig.DustLimit;
-            Satoshis localReserve = (ulong)(chainParameters.ChannelReservePercentage * (ulong)openChannel.FundingSatoshis);
+            acceptChannel.DustLimitSatoshis = chainParameters.ChannelConfig.DustLimit;
+            Satoshis localReserve = (ulong)(chainParameters.ChannelBoundariesConfig.ChannelReservePercentage * (ulong)openChannel.FundingSatoshis);
             acceptChannel.ChannelReserveSatoshis = localReserve;
-            acceptChannel.HtlcMinimumMsat = channelConfig.HtlcMinimum;
-            acceptChannel.MaxHtlcValueInFlightMsat = channelConfig.MaxHtlcValueInFlight;
-            acceptChannel.MinimumDepth = chainParameters.MinimumDepth;
-            acceptChannel.ToSelfDelay = channelConfig.ToSelfDelay;
-            acceptChannel.MaxAcceptedHtlcs = channelConfig.MaxAcceptedHtlcs;
+            acceptChannel.HtlcMinimumMsat = chainParameters.ChannelConfig.HtlcMinimum;
+            acceptChannel.MaxHtlcValueInFlightMsat = chainParameters.ChannelConfig.MaxHtlcValueInFlight;
+            acceptChannel.MinimumDepth = chainParameters.ChannelBoundariesConfig.MinimumDepth;
+            acceptChannel.ToSelfDelay = chainParameters.ChannelConfig.ToSelfDelay;
+            acceptChannel.MaxAcceptedHtlcs = chainParameters.ChannelConfig.MaxAcceptedHtlcs;
 
             ChannelCandidate channelCandidate = new()
             {
@@ -174,11 +164,11 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             return new MessageProcessingOutput { Success = true, ResponseMessages = new[] { boltMessage } };
         }
 
-        private string CheckMessage(OpenChannel openChannel, ChainParameters chainParameters, ChannelConfig channelConfig, bool optionAnchorOutputs)
+        private string CheckMessage(OpenChannel openChannel, ChainParameters chainParameters, bool optionAnchorOutputs)
         {
-            if (!chainParameters.AllowPrivateChannels && ((ChannelFlags.ChannelFlags)openChannel.ChannelFlags & ChannelFlags.ChannelFlags.AnnounceChannel) == 0) return "private channels not supported";
+            if (!chainParameters.ChannelBoundariesConfig.AllowPrivateChannels && ((ChannelFlags.ChannelFlags)openChannel.ChannelFlags & ChannelFlags.ChannelFlags.AnnounceChannel) == 0) return "private channels not supported";
 
-            Satoshis localReserve = (ulong)(chainParameters.ChannelReservePercentage * (ulong)openChannel.FundingSatoshis);
+            Satoshis localReserve = (ulong)(chainParameters.ChannelBoundariesConfig.ChannelReservePercentage * (ulong)openChannel.FundingSatoshis);
             Satoshis remoteReserve = openChannel.ChannelReserveSatoshis;
             Satoshis totalReserve = remoteReserve + localReserve;
             if (optionAnchorOutputs) totalReserve += 666;
@@ -191,14 +181,14 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             if (capacity < baseFee) return "the funder's amount for the initial commitment transaction is not sufficient for full fee payment.";
             capacity -= baseFee;
 
-            Satoshis maxHtlcValueInFlightSat = (Satoshis)channelConfig.MaxHtlcValueInFlight;
+            Satoshis maxHtlcValueInFlightSat = (Satoshis)chainParameters.ChannelConfig.MaxHtlcValueInFlight;
             if (capacity > maxHtlcValueInFlightSat) // the other side capped the capacity
                 capacity = maxHtlcValueInFlightSat;
 
             Satoshis htlcMinimumSat = (Satoshis)openChannel.HtlcMinimumMsat;
             if (capacity < htlcMinimumSat) return "htlc_minimum_msat too large"; // If the minimum htlc is greater than the capacity, the channel is usless
 
-            if (capacity < chainParameters.MinEffectiveHtlcCapacity) return "funding_satoshis is too small";
+            if (capacity < chainParameters.ChannelBoundariesConfig.MinEffectiveHtlcCapacity) return "funding_satoshis is too small";
 
             if (openChannel.MaxAcceptedHtlcs == 0) return "max_accepted_htlcs too small";
             if (openChannel.MaxAcceptedHtlcs > 483) return "max_accepted_htlcs is greater than 483";
@@ -206,17 +196,17 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             if (openChannel.DustLimitSatoshis > openChannel.ChannelReserveSatoshis) return "dust_limit_satoshis is greater than channel_reserve_satoshis";
             if (openChannel.DustLimitSatoshis > localReserve) return "dust_limit_satoshis is greater than our channel_reserve_satoshis";
 
-            if (openChannel.DustLimitSatoshis < channelConfig.DustLimit) return "dust_limit_satoshis too small";
+            if (openChannel.DustLimitSatoshis < chainParameters.ChannelConfig.DustLimit) return "dust_limit_satoshis too small";
 
             // todo: dan - investigate this logic - bolt2 openchannel received side -
             // it considers dust_limit_satoshis too small and plans to rely on the sending node publishing its commitment transaction in the event of a data loss
 
             MiliSatoshis fundingMiliSatoshis = openChannel.FundingSatoshis;
             if (openChannel.PushMsat > fundingMiliSatoshis) return "push_msat is greater than funding_satoshis * 1000";
-            if (openChannel.ToSelfDelay > chainParameters.MaxToSelfDelay) return "to_self_delay is unreasonably large";
+            if (openChannel.ToSelfDelay > chainParameters.ChannelBoundariesConfig.MaxToSelfDelay) return "to_self_delay is unreasonably large";
 
-            if (openChannel.FeeratePerKw < chainParameters.TooLowFeeratePerKw) return "feerate_per_kw too small for timely processing";
-            if (openChannel.FeeratePerKw > chainParameters.TooLargeFeeratePerKw) return "feerate_per_kw unreasonably large";
+            if (openChannel.FeeratePerKw < chainParameters.ChannelBoundariesConfig.TooLowFeeratePerKw) return "feerate_per_kw too small for timely processing";
+            if (openChannel.FeeratePerKw > chainParameters.ChannelBoundariesConfig.TooLargeFeeratePerKw) return "feerate_per_kw unreasonably large";
 
             if (!_lightningKeyDerivation.IsValidPublicKey(openChannel.FundingPubkey)) return "funding_pubkey not valid secp256k1 pubkeys in compressed format";
             if (!_lightningKeyDerivation.IsValidPublicKey(openChannel.RevocationBasepoint)) return "revocation_basepoint not valid secp256k1 pubkeys in compressed format";
@@ -224,7 +214,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             if (!_lightningKeyDerivation.IsValidPublicKey(openChannel.PaymentBasepoint)) return "payment_basepoint not valid secp256k1 pubkeys in compressed format";
             if (!_lightningKeyDerivation.IsValidPublicKey(openChannel.DelayedPaymentBasepoint)) return "delayed_payment_basepoint not valid secp256k1 pubkeys in compressed format";
 
-            if ((openChannel.FundingSatoshis > chainParameters.LargeChannelAmount)
+            if ((openChannel.FundingSatoshis > chainParameters.ChannelBoundariesConfig.LargeChannelAmount)
                 && _boltFeatures.SupportedFeatures != Features.OptionSupportLargeChannel) return "funding_satoshis too big for option_support_large_channel";
 
             return string.Empty;

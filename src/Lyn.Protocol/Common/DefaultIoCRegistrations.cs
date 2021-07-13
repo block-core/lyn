@@ -69,7 +69,6 @@ namespace Lyn.Protocol.Common
             services.AddSingleton<IBoltFeatures, LynImplementedBoltFeatures>();
             services.AddSingleton<IParseFeatureFlags, ParseFeatureFlags>();
 
-            services.AddSingleton<IChannelConfigProvider, ChannelConfigProvider>();
             services.AddSingleton<IChainConfigProvider, ChainConfigProvider>(); ;
             services.AddSingleton<ISecretStore, SecretStore>();
 
