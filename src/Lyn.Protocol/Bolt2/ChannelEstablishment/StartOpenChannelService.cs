@@ -81,6 +81,9 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             openChannel.TemporaryChannelId = new ChannelId(_randomNumberGenerator.GetBytes(32));
 
+            if (createOpenChannelIn.PrivateChannel && !chainParameters.AllowPrivateChannels)
+                throw new ApplicationException($"Private channels are not enabled");
+
             bool localSupportLargeChannels = (_boltFeatures.SupportedFeatures & Features.OptionSupportLargeChannel) != 0;
             bool remoteSupportLargeChannels = (peer.Featurs & Features.OptionSupportLargeChannel) != 0;
 
@@ -111,8 +114,8 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             openChannel.FirstPerCommitmentPoint = _lightningKeyDerivation.PerCommitmentPoint(secrets.Shaseed, 0);
 
-            // c-lightning sets this to be 1% of the funding amount, should we do the same?
-            openChannel.ChannelReserveSatoshis = channelConfig.ChannelReserve; // todo: discuss whether this should be a configuration of the % of the funding amount
+            Satoshis localReserve = (ulong)(chainParameters.ChannelReservePercentage * (ulong)openChannel.FundingSatoshis);
+            openChannel.ChannelReserveSatoshis = localReserve;
 
             if (channelConfig.ChannelReserve < channelConfig.DustLimit)
                 channelConfig.ChannelReserve = channelConfig.DustLimit;
@@ -121,7 +124,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             openChannel.ToSelfDelay = channelConfig.ToSelfDelay;
             openChannel.FeeratePerKw = createOpenChannelIn.FeeRate;
             openChannel.DustLimitSatoshis = channelConfig.DustLimit;
-            openChannel.HtlcMinimumMsat = channelConfig.HtlcMinimum;
+            openChannel.HtlcMinimumMsat = chainParameters.MinEffectiveHtlcCapacity;
             openChannel.MaxHtlcValueInFlightMsat = channelConfig.MaxHtlcValueInFlight;
             openChannel.MaxAcceptedHtlcs = channelConfig.MaxAcceptedHtlcs;
 

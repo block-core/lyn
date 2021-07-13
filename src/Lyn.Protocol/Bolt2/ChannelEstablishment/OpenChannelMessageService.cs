@@ -123,6 +123,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             }
 
             AcceptChannel acceptChannel = new();
+            acceptChannel.TemporaryChannelId = openChannel.TemporaryChannelId;
 
             Secret seed = _secretStore.GetSeed();
             Secrets secrets = _lightningKeyDerivation.DeriveSecrets(seed);
@@ -136,6 +137,15 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             acceptChannel.DelayedPaymentBasepoint = basepoints.DelayedPayment;
 
             acceptChannel.FirstPerCommitmentPoint = _lightningKeyDerivation.PerCommitmentPoint(secrets.Shaseed, 0);
+
+            acceptChannel.DustLimitSatoshis = channelConfig.DustLimit;
+            Satoshis localReserve = (ulong)(chainParameters.ChannelReservePercentage * (ulong)openChannel.FundingSatoshis);
+            acceptChannel.ChannelReserveSatoshis = localReserve;
+            acceptChannel.HtlcMinimumMsat = channelConfig.HtlcMinimum;
+            acceptChannel.MaxHtlcValueInFlightMsat = channelConfig.MaxHtlcValueInFlight;
+            acceptChannel.MinimumDepth = chainParameters.MinimumDepth;
+            acceptChannel.ToSelfDelay = channelConfig.ToSelfDelay;
+            acceptChannel.MaxAcceptedHtlcs = channelConfig.MaxAcceptedHtlcs;
 
             ChannelCandidate channelCandidate = new()
             {
@@ -166,17 +176,45 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
         private string CheckMessage(OpenChannel openChannel, ChainParameters chainParameters, ChannelConfig channelConfig, bool optionAnchorOutputs)
         {
-            if (openChannel.FundingSatoshis < chainParameters.MinFundingAmount) return "funding_satoshis is too small";
-            if (openChannel.HtlcMinimumMsat > channelConfig.HtlcMinimum) return "htlc_minimum_msat too large";
-            if (openChannel.MaxHtlcValueInFlightMsat < channelConfig.MaxHtlcValueInFlight) return "max_htlc_value_in_flight_msat too small";
-            if (openChannel.ChannelReserveSatoshis > channelConfig.ChannelReserve) return "channel_reserve_satoshis too large";
-            if (openChannel.MaxAcceptedHtlcs < channelConfig.MaxAcceptedHtlcs) return "max_accepted_htlcs too small";
+            if (!chainParameters.AllowPrivateChannels && ((ChannelFlags.ChannelFlags)openChannel.ChannelFlags & ChannelFlags.ChannelFlags.AnnounceChannel) == 0) return "private channels not supported";
+
+            Satoshis localReserve = (ulong)(chainParameters.ChannelReservePercentage * (ulong)openChannel.FundingSatoshis);
+            Satoshis remoteReserve = openChannel.ChannelReserveSatoshis;
+            Satoshis totalReserve = remoteReserve + localReserve;
+            if (optionAnchorOutputs) totalReserve += 666;
+
+            Satoshis capacity = openChannel.FundingSatoshis;
+            if (capacity < totalReserve) return "channel_reserve_satoshis too large";
+            capacity = openChannel.FundingSatoshis - totalReserve;
+
+            Satoshis baseFee = _lightningTransactions.GetBaseFee(openChannel.FeeratePerKw, optionAnchorOutputs, 0);
+            if (capacity < baseFee) return "the funder's amount for the initial commitment transaction is not sufficient for full fee payment.";
+            capacity -= baseFee;
+
+            Satoshis maxHtlcValueInFlightSat = (Satoshis)channelConfig.MaxHtlcValueInFlight;
+            if (capacity > maxHtlcValueInFlightSat) // the other side capped the capacity
+                capacity = maxHtlcValueInFlightSat;
+
+            Satoshis htlcMinimumSat = (Satoshis)openChannel.HtlcMinimumMsat;
+            if (capacity < htlcMinimumSat) return "htlc_minimum_msat too large"; // If the minimum htlc is greater than the capacity, the channel is usless
+
+            if (capacity < chainParameters.MinEffectiveHtlcCapacity) return "funding_satoshis is too small";
+
+            if (openChannel.MaxAcceptedHtlcs == 0) return "max_accepted_htlcs too small";
+            if (openChannel.MaxAcceptedHtlcs > 483) return "max_accepted_htlcs is greater than 483";
+
+            if (openChannel.DustLimitSatoshis > openChannel.ChannelReserveSatoshis) return "dust_limit_satoshis is greater than channel_reserve_satoshis";
+            if (openChannel.DustLimitSatoshis > localReserve) return "dust_limit_satoshis is greater than our channel_reserve_satoshis";
+
             if (openChannel.DustLimitSatoshis < channelConfig.DustLimit) return "dust_limit_satoshis too small";
+
+            // todo: dan - investigate this logic - bolt2 openchannel received side -
+            // it considers dust_limit_satoshis too small and plans to rely on the sending node publishing its commitment transaction in the event of a data loss
 
             MiliSatoshis fundingMiliSatoshis = openChannel.FundingSatoshis;
             if (openChannel.PushMsat > fundingMiliSatoshis) return "push_msat is greater than funding_satoshis * 1000";
             if (openChannel.ToSelfDelay > chainParameters.MaxToSelfDelay) return "to_self_delay is unreasonably large";
-            if (openChannel.MaxAcceptedHtlcs > 483) return "max_accepted_htlcs is greater than 483";
+
             if (openChannel.FeeratePerKw < chainParameters.TooLowFeeratePerKw) return "feerate_per_kw too small for timely processing";
             if (openChannel.FeeratePerKw > chainParameters.TooLargeFeeratePerKw) return "feerate_per_kw unreasonably large";
 
@@ -185,11 +223,6 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             if (!_lightningKeyDerivation.IsValidPublicKey(openChannel.HtlcBasepoint)) return "htlc_basepoint not valid secp256k1 pubkeys in compressed format";
             if (!_lightningKeyDerivation.IsValidPublicKey(openChannel.PaymentBasepoint)) return "payment_basepoint not valid secp256k1 pubkeys in compressed format";
             if (!_lightningKeyDerivation.IsValidPublicKey(openChannel.DelayedPaymentBasepoint)) return "delayed_payment_basepoint not valid secp256k1 pubkeys in compressed format";
-
-            if (openChannel.DustLimitSatoshis > openChannel.ChannelReserveSatoshis) return "dust_limit_satoshis is greater than channel_reserve_satoshis";
-
-            Satoshis baseFee = _lightningTransactions.GetBaseFee(openChannel.FeeratePerKw, optionAnchorOutputs, 0);
-            if (openChannel.FundingSatoshis < openChannel.ChannelReserveSatoshis + baseFee) return "the funder's amount for the initial commitment transaction is not sufficient for full fee payment.";
 
             if ((openChannel.FundingSatoshis > chainParameters.LargeChannelAmount)
                 && _boltFeatures.SupportedFeatures != Features.OptionSupportLargeChannel) return "funding_satoshis too big for option_support_large_channel";

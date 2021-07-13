@@ -16,11 +16,18 @@ namespace Lyn.Protocol.Common.Blockchain
         /// </summary>
         public Satoshis LargeChannelAmount { get; set; } = 16_777_216; // (2^24)
 
-        public Satoshis MinFundingAmount { get; set; }
+        public Satoshis MinEffectiveHtlcCapacity { get; set; }
 
         public ushort MaxToSelfDelay { get; set; }
 
+        public decimal ChannelReservePercentage { get; set; }
+
         public Satoshis TooLowFeeratePerKw { get; set; }
+
         public Satoshis TooLargeFeeratePerKw { get; set; }
+
+        public uint MinimumDepth { get; set; }
+
+        public bool AllowPrivateChannels { get; set; }
     }
 }

@@ -54,7 +54,13 @@ namespace Lyn.Protocol.Tests.Bolt2
 
         private (ChainParameters chainParameters, ChannelConfig channelConfig) WithExistingPeerAndChainParameters(CreateOpenChannelIn message)
         {
-            var chainParameters = new ChainParameters { GenesisBlockhash = message.ChainHash };
+            var chainParameters = new ChainParameters
+            {
+                GenesisBlockhash = message.ChainHash,
+                MinEffectiveHtlcCapacity = 100,
+                AllowPrivateChannels = true,
+                MinimumDepth = 6,
+            };
 
             var channelConfig = new ChannelConfig
             {
