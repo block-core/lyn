@@ -151,7 +151,8 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             {
                 ChannelOpener = ChannelSide.Local,
                 ChannelId = openChannel.TemporaryChannelId,
-                OpenChannel = openChannel
+                OpenChannel = openChannel,
+                LocalUpfrontShutdownScript = upfrontShutdownScript
             };
 
             await _channelStateRepository.CreateAsync(channelCandidate);

@@ -1,9 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Lyn.Protocol.Bolt1;
 using Lyn.Protocol.Bolt1.Messages;
 using Lyn.Protocol.Bolt2.ChannelEstablishment.Entities;
 using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages;
+using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages.TlvRecords;
 using Lyn.Protocol.Bolt2.Configuration;
 using Lyn.Protocol.Bolt2.Entities;
 using Lyn.Protocol.Bolt3;
@@ -78,16 +82,14 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             if (chainParameters == null)
             {
-                // todo: fail the channel.
-                return new MessageProcessingOutput { CloseChannel = true };
+                return MessageProcessingOutput.CreateErrorMessage(openChannel.TemporaryChannelId, true, "chainhash is unknowen");
             }
 
             ChannelConfig? channelConfig = _channelConfigProvider.GetConfiguration(openChannel.ChainHash);
 
             if (channelConfig == null)
             {
-                // todo: fail the channel.
-                return new MessageProcessingOutput { CloseChannel = true };
+                return MessageProcessingOutput.CreateErrorMessage(openChannel.TemporaryChannelId, true, "failed to open channel");
             }
 
             bool optionAnchorOutputs = (peer.Featurs & Features.OptionAnchorOutputs) != 0;
@@ -96,8 +98,28 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             if (!string.IsNullOrEmpty(failReason))
             {
-                // todo: fail the channel.
-                return new MessageProcessingOutput { CloseChannel = true };
+                return MessageProcessingOutput.CreateErrorMessage(openChannel.TemporaryChannelId, true, failReason);
+            }
+
+            byte[]? remoteUpfrontShutdownScript = null;
+            byte[]? localUpfrontShutdownScript = channelConfig.UpfrontShutdownScript;
+            bool localSupportUpfrontShutdownScript = (_boltFeatures.SupportedFeatures & Features.OptionUpfrontShutdownScript) != 0;
+            bool remoteSupportUpfrontShutdownScript = (peer.Featurs & Features.OptionUpfrontShutdownScript) != 0;
+
+            if (remoteSupportUpfrontShutdownScript)
+            {
+                remoteUpfrontShutdownScript = message.Message.Extension?.Records.OfType<UpfrontShutdownScriptTlvRecord>().FirstOrDefault()?.ShutdownScriptpubkey;
+
+                if (remoteUpfrontShutdownScript == null)
+                {
+                    return MessageProcessingOutput.CreateErrorMessage(openChannel.TemporaryChannelId, true, "failed to open channel");
+                }
+            }
+
+            if (localSupportUpfrontShutdownScript && remoteSupportUpfrontShutdownScript)
+            {
+                if (localUpfrontShutdownScript == null || localUpfrontShutdownScript.Length == 0)
+                    localUpfrontShutdownScript = new byte[] { 0x0000 };
             }
 
             AcceptChannel acceptChannel = new();
@@ -120,14 +142,23 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                 ChannelOpener = ChannelSide.Remote,
                 ChannelId = openChannel.TemporaryChannelId,
                 OpenChannel = openChannel,
-                AcceptChannel = acceptChannel
+                AcceptChannel = acceptChannel,
+                LocalUpfrontShutdownScript = localUpfrontShutdownScript,
+                RemoteUpfrontShutdownScript = remoteUpfrontShutdownScript,
             };
 
             await _channelStateRepository.CreateAsync(channelCandidate);
 
             var boltMessage = new BoltMessage
             {
-                Payload = acceptChannel
+                Payload = acceptChannel,
+                Extension = new TlVStream
+                {
+                    Records = new List<TlvRecord>
+                    {
+                        new UpfrontShutdownScriptTlvRecord {ShutdownScriptpubkey = localUpfrontShutdownScript}
+                    }
+                }
             };
 
             return new MessageProcessingOutput { Success = true, ResponseMessages = new[] { boltMessage } };
