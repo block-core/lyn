@@ -76,7 +76,7 @@ namespace Lyn.Protocol.Tests.Bolt2
             return chainParameters;
         }
 
-        private static CreateOpenChannelIn NewStartChannelMessage()
+        private CreateOpenChannelIn NewStartChannelMessage()
         {
             var message = new CreateOpenChannelIn(
                 new PublicKey(RandomMessages.NewRandomPublicKey()),

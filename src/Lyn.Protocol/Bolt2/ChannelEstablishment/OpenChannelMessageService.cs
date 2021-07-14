@@ -1,15 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Lyn.Protocol.Bolt1;
+﻿using Lyn.Protocol.Bolt1;
 using Lyn.Protocol.Bolt1.Messages;
 using Lyn.Protocol.Bolt2.ChannelEstablishment.Entities;
 using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages;
 using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages.TlvRecords;
-using Lyn.Protocol.Bolt2.Configuration;
-using Lyn.Protocol.Bolt2.Entities;
 using Lyn.Protocol.Bolt3;
 using Lyn.Protocol.Bolt3.Types;
 using Lyn.Protocol.Bolt9;
@@ -19,6 +12,9 @@ using Lyn.Protocol.Common.Messages;
 using Lyn.Protocol.Connection;
 using Lyn.Types.Fundamental;
 using Microsoft.Extensions.Logging;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 {
@@ -26,9 +22,8 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
     {
         private readonly ILogger<OpenChannelMessageService> _logger;
         private readonly ILightningTransactions _lightningTransactions;
-        private readonly IRandomNumberGenerator _randomNumberGenerator;
         private readonly ILightningKeyDerivation _lightningKeyDerivation;
-        private readonly IChannelCandidateRepository _channelStateRepository;
+        private readonly IChannelCandidateRepository _channelCandidateRepository;
         private readonly IChainConfigProvider _chainConfigProvider;
         private readonly IPeerRepository _peerRepository;
         private readonly ISecretStore _secretStore;
@@ -36,9 +31,8 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
         public OpenChannelMessageService(ILogger<OpenChannelMessageService> logger,
             ILightningTransactions lightningTransactions,
-            IRandomNumberGenerator randomNumberGenerator,
             ILightningKeyDerivation lightningKeyDerivation,
-            IChannelCandidateRepository channelStateRepository,
+            IChannelCandidateRepository channelCandidateRepository,
             IChainConfigProvider chainConfigProvider,
             IPeerRepository peerRepository,
             ISecretStore secretStore,
@@ -46,9 +40,8 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
         {
             _logger = logger;
             _lightningTransactions = lightningTransactions;
-            _randomNumberGenerator = randomNumberGenerator;
             _lightningKeyDerivation = lightningKeyDerivation;
-            _channelStateRepository = channelStateRepository;
+            _channelCandidateRepository = channelCandidateRepository;
             _chainConfigProvider = chainConfigProvider;
             _peerRepository = peerRepository;
             _secretStore = secretStore;
@@ -67,7 +60,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                 return new MessageProcessingOutput();
             }
 
-            ChannelCandidate? currentState = await _channelStateRepository.GetAsync(message.MessagePayload.TemporaryChannelId);
+            ChannelCandidate? currentState = await _channelCandidateRepository.GetAsync(message.MessagePayload.TemporaryChannelId);
 
             if (currentState != null)
             {
@@ -147,7 +140,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                 RemoteUpfrontShutdownScript = remoteUpfrontShutdownScript,
             };
 
-            await _channelStateRepository.CreateAsync(channelCandidate);
+            await _channelCandidateRepository.CreateAsync(channelCandidate);
 
             var boltMessage = new BoltMessage
             {
