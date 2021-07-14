@@ -16,14 +16,14 @@ namespace Lyn.Types.Serialization.Serializers
         {
             return new OutPoint
             {
-                Hash = reader.ReadWithSerializer(_uInt256Serializator),
+                TxId = reader.ReadWithSerializer(_uInt256Serializator),
                 Index = reader.ReadUInt()
             };
         }
 
         public int Serialize(OutPoint typeInstance, IBufferWriter<byte> writer, ProtocolTypeSerializerOptions? options = null)
         {
-            int size = writer.WriteWithSerializer(typeInstance.Hash!, _uInt256Serializator);
+            int size = writer.WriteWithSerializer(typeInstance.TxId!, _uInt256Serializator);
             size += writer.WriteUInt(typeInstance.Index);
 
             return size;

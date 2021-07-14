@@ -81,7 +81,7 @@ namespace Lyn.Protocol.Tests.Bolt3
             FundingOutputIndex = 0;
             FundingAmount = 10000000;
             FundingTxid = UInt256.Parse("8984484a580b825b9972d7adb15050b3ab624ccd731946b3eeddb92f4e7ef6be");
-            FundingTxOutpoint = new OutPoint { Hash = FundingTxid, Index = FundingOutputIndex };
+            FundingTxOutpoint = new OutPoint { TxId = FundingTxid, Index = FundingOutputIndex };
 
             CommitmentNumber = 42;
             ToSelfDelay = 144;

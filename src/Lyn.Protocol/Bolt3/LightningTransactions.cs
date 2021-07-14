@@ -1,14 +1,10 @@
 ﻿using System;
-using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using Lyn.Protocol.Bolt3.Types;
-using Lyn.Protocol.Common;
 using Lyn.Protocol.Common.Messages;
 using Lyn.Types.Bitcoin;
 using Lyn.Types.Fundamental;
-using Lyn.Types.Serialization;
-using Lyn.Types.Serialization.Serializers;
 using Microsoft.Extensions.Logging;
 using NBitcoin;
 using Transaction = Lyn.Types.Bitcoin.Transaction;
@@ -212,7 +208,7 @@ namespace Lyn.Protocol.Bolt3
                     // todo round down msat to sat in s common method
                     Satoshis amount = (Satoshis)htlc.AmountMsat;
 
-                    byte[]? wscript = _lightningScripts.GetHtlcOfferedRedeemscript(
+                    byte[]? wscript = _lightningScripts.GetHtlcOfferedRedeemScript(
                        commitmentTransactionIn.Keyset.LocalHtlcKey,
                        commitmentTransactionIn.Keyset.RemoteHtlcKey,
                        htlc.Rhash,
@@ -249,7 +245,7 @@ namespace Lyn.Protocol.Bolt3
                     // todo round down msat to sat in s common method
                     Satoshis amount = (Satoshis)htlc.AmountMsat;
 
-                    var wscript = _lightningScripts.GetHtlcReceivedRedeemscript(
+                    var wscript = _lightningScripts.GetHtlcReceivedRedeemScript(
                        htlc.Expirylocktime,
                        commitmentTransactionIn.Keyset.LocalHtlcKey,
                        commitmentTransactionIn.Keyset.RemoteHtlcKey,
@@ -288,7 +284,7 @@ namespace Lyn.Protocol.Bolt3
                 // todo round down msat to sat in s common method
                 Satoshis amount = (Satoshis)commitmentTransactionIn.SelfPayMsat;
 
-                var wscript = _lightningScripts.GetRevokeableRedeemscript(commitmentTransactionIn.Keyset.LocalRevocationKey, commitmentTransactionIn.ToSelfDelay, commitmentTransactionIn.Keyset.LocalDelayedPaymentKey);
+                var wscript = _lightningScripts.GetRevokeableRedeemScript(commitmentTransactionIn.Keyset.LocalRevocationKey, commitmentTransactionIn.ToSelfDelay, commitmentTransactionIn.Keyset.LocalDelayedPaymentKey);
 
                 var wscriptinst = new Script(wscript);
 
@@ -488,7 +484,7 @@ namespace Lyn.Protocol.Bolt3
                 }
             };
 
-            byte[]? wscript = _lightningScripts.GetRevokeableRedeemscript(htlcTransactionIn.RevocationPubkey, htlcTransactionIn.ToSelfDelay, htlcTransactionIn.LocalDelayedkey);
+            byte[]? wscript = _lightningScripts.GetRevokeableRedeemScript(htlcTransactionIn.RevocationPubkey, htlcTransactionIn.ToSelfDelay, htlcTransactionIn.LocalDelayedkey);
             var wscriptinst = new Script(wscript);
             Script? p2Wsh = PayToWitScriptHashTemplate.Instance.GenerateScriptPubKey(new WitScriptId(wscriptinst)); // todo: dan - move this to interface
 
@@ -540,7 +536,44 @@ namespace Lyn.Protocol.Bolt3
 
         public Transaction ClosingTransaction(ClosingTransactionIn closingTransactionIn)
         {
-            throw new NotImplementedException();
+            var list = new List<byte[]> {closingTransactionIn.LocalPublicKey, closingTransactionIn.RemotePublicKey};
+            
+            list.Sort(new LexicographicByteComparer());
+
+            var input =  new TransactionInput
+                {
+                    Sequence = 0xFFFFFFFF,
+                    PreviousOutput = closingTransactionIn.FundingCreatedTxout,
+                    SignatureScript = new byte[0],
+                    ScriptWitness = _lightningScripts
+                        .CreateClosingTransactionWitnessScript(list.First(), list.Last())
+                };
+
+            var outputs = new List<TransactionOutput>();
+
+            if (closingTransactionIn.AmountToPayLocal > 0)
+            {
+                outputs.Add(new TransactionOutput
+                {
+                    Value = closingTransactionIn.ChannelOpenedFromLocalNode
+                        ? closingTransactionIn.AmountToPayLocal - closingTransactionIn.Fee
+                        : closingTransactionIn.AmountToPayLocal,
+                    PublicKeyScript = closingTransactionIn.LocalScriptPublicKey
+                });
+            }
+
+            if (closingTransactionIn.AmountToPayRemote > 0)
+            {
+                outputs.Add(new TransactionOutput
+                {
+                    Value = closingTransactionIn.ChannelOpenedFromLocalNode
+                        ? closingTransactionIn.AmountToPayRemote 
+                        : closingTransactionIn.AmountToPayRemote- closingTransactionIn.Fee,
+                    PublicKeyScript = closingTransactionIn.RemoteScriptPublicKey
+                });
+            }
+            
+            return new Transaction {Version = 2, LockTime = 0, Inputs = new[] {input}, Outputs = outputs.ToArray()};
         }
     }
 }

@@ -8,7 +8,7 @@
         /// <summary>
         /// The hash of the referenced transaction.
         /// </summary>
-        public UInt256 Hash { get; set; } = UInt256.Zero;
+        public UInt256 TxId { get; set; } = UInt256.Zero;
 
         /// <summary>
         /// The index of the specific output in the transaction. The first output is 0, etc.
@@ -23,7 +23,7 @@
         /// </returns>
         public bool IsNull()
         {
-            return (Hash == UInt256.Zero && Index == uint.MaxValue);
+            return (TxId == UInt256.Zero && Index == uint.MaxValue);
         }
     }
 }

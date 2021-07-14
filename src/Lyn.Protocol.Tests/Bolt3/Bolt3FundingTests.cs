@@ -26,7 +26,7 @@ namespace Lyn.Protocol.Tests.Bolt3
             byte[] localFundingPubkey = Hex.FromString("023da092f6980e58d2c037173180e9a465476026ee50f96695963e8efe436f54eb");
             byte[] remoteFundingPubkey = Hex.FromString("030e9f7b623d2ccc7c9bd44d66d5ce21ce504c0acf6385a132cec6d3c39fa711c1");
 
-            byte[] script = lightningScripts.CreaateFundingTransactionScript(new PublicKey(localFundingPubkey), new PublicKey(remoteFundingPubkey));
+            byte[] script = lightningScripts.CreateFundingTransactionScript(new PublicKey(localFundingPubkey), new PublicKey(remoteFundingPubkey));
 
             Assert.Equal(script, Hex.FromString("5221023da092f6980e58d2c037173180e9a465476026ee50f96695963e8efe436f54eb21030e9f7b623d2ccc7c9bd44d66d5ce21ce504c0acf6385a132cec6d3c39fa711c152ae"));
         }
@@ -45,7 +45,7 @@ namespace Lyn.Protocol.Tests.Bolt3
             byte[] localFundingPubkey = Hex.FromString("023da092f6980e58d2c037173180e9a465476026ee50f96695963e8efe436f54eb");
             byte[] remoteFundingPubkey = Hex.FromString("030e9f7b623d2ccc7c9bd44d66d5ce21ce504c0acf6385a132cec6d3c39fa711c1");
 
-            byte[] script = lightningScripts.CreaateFundingTransactionScript(new PublicKey(localFundingPubkey), new PublicKey(remoteFundingPubkey));
+            byte[] script = lightningScripts.CreateFundingTransactionScript(new PublicKey(localFundingPubkey), new PublicKey(remoteFundingPubkey));
 
             var trx = Transaction.Parse(
                "0200000001adbb20ea41a8423ea937e76e8151636bf6093b70eaff942930d20576600521fd000000006b48304502210090587b6201e166ad6af0227d3036a9454223d49a1f11839c1a362184340ef0240220577f7cd5cca78719405cbf1de7414ac027f0239ef6e214c90fcaab0454d84b3b012103535b32d5eb0a6ed0982a0479bbadc9868d9836f6ba94dd5a63be16d875069184ffffffff028096980000000000220020c015c4a6be010e21657068fc2e6a9d02b27ebe4d490a25846f7237f104d1a3cd20256d29010000001600143ca33c2e4446f4a305f23c80df8ad1afdcf652f900000000", NBitcoin.Network.RegTest);
