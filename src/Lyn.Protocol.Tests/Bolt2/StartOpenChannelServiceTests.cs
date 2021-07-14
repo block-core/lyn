@@ -1,22 +1,20 @@
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Lyn.Protocol.Bolt1;
 using Lyn.Protocol.Bolt1.Entities;
-using Lyn.Protocol.Bolt2;
 using Lyn.Protocol.Bolt2.ChannelEstablishment;
+using Lyn.Protocol.Bolt2.ChannelEstablishment.Entities;
 using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages;
 using Lyn.Protocol.Bolt2.Configuration;
-using Lyn.Protocol.Bolt2.Entities;
 using Lyn.Protocol.Bolt3;
 using Lyn.Protocol.Bolt3.Types;
 using Lyn.Protocol.Bolt9;
 using Lyn.Protocol.Common;
 using Lyn.Protocol.Common.Blockchain;
-using Lyn.Protocol.Connection;
 using Lyn.Types.Fundamental;
 using Microsoft.Extensions.Logging;
 using Moq;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Lyn.Protocol.Tests.Bolt2
@@ -26,14 +24,12 @@ namespace Lyn.Protocol.Tests.Bolt2
         private StartOpenChannelService _sut;
 
         private readonly Mock<IPeerRepository> _peerRepository = new();
-        private readonly Mock<IBoltMessageSender<OpenChannel>> _messageSender = new();
         private readonly Mock<IBoltFeatures> _features = new();
         private readonly Mock<ILogger<OpenChannelMessageService>> _logger = new();
         private readonly Mock<IRandomNumberGenerator> _randomNumberGenerator = new();
         private readonly LightningKeyDerivation _lightningKeyDerivation = new();
-        private readonly Mock<IChannelStateRepository> _channelStateRepository = new();
+        private readonly Mock<IChannelCandidateRepository> _channelStateRepository = new();
         private readonly Mock<IChainConfigProvider> _chainConfigProvider = new();
-        private readonly Mock<IChannelConfigProvider> _channelConfigProvider = new();
         private readonly Mock<IParseFeatureFlags> _parseFeatureFlags = new();
         private readonly Mock<ISecretStore> _secretProvider = new();
 
@@ -41,41 +37,48 @@ namespace Lyn.Protocol.Tests.Bolt2
 
         public StartOpenChannelServiceTests()
         {
-            _sut = new StartOpenChannelService(_logger.Object, _messageSender.Object,
+            _sut = new StartOpenChannelService(_logger.Object,
                 _randomNumberGenerator.Object, _lightningKeyDerivation,
                 _channelStateRepository.Object, _peerRepository.Object,
-                _chainConfigProvider.Object, _channelConfigProvider.Object,
-                _features.Object, _parseFeatureFlags.Object, _secretProvider.Object);
+                _chainConfigProvider.Object, _features.Object,
+                _parseFeatureFlags.Object, _secretProvider.Object);
 
             _randomSecret = new Secret(RandomMessages.GetRandomByteArray(32));
 
             _secretProvider.Setup(_ => _.GetSeed()).Returns(new Secret(_randomSecret));
         }
 
-        private (ChainParameters chainParameters, ChannelConfig channelConfig) WithExistingPeerAndChainParameters(StartOpenChannelIn message)
+        private ChainParameters WithExistingPeerAndChainParameters(CreateOpenChannelIn message)
         {
-            var chainParameters = new ChainParameters { GenesisBlockhash = message.ChainHash };
-
-            var channelConfig = new ChannelConfig
+            var chainParameters = new ChainParameters
             {
-                ChannelReserve = 1000,
-                MaxAcceptedHtlcs = 5,
-                ToSelfDelay = 1000,
-                DustLimit = 100,
-                HtlcMinimum = 100,
-                MaxHtlcValueInFlight = 100000
+                Chainhash = message.ChainHash,
+                ChannelConfig = new ChannelConfig
+                {
+                    ChannelReserve = 1000,
+                    MaxAcceptedHtlcs = 5,
+                    ToSelfDelay = 1000,
+                    DustLimit = 100,
+                    HtlcMinimum = 100,
+                    MaxHtlcValueInFlight = 100000
+                },
+                ChannelBoundariesConfig = new ChannelBoundariesConfig
+                {
+                    MinEffectiveHtlcCapacity = 100,
+                    AllowPrivateChannels = true,
+                    MinimumDepth = 6,
+                },
             };
 
             _peerRepository.Setup(_ => _.TryGetPeerAsync(message.NodeId)).Returns(new Peer());
             _chainConfigProvider.Setup(_ => _.GetConfiguration(message.ChainHash)).Returns(chainParameters);
-            _channelConfigProvider.Setup(_ => _.GetConfiguration(message.ChainHash)).Returns(channelConfig);
 
-            return (chainParameters, channelConfig);
+            return chainParameters;
         }
 
-        private static StartOpenChannelIn NewStartChannelMessage()
+        private CreateOpenChannelIn NewStartChannelMessage()
         {
-            var message = new StartOpenChannelIn(
+            var message = new CreateOpenChannelIn(
                 new PublicKey(RandomMessages.NewRandomPublicKey()),
                 RandomMessages.NewRandomUint256(),
                 1000000,
@@ -99,25 +102,22 @@ namespace Lyn.Protocol.Tests.Bolt2
 
             var config = WithExistingPeerAndChainParameters(message);
 
-            await _sut.StartOpenChannelAsync(message);
-
-            var channelStates = new List<ChannelState>();
-            _channelStateRepository.Verify(_ =>
-                _.Create(Capture.In(channelStates)), Times.Once);
-
-            var openChannels = new List<PeerMessage<OpenChannel>>();
-            _messageSender.Verify(_ =>
-                _.SendMessageAsync(Capture.In(openChannels)), Times.Once);
+            var result = await _sut.CreateOpenChannelAsync(message);
 
             // todo: dan add more checks
 
-            Assert.Single(channelStates);
-            Assert.Equal(message.FundingAmount, channelStates.First().FundingAmount);
-            Assert.Equal(GetBasepointsFromSecret().fundingKey.ToString(), channelStates.First().LocalPublicKey.ToString());
-            Assert.Equal(config.channelConfig.DustLimit, channelStates.First().LocalConfig.DustLimit);
+            Assert.IsType<OpenChannel>(result.Payload);
+            OpenChannel openChannel = (OpenChannel)result.Payload;
+            Assert.Equal(message.FundingAmount, openChannel.FundingSatoshis);
 
-            Assert.Single(openChannels);
-            Assert.Equal(message.FundingAmount, openChannels.First().MessagePayload.FundingSatoshis);
+            var channelStates = new List<ChannelCandidate>();
+            _channelStateRepository.Verify(_ =>
+                _.CreateAsync(Capture.In(channelStates)), Times.Once);
+
+            Assert.Single(channelStates);
+            Assert.Equal(message.FundingAmount, channelStates.First().OpenChannel.FundingSatoshis);
+            Assert.Equal(GetBasepointsFromSecret().fundingKey.ToString(), channelStates.First().OpenChannel.FundingPubkey.ToString());
+            Assert.Equal(config.ChannelConfig.DustLimit, channelStates.First().OpenChannel.DustLimitSatoshis);
         }
     }
 }

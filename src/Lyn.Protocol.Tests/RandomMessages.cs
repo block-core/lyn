@@ -26,7 +26,7 @@ namespace Lyn.Protocol.Tests
 
         public static PublicKey NewRandomPublicKey()
         {
-            return new PublicKey(GetRandomByteArray(PublicKey.LENGTH));
+            return new PublicKey(new NBitcoin.Key().PubKey.ToBytes());
         }
 
         public static ChainHash NewRandomChainHash()

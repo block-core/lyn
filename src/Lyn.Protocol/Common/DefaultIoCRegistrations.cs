@@ -37,11 +37,11 @@ namespace Lyn.Protocol.Common
         public static IServiceCollection AddSerializationComponents(this IServiceCollection services)
         {
             ScanAssemblyAndRegisterTypeSingleton(services, typeof(IProtocolTypeSerializer<>));
-            
-            ScanAssemblyAndRegisterTypeSingleton(services, typeof(IProtocolTypeSerializer<>),typeof(InitMessageSerializer).Assembly);
+
+            ScanAssemblyAndRegisterTypeSingleton(services, typeof(IProtocolTypeSerializer<>), typeof(InitMessageSerializer).Assembly);
 
             services.AddTransient<ITlvRecordSerializer, NetworksTlvSerializer>();
-            
+
             return services;
         }
 
@@ -69,10 +69,9 @@ namespace Lyn.Protocol.Common
             services.AddSingleton<IBoltFeatures, LynImplementedBoltFeatures>();
             services.AddSingleton<IParseFeatureFlags, ParseFeatureFlags>();
 
-            services.AddSingleton<IChannelConfigProvider, ChannelConfigProvider>();
             services.AddSingleton<IChainConfigProvider, ChainConfigProvider>(); ;
             services.AddSingleton<ISecretStore, SecretStore>();
-            
+
             services.AddTransient(typeof(IBoltMessageSender<>), typeof(BoltMessageSender<>));
 
             return services;
@@ -115,32 +114,31 @@ namespace Lyn.Protocol.Common
         {
             services.AddSingleton<IPeerRepository, InMemoryPeerRepository>();
             services.AddSingleton<IPingPongMessageRepository, InMemoryPingPongMessageRepository>();
-            services.AddTransient<IPingMessageAction,PingMessageService>();
+            services.AddTransient<IPingMessageAction, PingMessageService>();
             services.AddTransient<IInitMessageAction, InitMessageService>();
 
             services.AddTransient<ITlvStreamSerializer, TlvStreamSerializer>();
 
             services.AddSingleton<IStartOpenChannelService, StartOpenChannelService>(); //TODO Dan this is not control and setup services
-            services.AddSingleton<IChannelStateRepository, InMemoryChannelStateRepository>();
- 
+            services.AddSingleton<IChannelCandidateRepository, InMemoryChannelCandidateRepository>();
+
             return services;
         }
-        
-        
+
         private static void ScanAssemblyAndRegisterTypeSingleton(IServiceCollection services, Type protocolSerializerInterface)
         {
             ScanAssemblyAndRegisterTypeSingleton(services, protocolSerializerInterface,
                 protocolSerializerInterface.Assembly);
         }
-        
-        private static void ScanAssemblyAndRegisterTypeSingleton(IServiceCollection services, Type protocolSerializerInterface,Assembly assembly)
+
+        private static void ScanAssemblyAndRegisterTypeSingleton(IServiceCollection services, Type protocolSerializerInterface, Assembly assembly)
         {
             // Discovers and registers all type implementation in this assembly.
             var implementations = from type in assembly.GetTypes()
-                from typeInterface in type.GetInterfaces()
-                where typeInterface.IsGenericType &&
-                      protocolSerializerInterface.IsAssignableFrom(typeInterface.GetGenericTypeDefinition())
-                select new {Interface = typeInterface, ImplementationType = type};
+                                  from typeInterface in type.GetInterfaces()
+                                  where typeInterface.IsGenericType &&
+                                        protocolSerializerInterface.IsAssignableFrom(typeInterface.GetGenericTypeDefinition())
+                                  select new { Interface = typeInterface, ImplementationType = type };
 
             foreach (var implementation in implementations)
             {
