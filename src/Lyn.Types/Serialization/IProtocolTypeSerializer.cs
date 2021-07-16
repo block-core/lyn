@@ -10,7 +10,6 @@ namespace Lyn.Types.Serialization
         /// <param name="typeInstance">The type to serialize.</param>
         /// <param name="writer"></param>
         /// <param name="options"></param>
-        /// <param name="output">The output buffer used to store data into.</param>
         /// <returns>number of written bytes</returns>
         int Serialize(TProtocolType typeInstance, IBufferWriter<byte> writer, ProtocolTypeSerializerOptions? options = null);
 

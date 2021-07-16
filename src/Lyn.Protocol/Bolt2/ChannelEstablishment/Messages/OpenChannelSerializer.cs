@@ -18,6 +18,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment.Messages
             size += writer.WriteULong(typeInstance.MaxHtlcValueInFlightMsat);
             size += writer.WriteULong(typeInstance.ChannelReserveSatoshis);
             size += writer.WriteULong(typeInstance.HtlcMinimumMsat);
+            size += writer.WriteUInt(typeInstance.FeeratePerKw);
             size += writer.WriteUShort(typeInstance.ToSelfDelay);
             size += writer.WriteUShort(typeInstance.MaxAcceptedHtlcs);
             size += writer.WriteBytes(typeInstance.FundingPubkey);
@@ -43,14 +44,15 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment.Messages
             message.MaxHtlcValueInFlightMsat = reader.ReadULong();
             message.ChannelReserveSatoshis = reader.ReadULong();
             message.HtlcMinimumMsat = reader.ReadULong();
+            message.FeeratePerKw = reader.ReadUInt();
             message.ToSelfDelay = reader.ReadUShort();
             message.MaxAcceptedHtlcs = reader.ReadUShort();
-            message.FundingPubkey = reader.ReadBytes(32);
-            message.RevocationBasepoint = reader.ReadBytes(32);
-            message.PaymentBasepoint = reader.ReadBytes(32);
-            message.DelayedPaymentBasepoint = reader.ReadBytes(32);
-            message.HtlcBasepoint = reader.ReadBytes(32);
-            message.FirstPerCommitmentPoint = reader.ReadBytes(32);
+            message.FundingPubkey = reader.ReadBytes(33);
+            message.RevocationBasepoint = reader.ReadBytes(33);
+            message.PaymentBasepoint = reader.ReadBytes(33);
+            message.DelayedPaymentBasepoint = reader.ReadBytes(33);
+            message.HtlcBasepoint = reader.ReadBytes(33);
+            message.FirstPerCommitmentPoint = reader.ReadBytes(33);
             message.ChannelFlags = reader.ReadByte();
 
             return message;

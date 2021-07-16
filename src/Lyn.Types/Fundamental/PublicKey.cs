@@ -1,8 +1,9 @@
 using System;
+using System.Linq;
 
 namespace Lyn.Types.Fundamental
 {
-    public class PublicKey: IEquatable<PublicKey>
+    public class PublicKey : IEquatable<PublicKey>
     {
         public const ushort LENGTH = 33;
 
@@ -30,9 +31,9 @@ namespace Lyn.Types.Fundamental
 
         public static implicit operator byte[](PublicKey hash) => hash._value;
 
-        public static implicit operator PublicKey(byte[] bytes) => new (bytes);
+        public static implicit operator PublicKey(byte[] bytes) => new(bytes);
 
-        public static implicit operator PublicKey(ReadOnlySpan<byte> bytes) => new (bytes.ToArray());
+        public static implicit operator PublicKey(ReadOnlySpan<byte> bytes) => new(bytes.ToArray());
 
         public override string ToString()
         {
@@ -43,7 +44,7 @@ namespace Lyn.Types.Fundamental
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
-            return _value.Equals(other._value);
+            return _value.SequenceEqual(other._value);
         }
 
         public override bool Equals(object? obj)
@@ -51,7 +52,7 @@ namespace Lyn.Types.Fundamental
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != this.GetType()) return false;
-            return Equals((PublicKey) obj);
+            return Equals((PublicKey)obj);
         }
 
         public override int GetHashCode()
