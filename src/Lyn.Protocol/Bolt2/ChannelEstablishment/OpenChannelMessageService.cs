@@ -54,18 +54,25 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             var peer = _peerRepository.TryGetPeerAsync(message.NodeId);
 
-            if (peer == null) // todo: dan asked himself wtf
+            if (peer == null)
             {
-                // todo: dan write this logic
-                return new MessageProcessingOutput();
+                return MessageProcessingOutput.CreateErrorMessage(openChannel.TemporaryChannelId, true, "invalid peer");
             }
 
             ChannelCandidate? currentState = await _channelCandidateRepository.GetAsync(message.MessagePayload.TemporaryChannelId);
 
             if (currentState != null)
             {
-                // todo: dan write this logic
-                return new MessageProcessingOutput();
+                if (currentState.ChannelOpener == ChannelSide.Remote
+                    && currentState.OpenChannel != null
+                    && currentState.AcceptChannel == null)
+                {
+                    // continue processing
+                }
+                else
+                {
+                    return MessageProcessingOutput.CreateErrorMessage(openChannel.TemporaryChannelId, true, "open channel is in an invalid state");
+                }
             }
 
             ChainParameters? chainParameters = _chainConfigProvider.GetConfiguration(openChannel.ChainHash);
@@ -135,9 +142,9 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                 ChannelOpener = ChannelSide.Remote,
                 ChannelId = openChannel.TemporaryChannelId,
                 OpenChannel = openChannel,
+                OpenChannelUpfrontShutdownScript = remoteUpfrontShutdownScript,
                 AcceptChannel = acceptChannel,
-                LocalUpfrontShutdownScript = localUpfrontShutdownScript,
-                RemoteUpfrontShutdownScript = remoteUpfrontShutdownScript,
+                AcceptChannelUpfrontShutdownScript = localUpfrontShutdownScript,
             };
 
             await _channelCandidateRepository.CreateAsync(channelCandidate);
