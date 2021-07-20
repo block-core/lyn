@@ -110,6 +110,7 @@ namespace Lyn.Protocol.Common
             
             // Bolt 3
             services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<OpenChannel>>();
+            services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<AcceptChannel>>();
 
             return services;
         }
