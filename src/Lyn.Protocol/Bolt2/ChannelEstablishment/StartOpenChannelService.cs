@@ -126,18 +126,19 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                     upfrontShutdownScript = new byte[] { 0x0000 };
             }
 
-            var boltMessage = new BoltMessage
+            var boltMessage = new BoltMessage {Payload = openChannel};
+
+            if (upfrontShutdownScript != null)
             {
-                Payload = openChannel,
-                Extension = new TlVStream
+                boltMessage.Extension = new TlVStream
                 {
                     Records = new List<TlvRecord>
                     {
-                        new UpfrontShutdownScriptTlvRecord{ ShutdownScriptpubkey = upfrontShutdownScript}
+                        new UpfrontShutdownScriptTlvRecord {ShutdownScriptpubkey = upfrontShutdownScript}
                     }
-                }
-            };
-
+                };
+            }
+            
             ChannelCandidate channelCandidate = new()
             {
                 ChannelOpener = ChannelSide.Local,

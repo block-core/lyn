@@ -14,10 +14,10 @@ namespace Lyn.Protocol.Common.Blockchain
                 {
                     ChannelReserve = 0,
                     DustLimit = 100,
-                    HtlcMinimum = 50000,
-                    MaxAcceptedHtlcs = 486,
-                    ToSelfDelay = 2160,
-                    MaxHtlcValueInFlight = 500000
+                    HtlcMinimum = 3500,
+                    MaxAcceptedHtlcs = 100,
+                    ToSelfDelay = 2016,
+                    MaxHtlcValueInFlight = 12000000
                 },
                 ChannelBoundariesConfig = new ChannelBoundariesConfig
                 {
@@ -26,9 +26,9 @@ namespace Lyn.Protocol.Common.Blockchain
                     ChannelReservePercentage = 0.01m,
                     LargeChannelAmount = 16000000,
                     MaxToSelfDelay = 2500,
-                    MinEffectiveHtlcCapacity = 500000,
+                    MinEffectiveHtlcCapacity = 30,
                     TooLargeFeeratePerKw = 2000,
-                    TooLowFeeratePerKw = 100
+                    TooLowFeeratePerKw = 10
                 }
             };
         }
