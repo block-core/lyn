@@ -6,8 +6,9 @@ namespace Lyn.Protocol.Common
 {
     public class DefaultRandomNumberGenerator : IRandomNumberGenerator //TODO David this was imported from Mithril shards and needs unit tests
     {
-        private static readonly RandomNumberGenerator Generator = RandomNumberGenerator.Create();
-
+        //private static readonly RandomNumberGenerator Generator = RandomNumberGenerator.Create();
+        private static readonly RNGCryptoServiceProvider Generator = new ();
+        
         public void GetBytes(Span<byte> data)
         {
             Generator.GetBytes(data);

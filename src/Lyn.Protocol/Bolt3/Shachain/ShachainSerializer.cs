@@ -14,7 +14,7 @@ namespace Lyn.Protocol.Bolt3.Shachain
             foreach (var (key, value) in typeInstance.Secrets)
             {
                 size += writer.WriteInt(key);
-                size += writer.WriteUint256(value.Secret);
+                size += writer.WriteUint256(value.Secret, true);
                 size += writer.WriteULong(value.Index);
             }
 

@@ -1,5 +1,4 @@
 ﻿using System;
-using Lyn.Protocol.Bolt1.Messages;
 using Lyn.Protocol.Common.Messages;
 using Lyn.Types.Fundamental;
 
@@ -11,13 +10,15 @@ namespace Lyn.Protocol.Connection
         {
             NodeId = nodeId;
             Message = message;
-            MessagePayload = message.Payload as T ?? throw new InvalidCastException($"{typeof(T).FullName} from {message.Payload.GetType()}");
+
+            MessagePayload = message.Payload as T ??
+                           throw new InvalidCastException($"{message.Payload.GetType()} as {typeof(T).FullName}");
         }
 
-        public PublicKey NodeId { get; set; }
+        public PublicKey NodeId { get; }
 
-        public BoltMessage Message { get; set; }
+        public BoltMessage Message { get; }
 
-        public T MessagePayload { get; set; }
+        public T MessagePayload  { get; }
     }
 }

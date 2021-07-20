@@ -174,7 +174,7 @@ namespace Lyn.Types.Bitcoin
             return new UInt256(hexString);
         }
 
-        public ReadOnlySpan<byte> GetBytes()
+        public ReadOnlySpan<byte> GetBytes(bool bigEndian = false)
         {
             // TODO: fix when moving to dotnet5
             // return MemoryMarshal.CreateReadOnlySpan(ref Unsafe.As<ulong, byte>(ref part1), EXPECTED_SIZE);
@@ -184,9 +184,13 @@ namespace Lyn.Types.Bitcoin
             temp[1] = part2;
             temp[2] = part3;
             temp[3] = part4;
-            Span<byte> temp2 = MemoryMarshal.Cast<ulong, byte>(temp);
 
-            return temp2.ToArray();
+            Span<byte> arrAsBytes = MemoryMarshal.Cast<ulong, byte>(temp);
+
+            if (bigEndian)
+                arrAsBytes.Reverse();
+
+            return arrAsBytes.ToArray();
         }
 
         public override int GetHashCode()

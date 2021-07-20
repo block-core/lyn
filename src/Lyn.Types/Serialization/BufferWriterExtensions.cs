@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Buffers;
 using System.Buffers.Binary;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Lyn.Types.Bitcoin;
@@ -130,9 +131,9 @@ namespace Lyn.Types.Serialization
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int WriteUint256(this IBufferWriter<byte> writer, UInt256 value)
+        public static int WriteUint256(this IBufferWriter<byte> writer, UInt256 value, bool isBigEndian = false)
         {
-            ReadOnlySpan<byte> span = value.GetBytes();
+            var span = value.GetBytes(isBigEndian);
             writer.Write(span);
             return span.Length;
         }

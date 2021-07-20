@@ -10,7 +10,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment.Messages
         {
             var size = 0;
 
-            size += writer.WriteUint256(typeInstance.ChainHash);
+            size += writer.WriteUint256(typeInstance.ChainHash, true);
             size += writer.WriteBytes(typeInstance.TemporaryChannelId);
             size += writer.WriteULong(typeInstance.FundingSatoshis);
             size += writer.WriteULong(typeInstance.PushMsat);

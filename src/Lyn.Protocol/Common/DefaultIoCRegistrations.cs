@@ -5,9 +5,9 @@ using Lyn.Protocol.Bolt1;
 using Lyn.Protocol.Bolt1.Messages;
 using Lyn.Protocol.Bolt1.Messages.TlvRecords;
 using Lyn.Protocol.Bolt1.TlvStreams;
-using Lyn.Protocol.Bolt2;
 using Lyn.Protocol.Bolt2.ChannelEstablishment;
-using Lyn.Protocol.Bolt2.Configuration;
+using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages;
+using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages.TlvRecords;
 using Lyn.Protocol.Bolt3;
 using Lyn.Protocol.Bolt7;
 using Lyn.Protocol.Bolt7.Messages;
@@ -41,6 +41,7 @@ namespace Lyn.Protocol.Common
             ScanAssemblyAndRegisterTypeSingleton(services, typeof(IProtocolTypeSerializer<>), typeof(InitMessageSerializer).Assembly);
 
             services.AddTransient<ITlvRecordSerializer, NetworksTlvSerializer>();
+            services.AddTransient<ITlvRecordSerializer, UpfrontShutdownScriptTlvSerializer>();
 
             return services;
         }
@@ -106,6 +107,9 @@ namespace Lyn.Protocol.Common
             services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<ErrorMessage>>();
             services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<PingMessage>>();
             services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<PongMessage>>();
+            
+            // Bolt 3
+            services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<OpenChannel>>();
 
             return services;
         }

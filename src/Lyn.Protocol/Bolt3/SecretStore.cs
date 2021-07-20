@@ -1,4 +1,5 @@
-﻿using Lyn.Types.Fundamental;
+﻿using Lyn.Types;
+using Lyn.Types.Fundamental;
 
 namespace Lyn.Protocol.Bolt3
 {
@@ -6,7 +7,7 @@ namespace Lyn.Protocol.Bolt3
     {
         public Secret GetSeed()
         {
-            throw new System.NotImplementedException();
+            return new Secret(Hex.FromString("0x1111111111111111111111111111111111111111111111111111111111111111"));
         }
     }
 }
