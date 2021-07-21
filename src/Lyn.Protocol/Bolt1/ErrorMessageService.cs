@@ -35,7 +35,7 @@ namespace Lyn.Protocol.Bolt1
                 _logger.Log(LogLevel.Information,"Need to fail all channels"); // TODO fail all channels
             else
                 _logger.Log(LogLevel.Information,
-                    $"Need to fail channel {Hex.ToString(request.MessagePayload.ChannelId)}"); // TODO fail the channel
+                    $"Need to fail channel {Hex.ToString(request.MessagePayload.ChannelId.GetBytes())}"); // TODO fail the channel
 
             return new EmptySuccessResponse();
         }

@@ -7,7 +7,7 @@ namespace Lyn.Protocol.Bolt1.Messages
     {
         public override MessageType MessageType => MessageType.Error;
 
-        public ChannelId ChannelId { get; set; } = new(new byte[0]);
+        public ChannelId ChannelId { get; set; } = new(new byte[32]);
 
         public ushort Len { get; set; }
 

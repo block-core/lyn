@@ -11,7 +11,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment.Messages
         {
             var size = 0;
 
-            size += writer.WriteBytes(typeInstance.TemporaryChannelId);
+            size += writer.WriteUint256(typeInstance.TemporaryChannelId,true);
             size += writer.WriteULong(typeInstance.DustLimitSatoshis, true);
             size += writer.WriteULong(typeInstance.MaxHtlcValueInFlightMsat, true);
             size += writer.WriteULong(typeInstance.ChannelReserveSatoshis, true);
@@ -33,7 +33,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment.Messages
         {
             var message = new AcceptChannel();
 
-            message.TemporaryChannelId = reader.ReadBytes(ChannelId.LENGTH);
+            message.TemporaryChannelId = new ChannelId(reader.ReadUint256(true).GetBytes().ToArray()); 
             message.DustLimitSatoshis = reader.ReadULong(true);
             message.MaxHtlcValueInFlightMsat = reader.ReadULong(true);
             message.ChannelReserveSatoshis = reader.ReadULong(true);

@@ -97,7 +97,7 @@ namespace Lyn.Protocol.Tests.Bolt1
                     {
                         Records = new List<TlvRecord>
                         {
-                            new NetworksTlvRecord {Type = 1, Payload = ChainHashes.BitcoinSignet, Size = 32}
+                            new NetworksTlvRecord {Type = 1, Payload = ChainHashes.BitcoinSignet.GetBytes().ToArray(), Size = 32}
                         }
                     }
                 });

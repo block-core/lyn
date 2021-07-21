@@ -17,7 +17,7 @@ namespace Lyn.Protocol.Common
         public byte[] GetBytes(int len)
         {
             Span<byte> result = stackalloc byte[len];
-            Generator.GetBytes(MemoryMarshal.AsBytes(result));
+            Generator.GetBytes(result);
             return result.ToArray();
         }
 

@@ -10,7 +10,7 @@ namespace Lyn.Protocol.Bolt1.Messages
             ProtocolTypeSerializerOptions? options = null)
         {
             var size = 0;
-            size += writer.WriteBytes(typeInstance.ChannelId);
+            size += writer.WriteUint256(typeInstance.ChannelId);
             size += writer.WriteUShort(typeInstance.Len, true);
             if (typeInstance.Data != null)
             {
