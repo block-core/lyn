@@ -23,7 +23,7 @@ namespace Lyn.Protocol.Bolt7.Messages
         {
             return new GossipTimestampFilter
             {
-                ChainHash = (ChainHash) reader.ReadUint256(true),
+                ChainHash = new ChainHash(reader.ReadUint256(true).GetBytes().ToArray()),
                 FirstTimestamp = reader.ReadUInt(),
                 TimestampRange = reader.ReadUInt()
             };

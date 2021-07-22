@@ -25,10 +25,10 @@ namespace Lyn.Protocol.Bolt7
          if (message.ChainHash == null)
             throw new ArgumentNullException(nameof(ChainHash));
 
-         if (message.NodeId is null)
+         if (request.NodeId is null)
             throw new InvalidOperationException();
          
-         var node = await _gossipRepository.GetNodeAsync(message.NodeId);
+         var node = await _gossipRepository.GetNodeAsync(request.NodeId);
 
          if (node == null)
             throw new InvalidOperationException("Node not found in gossip repository"); //we should only be getting this message if the feature is enabled in the handshake

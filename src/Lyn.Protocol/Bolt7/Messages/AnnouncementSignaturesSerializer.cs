@@ -24,7 +24,7 @@ namespace Lyn.Protocol.Bolt7.Messages
         {
             return new AnnouncementSignatures
             {
-                ChannelId = (ChannelId) reader.ReadUint256(true),
+                ChannelId = new ChannelId(reader.ReadUint256(true).GetBytes().ToArray()),
                 ShortChannelId = reader.ReadBytes(8),
                 NodeSignature = reader.ReadBytes(CompressedSignature.LENGTH),
                 BitcoinSignature = reader.ReadBytes(CompressedSignature.LENGTH),

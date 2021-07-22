@@ -40,7 +40,7 @@ namespace Lyn.Protocol.Bolt7.Messages
 
             message.Len = reader.ReadUShort();
             message.Features = reader.ReadBytes(message.Len).ToArray();
-            message.ChainHash =  (ChainHash) reader.ReadUint256(true);
+            message.ChainHash =  new ChainHash(reader.ReadUint256(true).GetBytes().ToArray());
             message.ShortChannelId = reader.ReadBytes(8);
             message.NodeId1 = reader.ReadBytes(PublicKey.LENGTH);
             message.NodeId2 = reader.ReadBytes(PublicKey.LENGTH);

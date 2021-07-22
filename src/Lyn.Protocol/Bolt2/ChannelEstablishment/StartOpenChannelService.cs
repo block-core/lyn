@@ -67,9 +67,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             openChannel.ChainHash = chainParameters.Chainhash;
 
-            var test = _randomNumberGenerator.GetBytes(32);
-            
-            openChannel.TemporaryChannelId = new ChannelId(test);
+            openChannel.TemporaryChannelId = new ChannelId(_randomNumberGenerator.GetBytes(32));
 
             if (createOpenChannelIn.PrivateChannel && !chainParameters.ChannelBoundariesConfig.AllowPrivateChannels)
                 throw new ApplicationException($"Private channels are not enabled");

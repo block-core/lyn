@@ -13,7 +13,5 @@ namespace Lyn.Protocol.Bolt7.Messages
         public uint FirstTimestamp { get; set; }
 
         public uint TimestampRange { get; set; }
-
-        public PublicKey? NodeId { get; }
     }
 }
