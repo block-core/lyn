@@ -7,6 +7,8 @@ using Lyn.Protocol.Bolt1;
 using Lyn.Protocol.Bolt1.Entities;
 using Lyn.Protocol.Bolt1.Messages;
 using Lyn.Protocol.Bolt1.Messages.TlvRecords;
+using Lyn.Protocol.Bolt7;
+using Lyn.Protocol.Bolt7.Entities;
 using Lyn.Protocol.Bolt9;
 using Lyn.Protocol.Common.Messages;
 using Lyn.Protocol.Connection;
@@ -24,15 +26,17 @@ namespace Lyn.Protocol.Tests.Bolt1
         private readonly Mock<IPeerRepository> _repository;
         private readonly Mock<IBoltFeatures> _features;
         private readonly ParseFeatureFlags _parseFeatureFlags;
+        private readonly Mock<IGossipRepository> _gossipRepository;
 
         public InitMessageServiceTests()
         {
             _repository = new ();
             _features = new ();
             _parseFeatureFlags = new ();
+            _gossipRepository = new();
             
             _sut = new InitMessageService(_repository.Object,
-                _features.Object, _parseFeatureFlags);
+                _features.Object, _parseFeatureFlags, _gossipRepository.Object);
         }
 
         private void WithFeaturesThanAreSupportedLocally(PeerMessage<InitMessage> message)
@@ -125,6 +129,21 @@ namespace Lyn.Protocol.Tests.Bolt1
             _repository.Verify(_ => _.AddOrUpdatePeerAsync(It.Is<Peer>(p
                 => (ulong)p.Featurs  == (ulong)parsedFeatures &&
                    p.NodeId.Equals(message.NodeId))));
+        }
+        
+        [Fact]
+        public void ProcessMessageAddsNodeToGossipRepository()
+        {
+            var message = NewRandomPeerMessage();
+
+            _parseFeatureFlags.ParseFeatures(message.MessagePayload.Features);
+            
+            WithFeaturesThanAreSupportedLocally(message);
+
+            _sut.ProcessMessageAsync(message);
+
+            _gossipRepository.Verify(_ => _.AddNodeAsync(It.Is<GossipNode>(_ 
+            => _.Id == message.NodeId)));
         }
         
         [Fact]

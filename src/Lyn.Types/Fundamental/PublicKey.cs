@@ -1,9 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Lyn.Types.Fundamental
 {
-    public class PublicKey : IEquatable<PublicKey>
+    public class PublicKey : IEquatable<PublicKey>, IEqualityComparer<PublicKey>
     {
         public const ushort LENGTH = 33;
 
@@ -58,6 +59,20 @@ namespace Lyn.Types.Fundamental
         public override int GetHashCode()
         {
             return _value.GetHashCode();
+        }
+
+        public bool Equals(PublicKey x, PublicKey y)
+        {
+            if (ReferenceEquals(x, y)) return true;
+            if (ReferenceEquals(x, null)) return false;
+            if (ReferenceEquals(y, null)) return false;
+            if (x.GetType() != y.GetType()) return false;
+            return x._value.Equals(y._value);
+        }
+
+        public int GetHashCode(PublicKey obj)
+        {
+            return obj._value.GetHashCode();
         }
     }
 }

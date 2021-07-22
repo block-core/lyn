@@ -40,7 +40,7 @@ namespace Lyn.Protocol.Bolt7
          existingFilter.FirstTimestamp = message.FirstTimestamp;
          existingFilter.TimestampRange = message.TimestampRange;
 
-         await _gossipRepository.AddNodeAsync(node);
+         await _gossipRepository.UpdateNodeAsync(node);
 
          return new EmptySuccessResponse();
       }
