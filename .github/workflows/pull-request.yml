@@ -37,10 +37,10 @@ jobs:
     #     dotnet-version: '3.1.101' 
 
     - name: Unit Test
-      run: dotnet test -v=normal --no-build --configuration ${{env.BUILD_CONFIGURATION}} ${{env.SOLUTION_PATH}}
+      run: dotnet test -v=normal --configuration ${{env.BUILD_CONFIGURATION}} ${{env.SOLUTION_PATH}}
 
     # - name: Setup NuGet
     #   uses: NuGet/setup-nuget@v1.0.5
 
-    - name: Nuget Pack
-      run: dotnet pack --configuration ${{env.BUILD_CONFIGURATION}} --output "${{github.workspace}}/package/" ${{env.SOLUTION_PATH}}
+    # - name: Nuget Pack
+    #   run: dotnet pack --configuration ${{env.BUILD_CONFIGURATION}} --output "${{github.workspace}}/package/" ${{env.SOLUTION_PATH}}
