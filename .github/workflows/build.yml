@@ -35,7 +35,7 @@ jobs:
     - name: Get Build Version
       run: |
         [xml]$propscontents = Get-Content -Path ".\src\Directory.Build.props";
-        echo "VERSION=$propscontents.Project.PropertyGroup.Version" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf-8 -Append
+        echo VERSION=($propscontents.Project.PropertyGroup.Version) | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf-8 -Append
       shell: pwsh
 
     - name: Unit Test
