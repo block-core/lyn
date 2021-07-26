@@ -10,12 +10,7 @@ jobs:
   
   buildAndUnitTest:
 
-    strategy:
-      matrix:
-        os: [ windows-latest, ubuntu-latest, macos-latest ]
-      fail-fast: false
-
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     
     env:
       SOLUTION_PATH: 'src/Lyn.sln'
