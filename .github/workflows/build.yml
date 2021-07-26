@@ -3,7 +3,7 @@ name: Build
 on: 
   push:
     branches:
-      - make-nuget-pkgs
+      - master
   repository_dispatch:
     types: [build]
   workflow_dispatch:
@@ -42,7 +42,7 @@ jobs:
     #   uses: actions/setup-dotnet@v1
     #   with:
     #     dotnet-version: '3.1.101' 
-
+    
     - name: Unit Test
       run: dotnet test -v=normal --no-build --configuration ${{env.BUILD_CONFIGURATION}} ${{env.SOLUTION_PATH}}
 
