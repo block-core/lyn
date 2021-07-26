@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - master
-      - make-nuget-pkgs
   repository_dispatch:
     types: [build]
   workflow_dispatch:

@@ -8,6 +8,7 @@
     <AssemblyTitle>Lyn.Protocol</AssemblyTitle>
     <AssemblyName>Lyn.Protocol</AssemblyName>
     <PackageId>Blockcore.Lyn.Protocol</PackageId>
+    <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
