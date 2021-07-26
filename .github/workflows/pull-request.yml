@@ -1,11 +1,9 @@
-name: Build
+name: Pull Request
 
 on: 
-  push:
+  pull_request:
     branches:
-      - make-nuget-pkgs
-  repository_dispatch:
-    types: [build]
+      - master
   workflow_dispatch:
 
 jobs:
@@ -43,27 +41,11 @@ jobs:
     #   with:
     #     dotnet-version: '3.1.101' 
 
-    - name: Unit Test
-      run: dotnet test -v=normal --no-build --configuration ${{env.BUILD_CONFIGURATION}} ${{env.SOLUTION_PATH}}
+    # - name: Unit Test
+    #   run: dotnet test -v=normal --no-build --filter FullyQualifiedName!~IntegrationTests --configuration ${{env.BUILD_CONFIGURATION}} ${{env.SOLUTION_PATH}}
+
+    # - name: Setup NuGet
+    #   uses: NuGet/setup-nuget@v1.0.5
 
     - name: Nuget Pack
       run: dotnet pack --configuration ${{env.BUILD_CONFIGURATION}} --output "${{github.workspace}}/package/" ${{env.SOLUTION_PATH}}
-
-    - uses: actions/upload-artifact@v2
-      if: matrix.os == 'ubuntu-latest'
-      with:
-        name: Lyn-${{env.VERSION}}-preview
-        path: "${{github.workspace}}/package/"
-
-    - name: Release
-      if: matrix.os == 'ubuntu-latest'
-      uses: sondreb/action-release@master
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        verbose: true
-        folder: "${{github.workspace}}/package/"
-        draft: true
-        prerelease: false
-        body: ''
-        name: "Lyn ${{env.VERSION}}"
-        tag: ${{env.VERSION}}
