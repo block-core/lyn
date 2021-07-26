@@ -7,7 +7,7 @@
     <Description>Library implementation of the lightning protocol.</Description>
     <AssemblyTitle>Lyn.Protocol</AssemblyTitle>
     <AssemblyName>Lyn.Protocol</AssemblyName>
-    <PackageId>Lyn.Protocol</PackageId>
+    <PackageId>Blockcore.Lyn.Protocol</PackageId>
     <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
   </PropertyGroup>
 

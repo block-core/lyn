@@ -4,7 +4,7 @@
     <TargetFramework>net5.0</TargetFramework>
     <Nullable>enable</Nullable>
     <RootNamespace>Lyn.Protocol.Tests</RootNamespace>
-    <PackageId>Lyn.Protocol.Tests</PackageId>
+    <PackageId>Blockcore.Lyn.Protocol.Tests</PackageId>
     <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
   </PropertyGroup>
 

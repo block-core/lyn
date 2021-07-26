@@ -4,7 +4,7 @@
     <TargetFramework>net5.0</TargetFramework>
     <Nullable>enable</Nullable>
     <RootNamespace>Lyn.Types</RootNamespace>
-    <PackageId>Lyn.Types</PackageId>
+    <PackageId>Blockcore.Lyn.Types</PackageId>
     <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
   </PropertyGroup>
 </Project>
