@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Lyn.Protocol.Bolt1.Entities;
 using Lyn.Protocol.Bolt1.Messages;
@@ -41,7 +42,8 @@ namespace Lyn.Protocol.Bolt1
 
         public Peer? TryGetPeerAsync(PublicKey nodeId)
         {
-            return Peers.ContainsKey(nodeId) ? Peers[nodeId] : null;
+            return Peers.FirstOrDefault().Value;
+            //return Peers.ContainsKey(nodeId) ? Peers[nodeId] : null;
         }
 
         public Task AddOrUpdatePeerAsync(Peer peer)
@@ -53,7 +55,7 @@ namespace Lyn.Protocol.Bolt1
                     peer.Id = existingPeer.Id;
                     return existingPeer;
                 });
-            
+
             return Task.CompletedTask;
         }
     }
