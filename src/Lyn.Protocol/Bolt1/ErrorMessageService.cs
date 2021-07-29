@@ -5,6 +5,7 @@ using Lyn.Protocol.Common;
 using Lyn.Protocol.Common.Messages;
 using Lyn.Protocol.Connection;
 using Lyn.Types;
+using Lyn.Types.Bitcoin;
 using Microsoft.Extensions.Logging;
 
 namespace Lyn.Protocol.Bolt1
@@ -31,7 +32,7 @@ namespace Lyn.Protocol.Bolt1
 
             //TODO David need to connect the logic to fail a channel after Bolt2 is implemented
 
-            if (request.MessagePayload.ChannelId.IsEmpty)
+            if (request.MessagePayload.ChannelId == UInt256.Zero)
                 _logger.Log(LogLevel.Information,"Need to fail all channels"); // TODO fail all channels
             else
                 _logger.Log(LogLevel.Information,

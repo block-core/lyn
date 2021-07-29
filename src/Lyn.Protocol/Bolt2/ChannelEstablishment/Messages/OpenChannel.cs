@@ -9,7 +9,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment.Messages
     public class OpenChannel : MessagePayload
     {
         public override MessageType MessageType => MessageType.OpenChannel;
-        public ChannelId TemporaryChannelId { get; set; }
+        public UInt256 TemporaryChannelId { get; set; }
         public UInt256 ChainHash { get; set; }
         public Satoshis FundingSatoshis { get; set; }
         public MiliSatoshis PushMsat { get; set; }

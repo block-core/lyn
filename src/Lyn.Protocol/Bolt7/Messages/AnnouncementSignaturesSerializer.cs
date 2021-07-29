@@ -1,4 +1,5 @@
 using System.Buffers;
+using Lyn.Types.Bitcoin;
 using Lyn.Types.Bolt;
 using Lyn.Types.Fundamental;
 using Lyn.Types.Serialization;
@@ -24,7 +25,7 @@ namespace Lyn.Protocol.Bolt7.Messages
         {
             return new AnnouncementSignatures
             {
-                ChannelId = new ChannelId(reader.ReadUint256(true).GetBytes().ToArray()),
+                ChannelId = new UInt256(reader.ReadUint256(true).GetBytes().ToArray()),
                 ShortChannelId = reader.ReadBytes(8),
                 NodeSignature = reader.ReadBytes(CompressedSignature.LENGTH),
                 BitcoinSignature = reader.ReadBytes(CompressedSignature.LENGTH),

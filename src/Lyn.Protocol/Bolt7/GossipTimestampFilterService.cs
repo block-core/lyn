@@ -23,7 +23,7 @@ namespace Lyn.Protocol.Bolt7
          var message = request.MessagePayload;
          
          if (message.ChainHash == null)
-            throw new ArgumentNullException(nameof(ChainHash));
+            throw new ArgumentNullException(nameof(message.ChainHash));
 
          if (request.NodeId is null)
             throw new InvalidOperationException();

@@ -1,5 +1,6 @@
 using System;
 using System.Buffers;
+using Lyn.Types.Bitcoin;
 using Lyn.Types.Bolt;
 using Lyn.Types.Serialization;
 
@@ -23,7 +24,7 @@ namespace Lyn.Protocol.Bolt7.Messages
         {
             return new GossipTimestampFilter
             {
-                ChainHash = new ChainHash(reader.ReadUint256(true).GetBytes().ToArray()),
+                ChainHash = new UInt256(reader.ReadUint256(true).GetBytes().ToArray()),
                 FirstTimestamp = reader.ReadUInt(),
                 TimestampRange = reader.ReadUInt()
             };

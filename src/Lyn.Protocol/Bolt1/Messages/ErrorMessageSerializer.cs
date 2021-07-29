@@ -1,4 +1,5 @@
 using System.Buffers;
+using Lyn.Types.Bitcoin;
 using Lyn.Types.Bolt;
 using Lyn.Types.Serialization;
 
@@ -27,7 +28,7 @@ namespace Lyn.Protocol.Bolt1.Messages
 
             return new ErrorMessage
             {
-                ChannelId = new ChannelId(channelId), 
+                ChannelId = new UInt256(channelId), 
                 Len = len, 
                 Data = reader.ReadBytes(len).ToArray()
             };

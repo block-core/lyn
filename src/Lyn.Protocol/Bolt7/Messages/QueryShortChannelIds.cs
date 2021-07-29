@@ -2,6 +2,7 @@ using System;
 using Lyn.Protocol.Bolt1.Messages;
 using Lyn.Protocol.Common.Messages;
 using Lyn.Types;
+using Lyn.Types.Bitcoin;
 using Lyn.Types.Bolt;
 
 namespace Lyn.Protocol.Bolt7.Messages
@@ -15,7 +16,7 @@ namespace Lyn.Protocol.Bolt7.Messages
             EncodedShortIds = new Byte[0];
         }
 
-        public QueryShortChannelIds(ChainHash chainHash, ushort len, byte[] encodedShortIds)
+        public QueryShortChannelIds(UInt256 chainHash, ushort len, byte[] encodedShortIds)
         {
             ChainHash = chainHash;
             Len = len;
@@ -24,7 +25,7 @@ namespace Lyn.Protocol.Bolt7.Messages
 
         public override MessageType MessageType => MessageType.QueryShortChannelIds;
 
-        public ChainHash ChainHash { get; set; }
+        public UInt256 ChainHash { get; set; }
 
         public ushort Len { get; set; }
 

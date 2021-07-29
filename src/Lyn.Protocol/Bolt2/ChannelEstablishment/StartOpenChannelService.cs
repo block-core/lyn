@@ -15,6 +15,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Lyn.Types.Bitcoin;
 
 namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 {
@@ -67,7 +68,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             openChannel.ChainHash = chainParameters.Chainhash;
 
-            openChannel.TemporaryChannelId = new ChannelId(_randomNumberGenerator.GetBytes(32));
+            openChannel.TemporaryChannelId = new UInt256(_randomNumberGenerator.GetBytes(32));
 
             if (createOpenChannelIn.PrivateChannel && !chainParameters.ChannelBoundariesConfig.AllowPrivateChannels)
                 throw new ApplicationException($"Private channels are not enabled");

@@ -1,4 +1,5 @@
 using Lyn.Protocol.Common.Messages;
+using Lyn.Types.Bitcoin;
 using Lyn.Types.Bolt;
 
 namespace Lyn.Protocol.Bolt1.Messages
@@ -7,7 +8,7 @@ namespace Lyn.Protocol.Bolt1.Messages
     {
         public override MessageType MessageType => MessageType.Error;
 
-        public ChannelId ChannelId { get; set; } = new(new byte[32]);
+        public UInt256 ChannelId { get; set; } = new(new byte[32]);
 
         public ushort Len { get; set; }
 

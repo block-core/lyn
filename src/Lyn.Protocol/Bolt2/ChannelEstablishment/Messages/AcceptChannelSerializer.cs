@@ -1,5 +1,6 @@
 using Lyn.Types.Serialization;
 using System.Buffers;
+using Lyn.Types.Bitcoin;
 using Lyn.Types.Bolt;
 using Lyn.Types.Fundamental;
 
@@ -33,7 +34,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment.Messages
         {
             var message = new AcceptChannel();
 
-            message.TemporaryChannelId = new ChannelId(reader.ReadUint256(true).GetBytes().ToArray()); 
+            message.TemporaryChannelId = new UInt256(reader.ReadUint256(true).GetBytes().ToArray()); 
             message.DustLimitSatoshis = reader.ReadULong(true);
             message.MaxHtlcValueInFlightMsat = reader.ReadULong(true);
             message.ChannelReserveSatoshis = reader.ReadULong(true);

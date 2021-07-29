@@ -1,5 +1,6 @@
 ﻿using System.Threading.Tasks;
 using Lyn.Protocol.Bolt2.ChannelEstablishment.Entities;
+using Lyn.Types.Bitcoin;
 using Lyn.Types.Bolt;
 
 namespace Lyn.Protocol.Bolt2.ChannelEstablishment
@@ -10,6 +11,6 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
         Task UpdateAsync(ChannelCandidate channelCandidate);
 
-        Task<ChannelCandidate?> GetAsync(ChannelId channelId);
+        Task<ChannelCandidate?> GetAsync(UInt256 channelId);
     }
 }

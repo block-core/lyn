@@ -1,4 +1,5 @@
 using System.Buffers;
+using Lyn.Types.Bitcoin;
 using Lyn.Types.Bolt;
 using Lyn.Types.Fundamental;
 using Lyn.Types.Serialization;
@@ -40,7 +41,7 @@ namespace Lyn.Protocol.Bolt7.Messages
 
             message.Len = reader.ReadUShort();
             message.Features = reader.ReadBytes(message.Len).ToArray();
-            message.ChainHash =  new ChainHash(reader.ReadUint256(true).GetBytes().ToArray());
+            message.ChainHash =  new UInt256(reader.ReadUint256(true).GetBytes().ToArray());
             message.ShortChannelId = reader.ReadBytes(8);
             message.NodeId1 = reader.ReadBytes(PublicKey.LENGTH);
             message.NodeId2 = reader.ReadBytes(PublicKey.LENGTH);
