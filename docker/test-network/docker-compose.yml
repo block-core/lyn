@@ -2,6 +2,9 @@ version: "3.3"
 networks:
   lnnet:
 
+volumes: 
+  lnd-rest:
+    
 services:
   bitcoind:
     container_name: bitcoind
@@ -27,14 +30,20 @@ services:
       - "9735"
     restart: always
 
-  clightning-node:
-    container_name: clightning-node
+  c-lightning-node:
+    container_name: c-lightning-node
+    hostname: c-lightning-node
+    hostname: lightning
     build:
       context: c-lightning
     image: lyn/c-lightning:latest
     networks:
       - lnnet
+    volumes:
+      - lnd-rest:/rest  
     expose:
+      - "3002"
+      - "4001"
       - "9735"
     ports:
       - "0.0.0.0:9735:9735"
@@ -51,3 +60,15 @@ services:
       - "9735"
     restart: always
 
+  c-lightning-ui:
+    container_name: c-lightning-ui
+    image: dangershony/clnd-rtl:latest
+    hostname: c-lightning-ui
+    networks:
+      - lnnet
+    volumes:
+      - lnd-rest:/rest
+    ports:
+      - "0.0.0.0:3000:3000"
+    depends_on:
+      - "c-lightning-node"
