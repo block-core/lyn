@@ -1,6 +1,6 @@
 
 docker build -t lyn/bitcoind bitcoind
-docker build -t lyn/clightning c-lightning
+docker build -t lyn/c-lightning c-lightning
 docker build -t lyn/lnd lnd
 docker build -t lyn/eclair eclair
 
