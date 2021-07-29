@@ -36,6 +36,8 @@ services:
       - lnnet
     expose:
       - "9735"
+    ports:
+      - "0.0.0.0:9735:9735"
     restart: always
 
   eclair-node:
