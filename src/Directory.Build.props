@@ -1,0 +1,42 @@
+<Project>
+  <PropertyGroup>
+    <Version>0.0.1-alpha</Version>
+    <TargetFramework>net5.0</TargetFramework>
+    <IsPackable>true</IsPackable>
+    <Authors>Blockcore</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://lyn.blockcore.net</PackageProjectUrl>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>git://github.com/block-core/lyn</RepositoryUrl>
+    <PackageIcon></PackageIcon>
+    <PackageIconUrl>https://www.blockcore.net/assets/blockcore-256x256.png</PackageIconUrl>
+    <PackageTags>blockchain;cryptocurrency;crypto;C#;.NET;bitcoin;blockcore,lightning</PackageTags>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <DebugType>portable</DebugType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
+  </ItemGroup>
+
+  <Target Name="AddInternalsVisibleTo" BeforeTargets="CoreCompile">
+    <ItemGroup>
+      <!-- We don't need this at the moment, so not added. -->
+      <!--
+      <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+        <_Parameter1>$(AssemblyName).Tests</_Parameter1>
+      </AssemblyAttribute>-->
+
+      <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+        <_Parameter1>$(PackageId).Tests</_Parameter1>
+      </AssemblyAttribute>
+
+      <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+        <_Parameter1>$(MSBuildProjectName).Tests</_Parameter1>
+      </AssemblyAttribute>
+    </ItemGroup>
+  </Target>
+</Project>

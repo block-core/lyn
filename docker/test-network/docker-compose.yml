@@ -1,0 +1,53 @@
+version: "3.3"
+networks:
+  lnnet:
+
+services:
+  bitcoind:
+    container_name: bitcoind
+    build:
+        context: bitcoind
+    image: lyn/bitcoind:latest
+    networks:
+      - lnnet
+    expose:
+      - "18443"
+      - "12005"
+      - "12006"
+    restart: always
+
+  lnd-node:
+    container_name: lnd-node
+    build:
+        context: lnd
+    image: lyn/lnd:latest
+    networks:
+      - lnnet
+    expose:
+      - "9735"
+    restart: always
+
+  clightning-node:
+    container_name: clightning-node
+    build:
+      context: c-lightning
+    image: lyn/c-lightning:latest
+    networks:
+      - lnnet
+    expose:
+      - "9735"
+    ports:
+      - "0.0.0.0:9735:9735"
+    restart: always
+
+  eclair-node:
+    container_name: eclair-node
+    build:
+        context: eclair
+    image: lyn/eclair:latest
+    networks:
+      - lnnet
+    expose:
+      - "9735"
+    restart: always
+

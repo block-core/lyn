@@ -4,6 +4,11 @@
     <TargetFramework>net5.0</TargetFramework>
     <Nullable>enable</Nullable>
     <RootNamespace>Lyn.Protocol</RootNamespace>
+    <Description>Library implementation of the lightning protocol.</Description>
+    <AssemblyTitle>Blockcore.Lyn.Protocol</AssemblyTitle>
+    <AssemblyName>Blockcore.Lyn.Protocol</AssemblyName>
+    <PackageId>Blockcore.Lyn.Protocol</PackageId>
+    <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>

@@ -1,0 +1,63 @@
+name: Build
+
+on: 
+  push:
+    branches:
+      - master
+  repository_dispatch:
+    types: [build]
+  workflow_dispatch:
+
+jobs:
+  
+  buildAndUnitTest:
+
+    strategy:
+      matrix:
+        os: [ windows-latest, ubuntu-latest, macos-latest ]
+      fail-fast: false
+
+    runs-on: ${{ matrix.os }}
+
+    env:
+      SOLUTION_PATH: 'src/Lyn.sln'
+      BUILD_CONFIGURATION: 'Release'
+
+    steps:
+
+    - uses: actions/checkout@v2
+      name: Checkout
+      
+    - name: Display structure of files
+      run: ls -R
+
+    - name: Get Build Version
+      run: |
+        [xml]$propscontents = Get-Content -Path ".\src\Directory.Build.props";
+        echo "VERSION=$($propscontents.Project.PropertyGroup.Version)" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf-8 -Append
+      shell: pwsh
+
+    - name: Unit Test
+      run: dotnet test -v=normal --configuration ${{env.BUILD_CONFIGURATION}} ${{env.SOLUTION_PATH}}
+
+    - name: Nuget Pack
+      run: dotnet pack --configuration ${{env.BUILD_CONFIGURATION}} --output "${{github.workspace}}/package/" ${{env.SOLUTION_PATH}}
+
+    - uses: actions/upload-artifact@v2
+      if: matrix.os == 'ubuntu-latest'
+      with:
+        name: Lyn-${{env.VERSION}}-preview
+        path: "${{github.workspace}}/package/"
+
+    - name: Release
+      if: matrix.os == 'ubuntu-latest'
+      uses: sondreb/action-release@master
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        verbose: true
+        folder: "${{github.workspace}}/package/"
+        draft: true
+        prerelease: false
+        body: ''
+        name: "Lyn ${{env.VERSION}}"
+        tag: ${{env.VERSION}}
