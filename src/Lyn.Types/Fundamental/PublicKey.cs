@@ -1,10 +1,10 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 
 namespace Lyn.Types.Fundamental
 {
-    public class PublicKey : IEquatable<PublicKey>, IEqualityComparer<PublicKey>
+    public class PublicKey : IEquatable<PublicKey>
     {
         public const ushort LENGTH = 33;
 
@@ -48,31 +48,9 @@ namespace Lyn.Types.Fundamental
             return _value.SequenceEqual(other._value);
         }
 
-        public override bool Equals(object? obj)
-        {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != this.GetType()) return false;
-            return Equals((PublicKey)obj);
-        }
-
         public override int GetHashCode()
         {
-            return _value.GetHashCode();
-        }
-
-        public bool Equals(PublicKey x, PublicKey y)
-        {
-            if (ReferenceEquals(x, y)) return true;
-            if (ReferenceEquals(x, null)) return false;
-            if (ReferenceEquals(y, null)) return false;
-            if (x.GetType() != y.GetType()) return false;
-            return x._value.Equals(y._value);
-        }
-
-        public int GetHashCode(PublicKey obj)
-        {
-            return obj._value.GetHashCode();
+            return MemoryMarshal.Cast<byte,int>(_value)[0]; //we only need to identify if they are NOT equal at this point so returning the first 4 bytes can do that (if hash codes are equal the method Equal is called).
         }
     }
 }
