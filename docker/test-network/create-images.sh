@@ -1,10 +1,6 @@
 
-REGISTRY=docker.com
-NAME=lyn
-
-
 docker build -t lyn/bitcoind bitcoind
-docker build -t lyn/clightning clightning
+docker build -t lyn/clightning c-lightning
 docker build -t lyn/lnd lnd
 docker build -t lyn/eclair eclair
 
