@@ -9,34 +9,24 @@ namespace Lyn.Protocol.Tests
     {
         private static Random _random = new Random();
 
-        public static ChannelId NewRandomChannelId()
-        {
-            return new ChannelId(GetRandomByteArray(ChannelId.LENGTH));
-        }
-
         public static ShortChannelId NewRandomShortChannelId()
         {
-            return new ShortChannelId(GetRandomByteArray(ShortChannelId.LENGTH));
+            return new (GetRandomByteArray(ShortChannelId.LENGTH));
         }
 
         public static CompressedSignature NewRandomCompressedSignature()
         {
-            return new CompressedSignature(GetRandomByteArray(CompressedSignature.LENGTH));
+            return new (GetRandomByteArray(CompressedSignature.LENGTH));
         }
 
         public static PublicKey NewRandomPublicKey()
         {
-            return new PublicKey(new NBitcoin.Key().PubKey.ToBytes());
+            return new (new NBitcoin.Key().PubKey.ToBytes());
         }
 
-        public static ChainHash NewRandomChainHash()
+        public static UInt256 NewRandomUint256()
         {
-            return new ChainHash(GetRandomByteArray(32));
-        }
-
-        public static ChainHash NewRandomUint256()
-        {
-            return new UInt256(GetRandomByteArray(32));
+            return new (GetRandomByteArray(32));
         }
 
         public static byte[] GetRandomByteArray(int length)

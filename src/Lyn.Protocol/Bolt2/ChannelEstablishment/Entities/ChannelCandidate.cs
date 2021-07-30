@@ -13,7 +13,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment.Entities
     /// </summary>
     public class ChannelCandidate
     {
-        public ChannelId? ChannelId { get; set; }
+        public UInt256? ChannelId { get; set; }
         public ChannelSide ChannelOpener { get; set; }
         public OpenChannel? OpenChannel { get; set; }
         public AcceptChannel? AcceptChannel { get; set; }

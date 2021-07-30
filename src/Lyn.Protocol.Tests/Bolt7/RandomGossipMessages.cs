@@ -6,7 +6,7 @@ namespace Lyn.Protocol.Tests.Bolt7
     {
         internal AnnouncementSignatures NewAnnouncementSignatures()
         {
-            return new AnnouncementSignatures(RandomMessages.NewRandomChannelId(),
+            return new AnnouncementSignatures(RandomMessages.NewRandomUint256(),
                 RandomMessages.NewRandomShortChannelId(),
                 RandomMessages.NewRandomCompressedSignature(),
                 RandomMessages.NewRandomCompressedSignature());
@@ -25,7 +25,7 @@ namespace Lyn.Protocol.Tests.Bolt7
                 BitcoinKey2 = RandomMessages.NewRandomPublicKey(),
                 NodeId1 = RandomMessages.NewRandomPublicKey(),
                 NodeId2 = RandomMessages.NewRandomPublicKey(),
-                ChainHash = RandomMessages.NewRandomChainHash()
+                ChainHash = RandomMessages.NewRandomUint256()
             };
         }
 

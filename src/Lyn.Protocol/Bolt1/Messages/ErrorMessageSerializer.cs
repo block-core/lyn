@@ -1,4 +1,5 @@
 using System.Buffers;
+using Lyn.Types.Bitcoin;
 using Lyn.Types.Bolt;
 using Lyn.Types.Serialization;
 
@@ -10,7 +11,7 @@ namespace Lyn.Protocol.Bolt1.Messages
             ProtocolTypeSerializerOptions? options = null)
         {
             var size = 0;
-            size += writer.WriteBytes(typeInstance.ChannelId);
+            size += writer.WriteUint256(typeInstance.ChannelId);
             size += writer.WriteUShort(typeInstance.Len, true);
             if (typeInstance.Data != null)
             {
@@ -27,7 +28,7 @@ namespace Lyn.Protocol.Bolt1.Messages
 
             return new ErrorMessage
             {
-                ChannelId = new ChannelId(channelId), 
+                ChannelId = new UInt256(channelId), 
                 Len = len, 
                 Data = reader.ReadBytes(len).ToArray()
             };

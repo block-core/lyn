@@ -1,4 +1,5 @@
 using Lyn.Protocol.Common.Messages;
+using Lyn.Types.Bitcoin;
 using Lyn.Types.Bolt;
 using Lyn.Types.Fundamental;
 
@@ -7,7 +8,7 @@ namespace Lyn.Protocol.Bolt7.Messages
     public class AnnouncementSignatures : GossipMessage
     {
 
-        public AnnouncementSignatures(ChannelId channelId, ShortChannelId shortChannelId, CompressedSignature nodeSignature, CompressedSignature bitcoinSignature)
+        public AnnouncementSignatures(UInt256 channelId, ShortChannelId shortChannelId, CompressedSignature nodeSignature, CompressedSignature bitcoinSignature)
         {
             ChannelId = channelId;
             ShortChannelId = shortChannelId;
@@ -17,7 +18,7 @@ namespace Lyn.Protocol.Bolt7.Messages
 
         public AnnouncementSignatures()
         {
-            ChannelId = new ChannelId(new byte[] { 0 });
+            ChannelId = new UInt256(new byte[32]);
             ShortChannelId = new ShortChannelId(new byte[8]);
             NodeSignature = new CompressedSignature();
             BitcoinSignature = new CompressedSignature();
@@ -25,7 +26,7 @@ namespace Lyn.Protocol.Bolt7.Messages
 
         public override MessageType MessageType => MessageType.AnnouncementSignatures;
 
-        public ChannelId ChannelId { get; set; }
+        public UInt256 ChannelId { get; set; }
 
         public ShortChannelId ShortChannelId { get; set; }
 

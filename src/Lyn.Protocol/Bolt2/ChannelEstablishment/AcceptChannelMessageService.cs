@@ -113,7 +113,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                 FundingTxid = transactionHash,
                 FundingOutputIndex = 0,
                 TemporaryChannelId = acceptChannel.TemporaryChannelId,
-                Signature = new byte[] { 0x0 },
+                Signature = new byte[64],
             };
 
             var boltMessage = new BoltMessage

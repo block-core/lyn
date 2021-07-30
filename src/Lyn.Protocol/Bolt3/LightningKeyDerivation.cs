@@ -59,8 +59,11 @@ namespace Lyn.Protocol.Bolt3
 
         public PublicKey PerCommitmentPoint(UInt256 shaseed, ulong perCommitIndex)
         {
-            // todo: dan implement shachain
-            return new PublicKey();
+            Shachain.Shachain shachain = new();
+
+            var secret = shachain.GenerateFromSeed(shaseed, perCommitIndex);
+
+            return PublicKeyFromPrivateKey(new PrivateKey(secret.GetBytes().ToArray())); //TODO Dan confirm this is correct
         }
 
         public bool IsValidPublicKey(PublicKey publicKey)

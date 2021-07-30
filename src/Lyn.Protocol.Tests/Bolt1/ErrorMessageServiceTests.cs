@@ -35,7 +35,7 @@ namespace Lyn.Protocol.Tests.Bolt1
                 {
                     Payload = new ErrorMessage
                     {
-                        ChannelId = RandomMessages.NewRandomChannelId(),
+                        ChannelId = RandomMessages.NewRandomUint256(),
                         Len = RandomMessages.GetRandomNumberUInt16(),
                         Data = RandomMessages
                             .GetRandomByteArray(64) //64 just to keep it small it actually is a text message 

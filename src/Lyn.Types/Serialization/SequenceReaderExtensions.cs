@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Buffers;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Lyn.Types.Bitcoin;
@@ -130,9 +131,16 @@ namespace Lyn.Types.Serialization
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static UInt256 ReadUint256(ref this SequenceReader<byte> reader)
+        public static UInt256 ReadUint256(ref this SequenceReader<byte> reader,bool isBigEndian = false)
         {
-            return new UInt256(reader.ReadBytes(32));
+            var arr = reader.ReadBytes(32);
+
+            if (isBigEndian)
+            {
+                arr = arr.ToArray().Reverse().ToArray();
+            }
+            
+            return new UInt256(arr);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

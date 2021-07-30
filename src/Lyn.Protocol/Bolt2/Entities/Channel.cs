@@ -12,7 +12,7 @@ namespace Lyn.Protocol.Bolt2.Entities
         /// <summary>
         /// The id for this channel.
         /// </summary>
-        public ChannelId? ChannelId { get; set; }
+        public UInt256? ChannelId { get; set; }
 
         /// <summary>
         /// Funding txid and output.

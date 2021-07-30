@@ -1,4 +1,5 @@
 using Lyn.Protocol.Common.Messages;
+using Lyn.Types.Bitcoin;
 using Lyn.Types.Bolt;
 using Lyn.Types.Fundamental;
 
@@ -13,7 +14,7 @@ namespace Lyn.Protocol.Bolt7.Messages
             BitcoinSignature1 = new CompressedSignature();
             BitcoinSignature2 = new CompressedSignature();
             Features = new byte[0];
-            ChainHash = new ChainHash(new byte[32]);
+            ChainHash = new UInt256(new byte[32]);
             ShortChannelId = new ShortChannelId(new byte[8]);
             NodeId1 = new PublicKey();
             NodeId2 = new PublicKey();
@@ -35,7 +36,7 @@ namespace Lyn.Protocol.Bolt7.Messages
 
         public byte[] Features { get; set; }
 
-        public ChainHash ChainHash { get; set; }
+        public UInt256 ChainHash { get; set; }
 
         public ShortChannelId ShortChannelId { get; set; }
 

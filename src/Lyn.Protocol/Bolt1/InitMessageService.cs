@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using Lyn.Protocol.Bolt1.Entities;
 using Lyn.Protocol.Bolt1.Messages;
 using Lyn.Protocol.Bolt1.Messages.TlvRecords;
+using Lyn.Protocol.Bolt7;
+using Lyn.Protocol.Bolt7.Entities;
 using Lyn.Protocol.Bolt9;
 using Lyn.Protocol.Common.Messages;
 using Lyn.Protocol.Connection;
@@ -19,12 +21,15 @@ namespace Lyn.Protocol.Bolt1
         private readonly IBoltFeatures _boltFeatures;
         private readonly IParseFeatureFlags _featureFlags;
 
+        private readonly IGossipRepository _gossipRepository;
+
         public InitMessageService(IPeerRepository repository,
-        IBoltFeatures boltFeatures, IParseFeatureFlags featureFlags)
+        IBoltFeatures boltFeatures, IParseFeatureFlags featureFlags, IGossipRepository gossipRepository)
         {
             _repository = repository;
             _boltFeatures = boltFeatures;
             _featureFlags = featureFlags;
+            _gossipRepository = gossipRepository;
         }
 
         public async Task<MessageProcessingOutput> ProcessMessageAsync(PeerMessage<InitMessage> request)
@@ -43,6 +48,8 @@ namespace Lyn.Protocol.Bolt1
 
             await _repository.AddOrUpdatePeerAsync(peer);
 
+            await _gossipRepository.AddNodeAsync(new GossipNode(request.NodeId));
+            
             return new MessageProcessingOutput
             {
                 Success = true,
@@ -67,7 +74,7 @@ namespace Lyn.Protocol.Bolt1
                 {
                     Records = new List<TlvRecord>
                     {
-                        new NetworksTlvRecord {Type = 1, Payload = ChainHashes.Bitcoin, Size = 32}
+                        new NetworksTlvRecord {Type = 1, Payload = ChainHashes.BitcoinSignet.GetBytes().ToArray(), Size = 32}
                     }
                 }
             };

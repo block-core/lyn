@@ -41,6 +41,7 @@ namespace Lyn.Types.Serialization.Serializers
             }
             else
             {
+                tx.Inputs = inputs;
                 // otherwise we read valid inputs, now we have to read outputs
                 tx.Outputs = reader.ReadArray(_transactionOutputSerializer);
             }

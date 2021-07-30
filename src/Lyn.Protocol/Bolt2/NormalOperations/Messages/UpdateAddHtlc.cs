@@ -9,7 +9,7 @@ namespace Lyn.Protocol.Bolt2.NormalOperations.Messages
     public class UpdateAddHtlc : MessagePayload
     {
         public override MessageType MessageType => MessageType.UpdateAddHtlc;
-        public ChannelId? ChannelId { get; set; }
+        public UInt256? ChannelId { get; set; }
         public ulong? Id { get; set; }
         public MiliSatoshis? AmountMsat { get; set; }
         public UInt256? PaymentHash { get; set; }

@@ -1,5 +1,6 @@
 using System;
 using System.Buffers;
+using Lyn.Types.Bitcoin;
 using Lyn.Types.Bolt;
 using Lyn.Types.Serialization;
 
@@ -11,7 +12,7 @@ namespace Lyn.Protocol.Bolt7.Messages
             ProtocolTypeSerializerOptions? options = null)
         {
             var size = 0;
-            size += writer.WriteBytes(typeInstance.ChainHash ?? throw new ArgumentNullException(nameof(typeInstance.ChainHash)));
+            size += writer.WriteUint256(typeInstance.ChainHash ?? throw new ArgumentNullException(nameof(typeInstance.ChainHash)),true);
             size += writer.WriteUInt(typeInstance.FirstTimestamp);
             size += writer.WriteUInt(typeInstance.TimestampRange);
 
@@ -23,7 +24,7 @@ namespace Lyn.Protocol.Bolt7.Messages
         {
             return new GossipTimestampFilter
             {
-                ChainHash = (ChainHash)reader.ReadBytes(32),
+                ChainHash = new UInt256(reader.ReadUint256(true).GetBytes().ToArray()),
                 FirstTimestamp = reader.ReadUInt(),
                 TimestampRange = reader.ReadUInt()
             };

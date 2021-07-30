@@ -1,4 +1,7 @@
-﻿using Lyn.Types.Fundamental;
+﻿using Lyn.Types;
+using Lyn.Types.Fundamental;
+using NBitcoin;
+using Newtonsoft.Json.Serialization;
 
 namespace Lyn.Protocol.Bolt3
 {
@@ -6,7 +9,7 @@ namespace Lyn.Protocol.Bolt3
     {
         public Secret GetSeed()
         {
-            throw new System.NotImplementedException();
+            return new Secret(new Key().ToBytes()); //TODO Dan implement actual store
         }
     }
 }

@@ -23,12 +23,12 @@ namespace Lyn.Protocol.Bolt7
          var message = request.MessagePayload;
          
          if (message.ChainHash == null)
-            throw new ArgumentNullException(nameof(ChainHash));
+            throw new ArgumentNullException(nameof(message.ChainHash));
 
-         if (message.NodeId is null)
+         if (request.NodeId is null)
             throw new InvalidOperationException();
          
-         var node = await _gossipRepository.GetNodeAsync(message.NodeId);
+         var node = await _gossipRepository.GetNodeAsync(request.NodeId);
 
          if (node == null)
             throw new InvalidOperationException("Node not found in gossip repository"); //we should only be getting this message if the feature is enabled in the handshake
@@ -40,7 +40,7 @@ namespace Lyn.Protocol.Bolt7
          existingFilter.FirstTimestamp = message.FirstTimestamp;
          existingFilter.TimestampRange = message.TimestampRange;
 
-         await _gossipRepository.AddNodeAsync(node);
+         await _gossipRepository.UpdateNodeAsync(node);
 
          return new EmptySuccessResponse();
       }

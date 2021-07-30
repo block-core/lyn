@@ -1,6 +1,8 @@
 using System;
 using Lyn.Types.Serialization;
 using System.Buffers;
+using Lyn.Types.Bolt;
+using Lyn.Types.Fundamental;
 
 namespace Lyn.Protocol.Bolt2.ChannelEstablishment.Messages
 {
@@ -10,17 +12,19 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment.Messages
         {
             var size = 0;
 
-            size += writer.WriteUint256(typeInstance.ChainHash);
-            size += writer.WriteBytes(typeInstance.TemporaryChannelId);
-            size += writer.WriteULong(typeInstance.FundingSatoshis);
-            size += writer.WriteULong(typeInstance.PushMsat);
-            size += writer.WriteULong(typeInstance.DustLimitSatoshis);
-            size += writer.WriteULong(typeInstance.MaxHtlcValueInFlightMsat);
-            size += writer.WriteULong(typeInstance.ChannelReserveSatoshis);
-            size += writer.WriteULong(typeInstance.HtlcMinimumMsat);
-            size += writer.WriteUInt(typeInstance.FeeratePerKw);
-            size += writer.WriteUShort(typeInstance.ToSelfDelay);
-            size += writer.WriteUShort(typeInstance.MaxAcceptedHtlcs);
+            //writer.GetSpan(1024);
+
+            size += writer.WriteUint256(typeInstance.ChainHash, true);
+            size += writer.WriteUint256(typeInstance.TemporaryChannelId, true);
+            size += writer.WriteULong(typeInstance.FundingSatoshis,true);
+            size += writer.WriteULong(typeInstance.PushMsat,true);
+            size += writer.WriteULong(typeInstance.DustLimitSatoshis,true);
+            size += writer.WriteULong(typeInstance.MaxHtlcValueInFlightMsat,true);
+            size += writer.WriteULong(typeInstance.ChannelReserveSatoshis,true);
+            size += writer.WriteULong(typeInstance.HtlcMinimumMsat,true);
+            size += writer.WriteUInt(typeInstance.FeeratePerKw,true);
+            size += writer.WriteUShort(typeInstance.ToSelfDelay,true);
+            size += writer.WriteUShort(typeInstance.MaxAcceptedHtlcs,true);
             size += writer.WriteBytes(typeInstance.FundingPubkey);
             size += writer.WriteBytes(typeInstance.RevocationBasepoint);
             size += writer.WriteBytes(typeInstance.PaymentBasepoint);
@@ -36,23 +40,23 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment.Messages
         {
             var message = new OpenChannel();
 
-            message.ChainHash = reader.ReadUint256();
-            message.TemporaryChannelId = reader.ReadBytes(32);
-            message.FundingSatoshis = reader.ReadULong();
-            message.PushMsat = reader.ReadULong();
-            message.DustLimitSatoshis = reader.ReadULong();
-            message.MaxHtlcValueInFlightMsat = reader.ReadULong();
-            message.ChannelReserveSatoshis = reader.ReadULong();
-            message.HtlcMinimumMsat = reader.ReadULong();
-            message.FeeratePerKw = reader.ReadUInt();
-            message.ToSelfDelay = reader.ReadUShort();
-            message.MaxAcceptedHtlcs = reader.ReadUShort();
-            message.FundingPubkey = reader.ReadBytes(33);
-            message.RevocationBasepoint = reader.ReadBytes(33);
-            message.PaymentBasepoint = reader.ReadBytes(33);
-            message.DelayedPaymentBasepoint = reader.ReadBytes(33);
-            message.HtlcBasepoint = reader.ReadBytes(33);
-            message.FirstPerCommitmentPoint = reader.ReadBytes(33);
+            message.ChainHash = reader.ReadUint256(true);
+            message.TemporaryChannelId = new (reader.ReadUint256(true).GetBytes().ToArray());
+            message.FundingSatoshis = reader.ReadULong(true);
+            message.PushMsat = reader.ReadULong(true);
+            message.DustLimitSatoshis = reader.ReadULong(true);
+            message.MaxHtlcValueInFlightMsat = reader.ReadULong(true);
+            message.ChannelReserveSatoshis = reader.ReadULong(true);
+            message.HtlcMinimumMsat = reader.ReadULong(true);
+            message.FeeratePerKw = reader.ReadUInt(true);
+            message.ToSelfDelay = reader.ReadUShort(true);
+            message.MaxAcceptedHtlcs = reader.ReadUShort(true);
+            message.FundingPubkey = reader.ReadBytes(PublicKey.LENGTH);
+            message.RevocationBasepoint = reader.ReadBytes(PublicKey.LENGTH);
+            message.PaymentBasepoint = reader.ReadBytes(PublicKey.LENGTH);
+            message.DelayedPaymentBasepoint = reader.ReadBytes(PublicKey.LENGTH);
+            message.HtlcBasepoint = reader.ReadBytes(PublicKey.LENGTH);
+            message.FirstPerCommitmentPoint = reader.ReadBytes(PublicKey.LENGTH);
             message.ChannelFlags = reader.ReadByte();
 
             return message;

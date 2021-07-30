@@ -23,10 +23,18 @@ namespace Lyn.Protocol.Bolt7
 
       public Task<GossipNode> AddNodeAsync(GossipNode node)
       {
-         _nodes.AddOrUpdate(node.NodeAnnouncement.NodeId, node,
-            (key, gossipNode) => key != node.NodeAnnouncement.NodeId
+         _nodes.AddOrUpdate(node.Id, node,
+            (key, gossipNode) => !key.Equals(node.NodeAnnouncement?.NodeId ?? node.Id)
                ? throw new ArgumentException(nameof(node))
                : node);
+         
+         return Task.FromResult(node);
+      }
+
+      public Task<GossipNode> UpdateNodeAsync(GossipNode node)
+      {
+         if (!_nodes.TryUpdate(node.Id, node, _nodes[node.Id]))
+            throw new InvalidOperationException();
          
          return Task.FromResult(node);
       }
@@ -40,8 +48,9 @@ namespace Lyn.Protocol.Bolt7
 
       public Task<GossipNode[]> GetNodesAsync(params PublicKey[] keys)
       {
-         var nodes = _nodes.Values
-            .Where(_ => keys.Contains(_.NodeAnnouncement.NodeId)).ToArray();
+         var nodes = _nodes.Where(_ => keys.Contains(_.Key))
+            .Select(_ => _.Value)
+            .ToArray();
          
          return Task.FromResult(nodes);
       }

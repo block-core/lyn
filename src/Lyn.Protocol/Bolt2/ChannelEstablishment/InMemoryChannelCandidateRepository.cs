@@ -1,13 +1,14 @@
 ﻿using System.Collections.Concurrent;
 using System.Threading.Tasks;
 using Lyn.Protocol.Bolt2.ChannelEstablishment.Entities;
+using Lyn.Types.Bitcoin;
 using Lyn.Types.Bolt;
 
 namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 {
     public class InMemoryChannelCandidateRepository : IChannelCandidateRepository
     {
-        public ConcurrentDictionary<ChannelId, ChannelCandidate> ChannelStates = new();
+        public ConcurrentDictionary<UInt256, ChannelCandidate> ChannelStates = new();
 
         public Task CreateAsync(ChannelCandidate channelCandidate)
         {
@@ -23,7 +24,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             return Task.CompletedTask;
         }
 
-        public Task<ChannelCandidate?> GetAsync(ChannelId channelId)
+        public Task<ChannelCandidate?> GetAsync(UInt256 channelId)
         {
             if (ChannelStates.TryGetValue(channelId, out var channelState))
                 return Task.FromResult(channelState)!;

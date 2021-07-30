@@ -8,6 +8,8 @@ namespace Lyn.Protocol.Bolt7
    public interface IGossipRepository
    {
       Task<GossipNode> AddNodeAsync(GossipNode node);
+      
+      Task<GossipNode> UpdateNodeAsync(GossipNode node);
 
       Task<GossipNode?> GetNodeAsync(PublicKey nodeId);
       Task<GossipNode[]> GetNodesAsync(params PublicKey[] keys);

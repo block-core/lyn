@@ -9,7 +9,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment.Messages
     public class FundingCreated : MessagePayload
     {
         public override MessageType MessageType => MessageType.FundingCreated;
-        public ChannelId? TemporaryChannelId { get; set; }
+        public UInt256? TemporaryChannelId { get; set; }
         public UInt256? FundingTxid { get; set; }
         public ushort? FundingOutputIndex { get; set; }
         public CompressedSignature? Signature { get; set; }

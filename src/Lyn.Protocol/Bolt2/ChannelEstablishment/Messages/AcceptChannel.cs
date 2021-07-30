@@ -1,5 +1,6 @@
 using Lyn.Protocol.Bolt1.Messages;
 using Lyn.Protocol.Common.Messages;
+using Lyn.Types.Bitcoin;
 using Lyn.Types.Bolt;
 using Lyn.Types.Fundamental;
 
@@ -8,7 +9,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment.Messages
     public class AcceptChannel : MessagePayload
     {
         public override MessageType MessageType => MessageType.AcceptChannel;
-        public ChannelId? TemporaryChannelId { get; set; }
+        public UInt256? TemporaryChannelId { get; set; }
         public Satoshis? DustLimitSatoshis { get; set; }
         public MiliSatoshis? MaxHtlcValueInFlightMsat { get; set; }
         public Satoshis? ChannelReserveSatoshis { get; set; }

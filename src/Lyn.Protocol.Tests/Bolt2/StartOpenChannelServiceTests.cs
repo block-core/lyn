@@ -102,12 +102,18 @@ namespace Lyn.Protocol.Tests.Bolt2
 
             var config = WithExistingPeerAndChainParameters(message);
 
+            var expectedChannelId = RandomMessages.GetRandomByteArray(32);
+
+            _randomNumberGenerator.Setup(_ => _.GetBytes(32))
+                .Returns(expectedChannelId);
+            
             var result = await _sut.CreateOpenChannelAsync(message);
 
             // todo: dan add more checks
 
             Assert.IsType<OpenChannel>(result.Payload);
             OpenChannel openChannel = (OpenChannel)result.Payload;
+            Assert.Equal(expectedChannelId,openChannel.TemporaryChannelId.GetBytes().ToArray());
             Assert.Equal(message.FundingAmount, openChannel.FundingSatoshis);
 
             var channelStates = new List<ChannelCandidate>();

@@ -32,6 +32,7 @@ namespace Lyn.Protocol.Common.Messages
         NodeAnnouncement = 257,
         AnnouncementSignatures = 259,
         QueryShortChannelIds = 261,
+        QueryChannelRange = 263,
         GossipTimestampFilter = 265,
     }
 }
