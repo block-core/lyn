@@ -129,7 +129,7 @@ namespace Lyn.Types.Bitcoin
 
                 const string hexValues = "0123456789abcdef"; // "0123456789ABCDEF";
 
-             int i = rawData.Length - 1;
+                int i = rawData.Length - 1;
                 int j = 0;
 
                 while (i >= 0)
@@ -174,7 +174,7 @@ namespace Lyn.Types.Bitcoin
             return new UInt256(hexString);
         }
 
-        public ReadOnlySpan<byte> GetBytes(bool bigEndian = false)
+        public ReadOnlySpan<byte> GetBytes()
         {
             // TODO: fix when moving to dotnet5
             // return MemoryMarshal.CreateReadOnlySpan(ref Unsafe.As<ulong, byte>(ref part1), EXPECTED_SIZE);
@@ -186,9 +186,6 @@ namespace Lyn.Types.Bitcoin
             temp[3] = part4;
 
             Span<byte> arrAsBytes = MemoryMarshal.Cast<ulong, byte>(temp);
-
-            if (bigEndian)
-                arrAsBytes.Reverse();
 
             return arrAsBytes.ToArray();
         }

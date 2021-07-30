@@ -131,7 +131,7 @@ namespace Lyn.Types.Serialization
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static UInt256 ReadUint256(ref this SequenceReader<byte> reader,bool isBigEndian = false)
+        public static UInt256 ReadUint256(ref this SequenceReader<byte> reader, bool isBigEndian = false)
         {
             var arr = reader.ReadBytes(32);
 
@@ -139,7 +139,7 @@ namespace Lyn.Types.Serialization
             {
                 arr = arr.ToArray().Reverse().ToArray();
             }
-            
+
             return new UInt256(arr);
         }
 

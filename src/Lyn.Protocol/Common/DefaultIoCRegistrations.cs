@@ -107,10 +107,11 @@ namespace Lyn.Protocol.Common
             services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<ErrorMessage>>();
             services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<PingMessage>>();
             services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<PongMessage>>();
-            
+
             // Bolt 3
             services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<OpenChannel>>();
             services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<AcceptChannel>>();
+            services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<FundingCreated>>();
 
             return services;
         }
