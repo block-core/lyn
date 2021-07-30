@@ -11,7 +11,7 @@ namespace Lyn.Protocol.Bolt3
 {
     public class LightningScripts : ILightningScripts
     {
-        public byte[] CreaateFundingTransactionScript(PublicKey pubkey1, PublicKey pubkey2)
+        public byte[] CreateFundingTransactionScript(PublicKey pubkey1, PublicKey pubkey2)
         {
             // todo: sort pubkeys lexicographically
 
@@ -24,6 +24,17 @@ namespace Lyn.Protocol.Bolt3
             );
 
             return script.ToBytes();
+        }
+
+        public TransactionWitness CreateClosingTransactionWitnessScript(PublicKey pubkey1, PublicKey pubkey2)
+        {
+            var script = new Script(OpcodeType.OP_0, Op.GetPushOp(pubkey1), Op.GetPushOp(pubkey2))
+                .ToWitScript();
+            
+            return new TransactionWitness
+            {
+                Components = script.Pushes.Select(_ => new TransactionWitnessComponent {RawData = _}).ToArray()
+            };
         }
 
         /* BOLT #3:
@@ -45,7 +56,7 @@ namespace Lyn.Protocol.Bolt3
          *     OP_CHECKSIG
          */
 
-        public byte[] GetRevokeableRedeemscript(PublicKey revocationKey, ushort contestDelay, PublicKey broadcasterDelayedPaymentKey)
+        public byte[] GetRevokeableRedeemScript(PublicKey revocationKey, ushort contestDelay, PublicKey broadcasterDelayedPaymentKey)
         {
             var script = new Script(
                OpcodeType.OP_IF,
@@ -138,7 +149,7 @@ namespace Lyn.Protocol.Bolt3
          *  OP_ENDIF
          */
 
-        public byte[] GetHtlcOfferedRedeemscript(
+        public byte[] GetHtlcOfferedRedeemScript(
            PublicKey localhtlckey,
            PublicKey remotehtlckey,
            UInt256 paymenthash,
@@ -239,7 +250,7 @@ namespace Lyn.Protocol.Bolt3
          *  OP_ENDIF
          */
 
-        public byte[] GetHtlcReceivedRedeemscript(
+        public byte[] GetHtlcReceivedRedeemScript(
            ulong expirylocktime,
            PublicKey localhtlckey,
            PublicKey remotehtlckey,

@@ -156,12 +156,12 @@ namespace Lyn.Protocol.Tests.Bolt3
                     continue;
                 }
 
-                OutPoint outPoint = new OutPoint { Hash = localTransaction.Hash, Index = (uint)htlcIndex };
+                OutPoint outPoint = new OutPoint { TxId = localTransaction.Hash, Index = (uint)htlcIndex };
                 Transaction htlcTransaction;
                 byte[] redeemScript;
                 if (htlc.Htlc.Side == ChannelSide.Local)
                 {
-                    redeemScript = Context.LightningScripts.GetHtlcOfferedRedeemscript(
+                    redeemScript = Context.LightningScripts.GetHtlcOfferedRedeemScript(
                                    Context.LocalHtlckey,
                                    Context.RemoteHtlckey,
                                    htlc.Htlc.Rhash,
@@ -183,7 +183,7 @@ namespace Lyn.Protocol.Tests.Bolt3
                 }
                 else
                 {
-                    redeemScript = Context.LightningScripts.GetHtlcReceivedRedeemscript(
+                    redeemScript = Context.LightningScripts.GetHtlcReceivedRedeemScript(
                                    htlc.Htlc.Expirylocktime,
                                    Context.LocalHtlckey,
                                    Context.RemoteHtlckey,

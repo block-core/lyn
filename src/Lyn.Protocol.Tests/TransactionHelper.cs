@@ -20,7 +20,7 @@ namespace Lyn.Protocol.Tests
             foreach (var input in transaction.Inputs)
             {
                 sb.AppendLine($"Sequence={input.Sequence}");
-                sb.AppendLine($"PreviousOutput={input.PreviousOutput.Index}-{input.PreviousOutput.Hash}");
+                sb.AppendLine($"PreviousOutput={input.PreviousOutput.Index}-{input.PreviousOutput.TxId}");
                 sb.AppendLine($"SignatureScript={ (input.SignatureScript == null ? string.Empty : new NBitcoin.Script(input.SignatureScript))}");
 
                 if (input.ScriptWitness?.Components != null)
