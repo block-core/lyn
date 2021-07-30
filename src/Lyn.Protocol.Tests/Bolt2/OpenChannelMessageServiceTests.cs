@@ -1,3 +1,4 @@
+using System.Buffers;
 using Lyn.Protocol.Bolt1;
 using Lyn.Protocol.Bolt1.Entities;
 using Lyn.Protocol.Bolt2.ChannelEstablishment;
@@ -7,7 +8,6 @@ using Lyn.Protocol.Bolt2.Configuration;
 using Lyn.Protocol.Bolt3;
 using Lyn.Protocol.Bolt3.Types;
 using Lyn.Protocol.Bolt9;
-using Lyn.Protocol.Common;
 using Lyn.Protocol.Common.Blockchain;
 using Lyn.Types.Fundamental;
 using Microsoft.Extensions.Logging;
@@ -17,6 +17,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Lyn.Protocol.Common.Messages;
 using Lyn.Protocol.Connection;
+using Lyn.Types;
+using Lyn.Types.Serialization.Serializers;
 using Xunit;
 
 namespace Lyn.Protocol.Tests.Bolt2
@@ -142,5 +144,17 @@ namespace Lyn.Protocol.Tests.Bolt2
             Assert.Equal(GetBasepointsFromSecret().fundingKey.ToString(), channelStates.First().AcceptChannel.FundingPubkey.ToString());
             Assert.Equal(config.ChannelConfig.DustLimit, channelStates.First().AcceptChannel.DustLimitSatoshis);
         }
+
+        [Fact]
+        public void test()
+        {
+            var serializesr = new TransactionSerializer(new TransactionInputSerializer(new OutPointSerializer()),new TransactionOutputSerializer(),new TransactionWitnessSerializer(new TransactionWitnessComponentSerializer()));
+
+            var bytes = Hex.FromString(
+                "02000000000101ac2c641df0fad2cbd74e01da0af1c9ae89d73c1747ddd33df6c96cef2e2565f800000000009a4cf180012c21f40000000000160014a5dcd38b4493c0cf561e630a2f2399f3bd4942600400473044022072d47d9eefdf847645d859738ee2c9138a18ff7585a05935dc87470651b8fefc022027d557a94ead04e0fbb6c6c9286eed8fed20b91d171f7581700d93f0dc151727014730440220618e4f3d455fd61ef2c92888bcf65039864ef6f14d402707b6fd79098d2d90af022074e9381bdb70a58157077ab43aab5084ae6402640a2ce043d4d997a1c79fc04701475221033c3f33e23b2b4afdd58c8b2bc5847cf3fbdd433b347e2681eb9f25c00ac3c216210393170065a84271242134852b6336de92d732e17253733ffc6d49be04b1f4329a52aefba2bd20");
+            var reader = new SequenceReader<byte>(new ReadOnlySequence<byte>(bytes));
+            
+            var pb = serializesr.Deserialize(ref reader);
+       }
     }
 }
