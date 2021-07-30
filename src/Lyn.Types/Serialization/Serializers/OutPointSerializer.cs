@@ -5,25 +5,18 @@ namespace Lyn.Types.Serialization.Serializers
 {
     public class OutPointSerializer : IProtocolTypeSerializer<OutPoint>
     {
-        private readonly IProtocolTypeSerializer<UInt256> _uInt256Serializator;
-
-        public OutPointSerializer(IProtocolTypeSerializer<UInt256> uInt256Serializator)
-        {
-            _uInt256Serializator = uInt256Serializator;
-        }
-
         public OutPoint Deserialize(ref SequenceReader<byte> reader, ProtocolTypeSerializerOptions? options = null)
         {
             return new OutPoint
             {
-                Hash = reader.ReadWithSerializer(_uInt256Serializator),
+                Hash = reader.ReadUint256(),
                 Index = reader.ReadUInt()
             };
         }
 
         public int Serialize(OutPoint typeInstance, IBufferWriter<byte> writer, ProtocolTypeSerializerOptions? options = null)
         {
-            int size = writer.WriteWithSerializer(typeInstance.Hash!, _uInt256Serializator);
+            int size = writer.WriteUint256(typeInstance.Hash);
             size += writer.WriteUInt(typeInstance.Index);
 
             return size;

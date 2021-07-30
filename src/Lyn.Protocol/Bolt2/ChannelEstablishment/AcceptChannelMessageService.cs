@@ -103,7 +103,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             await _channelCandidateRepository.UpdateAsync(channelCandidate);
 
-            var fundingScript = _lightningScripts.CreaateFundingTransactionScript(channelCandidate.OpenChannel.FundingPubkey, channelCandidate.AcceptChannel.FundingPubkey);
+            var fundingScript = _lightningScripts.CreateFundingTransactionScript(channelCandidate.OpenChannel.FundingPubkey, channelCandidate.AcceptChannel.FundingPubkey);
 
             // todo: create the transaction with the fundingScript as output and the input will be taken and signed from a wallet interface (create a wallet interface)
 
