@@ -1,4 +1,6 @@
-﻿using Lyn.Protocol.Bolt2.ChannelEstablishment.Entities;
+﻿using System.Buffers;
+using System.Collections.Generic;
+using Lyn.Protocol.Bolt2.ChannelEstablishment.Entities;
 using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages;
 using Lyn.Protocol.Bolt3;
 using Lyn.Protocol.Bolt3.Types;
@@ -9,6 +11,8 @@ using Lyn.Protocol.Connection;
 using Lyn.Types.Bitcoin;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
+using Lyn.Types;
+using Lyn.Types.Fundamental;
 
 namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 {
@@ -90,13 +94,13 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             await _channelCandidateRepository.UpdateAsync(channelCandidate);
 
-            var fundingScript = _lightningScripts.CreaateFundingTransactionScript(channelCandidate.OpenChannel.FundingPubkey, channelCandidate.AcceptChannel.FundingPubkey);
+            var fundingScript = _lightningScripts.CreateFundingTransactionScript(channelCandidate.OpenChannel.FundingPubkey, channelCandidate.AcceptChannel.FundingPubkey);
 
             // todo: create the transaction with the fundingScript as output and the input will be taken and signed from a wallet interface (create a wallet interface)
 
             var fundingTransaction = new Transaction
             {
-                Outputs = new TransactionOutput[]
+                Outputs = new[]
                 {
                     new TransactionOutput
                     {
@@ -108,12 +112,27 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             var transactionHash = _transactionHashCalculator.ComputeHash(fundingTransaction);
 
-            FundingCreated fundingCreated = new FundingCreated
+            Secret seed = _secretStore.GetSeed();
+            Secrets secrets = _lightningKeyDerivation.DeriveSecrets(seed);
+
+            var commitmentTransaction = CommitmenTransactionOut(channelCandidate, acceptChannel, secrets,
+                new OutPoint { Hash = transactionHash, Index = 0 });
+
+            byte[]? fundingWscript = _lightningScripts.FundingRedeemScript(_lightningKeyDerivation.PublicKeyFromPrivateKey(secrets.FundingPrivkey), acceptChannel.FundingPubkey);
+
+            var bitsign = _lightningTransactions.SignInputCompressed(commitmentTransaction.Transaction, secrets.FundingPrivkey, 0,
+                fundingWscript, channelCandidate.OpenChannel.FundingSatoshis, false);
+
+            channelCandidate.CommitmentTransaction = commitmentTransaction.Transaction;
+
+            await _channelCandidateRepository.UpdateAsync(channelCandidate);
+
+            var fundingCreated = new FundingCreated
             {
                 FundingTxid = transactionHash,
                 FundingOutputIndex = 0,
                 TemporaryChannelId = acceptChannel.TemporaryChannelId,
-                Signature = new byte[64],
+                Signature = bitsign
             };
 
             var boltMessage = new BoltMessage
@@ -122,6 +141,67 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             };
 
             return new MessageProcessingOutput { Success = true, ResponseMessages = new[] { boltMessage } };
+        }
+
+        private CommitmenTransactionOut CommitmenTransactionOut(ChannelCandidate? channelCandidate, AcceptChannel acceptChannel,
+            Secrets secrets, OutPoint inPoint)
+        {
+            var test = new CommitmentTransactionIn
+            {
+                Funding = channelCandidate.OpenChannel.FundingSatoshis,
+                Htlcs = new List<Htlc>(),
+                Opener = ChannelSide.Local,
+                Side = ChannelSide.Local,
+                CommitmentNumber = 0,
+                FundingTxout = inPoint,
+                DustLimitSatoshis = channelCandidate.OpenChannel.DustLimitSatoshis,
+                FeeratePerKw = channelCandidate.OpenChannel.FeeratePerKw,
+                LocalFundingKey = channelCandidate.OpenChannel.FundingPubkey,
+                OptionAnchorOutputs = false,
+                OtherPayMsat = 0,
+                RemoteFundingKey = acceptChannel.FundingPubkey,
+                SelfPayMsat = channelCandidate.OpenChannel.FundingSatoshis,
+                ToSelfDelay = channelCandidate.OpenChannel.ToSelfDelay
+            };
+
+            SetKeys(test, secrets, acceptChannel, channelCandidate.OpenChannel.FirstPerCommitmentPoint);
+
+            return _lightningTransactions.CommitmentTransaction(test);
+        }
+
+        private void SetKeys(CommitmentTransactionIn transaction, Secrets secrets, AcceptChannel channel, PublicKey perCommitmentPoint)
+        {
+            Basepoints basepoints = _lightningKeyDerivation.DeriveBasepoints(secrets);
+
+            var LocalDelayedSecretkey = _lightningKeyDerivation.DerivePrivatekey(secrets.DelayedPaymentBasepointSecret, basepoints.DelayedPayment, perCommitmentPoint);
+
+            var RemoteRevocationKey = _lightningKeyDerivation.DeriveRevocationPublicKey(channel.RevocationBasepoint, perCommitmentPoint);
+
+            var LocalDelayedkey = _lightningKeyDerivation.PublicKeyFromPrivateKey(LocalDelayedSecretkey);
+
+            var Localkey = _lightningKeyDerivation.DerivePublickey(basepoints.Payment, perCommitmentPoint);
+
+            var Remotekey = _lightningKeyDerivation.DerivePublickey(channel.PaymentBasepoint, perCommitmentPoint);
+
+            var RemoteHtlckey = _lightningKeyDerivation.DerivePublickey(channel.HtlcBasepoint, perCommitmentPoint);
+
+            var LocalHtlcsecretkey = _lightningKeyDerivation.DerivePrivatekey(secrets.HtlcBasepointSecret, basepoints.Payment, perCommitmentPoint);
+
+            var LocalHtlckey = _lightningKeyDerivation.PublicKeyFromPrivateKey(LocalHtlcsecretkey);
+
+            transaction.CnObscurer =
+                _lightningScripts.CommitNumberObscurer(basepoints.Payment, channel.PaymentBasepoint);
+
+            Keyset keyset = default;
+
+            keyset.LocalRevocationKey = RemoteRevocationKey;
+            keyset.LocalDelayedPaymentKey = LocalDelayedkey;
+            keyset.LocalPaymentKey = Localkey;
+            keyset.RemotePaymentKey = Remotekey;
+            keyset.LocalHtlcKey = LocalHtlckey;
+            keyset.RemoteHtlcKey = RemoteHtlckey;
+
+            transaction.Keyset = keyset;
         }
     }
 }

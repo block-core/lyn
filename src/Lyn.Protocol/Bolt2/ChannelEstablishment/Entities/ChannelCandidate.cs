@@ -23,5 +23,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment.Entities
         public FundingSigned? FundingSignedRemote { get; set; }
         public byte[]? OpenChannelUpfrontShutdownScript { get; set; }
         public byte[]? AcceptChannelUpfrontShutdownScript { get; set; }
+
+        public Transaction? CommitmentTransaction { get; set; }
     }
 }

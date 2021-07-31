@@ -1,3 +1,4 @@
+using System.Buffers;
 using Lyn.Protocol.Bolt1;
 using Lyn.Protocol.Bolt1.Entities;
 using Lyn.Protocol.Bolt2.ChannelEstablishment;
@@ -7,7 +8,6 @@ using Lyn.Protocol.Bolt2.Configuration;
 using Lyn.Protocol.Bolt3;
 using Lyn.Protocol.Bolt3.Types;
 using Lyn.Protocol.Bolt9;
-using Lyn.Protocol.Common;
 using Lyn.Protocol.Common.Blockchain;
 using Lyn.Types.Fundamental;
 using Microsoft.Extensions.Logging;
@@ -17,6 +17,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Lyn.Protocol.Common.Messages;
 using Lyn.Protocol.Connection;
+using Lyn.Types;
+using Lyn.Types.Serialization.Serializers;
 using Xunit;
 
 namespace Lyn.Protocol.Tests.Bolt2

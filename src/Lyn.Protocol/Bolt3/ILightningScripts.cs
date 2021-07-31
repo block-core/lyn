@@ -5,7 +5,7 @@ namespace Lyn.Protocol.Bolt3
 {
     public interface ILightningScripts
     {
-        byte[] CreaateFundingTransactionScript(PublicKey pubkey1, PublicKey pubkey2);
+        byte[] CreateFundingTransactionScript(PublicKey pubkey1, PublicKey pubkey2);
         byte[] GetRevokeableRedeemscript(PublicKey revocationKey, ushort contestDelay, PublicKey broadcasterDelayedPaymentKey);
         byte[] AnchorToRemoteRedeem(PublicKey remoteKey);
         byte[] AnchorOutput(PublicKey fundingPubkey);

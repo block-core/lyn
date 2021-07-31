@@ -80,7 +80,6 @@ namespace Lyn.Protocol.Common
 
         private static IServiceCollection AddNoiseComponents(this IServiceCollection services)
         {
-            //services.AddSingleton<IHandshakeStateFactory, HandshakeStateFactory>();
             services.AddSingleton<IEllipticCurveActions, EllipticCurveActions>();
             services.AddTransient<IHashWithState, HashWithState>();
             services.AddSingleton<IHkdf, Hkdf>();
