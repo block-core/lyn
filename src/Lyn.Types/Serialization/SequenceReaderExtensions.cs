@@ -137,6 +137,7 @@ namespace Lyn.Types.Serialization
 
             if (isBigEndian)
             {
+                // todo: this can move in to uint256 for better performance
                 arr = arr.ToArray().Reverse().ToArray();
             }
 
