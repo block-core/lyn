@@ -11,21 +11,15 @@ namespace Lyn.Protocol.Bolt3
 {
     public class LightningScripts : ILightningScripts
     {
-        public byte[] CreateFundingTransactionScript(PublicKey pubkey1, PublicKey pubkey2)
+        public byte[] FundingWitnessScript(PublicKey pubkey1, PublicKey pubkey2)
         {
             var list = new List<byte[]> { pubkey1, pubkey2 };
 
             list.Sort(new LexicographicByteComparer());
 
-            var script = new Script(
-                 OpcodeType.OP_2,
-                 Op.GetPushOp(list.First()),
-                 Op.GetPushOp(list.Last()),
-               OpcodeType.OP_2,
-               OpcodeType.OP_CHECKMULTISIG
-            );
+            var script = FundingRedeemScript(pubkey1, pubkey2);
 
-            var p2Wsh = PayToWitScriptHashTemplate.Instance.GenerateScriptPubKey(new WitScriptId(script)); // todo: dan - move this to interface
+            var p2Wsh = PayToWitScriptHashTemplate.Instance.GenerateScriptPubKey(new WitScriptId(new Script(script))); // todo: dan - move this to interface
 
             return p2Wsh.ToBytes();
         }
