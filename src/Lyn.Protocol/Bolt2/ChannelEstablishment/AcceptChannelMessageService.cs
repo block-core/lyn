@@ -126,7 +126,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             var fundingTransactionHash = _transactionHashCalculator.ComputeHash(fundingTransaction);
             uint fundingTransactionIndex = 0;
 
-            bool optionAnchorOutputs = false;// (peer.Featurs & Features.OptionAnchorOutputs) != 0;
+            bool optionAnchorOutputs = (peer.Featurs & Features.OptionAnchorOutputs) != 0;
 
             Secret seed = _secretStore.GetSeed();
             Secrets secrets = _lightningKeyDerivation.DeriveSecrets(seed);
@@ -134,7 +134,9 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             var commitmentTransaction = CommitmenTransactionOut(channelCandidate, acceptChannel, secrets,
                 new OutPoint { Hash = fundingTransactionHash, Index = fundingTransactionIndex }, optionAnchorOutputs);
 
-            byte[]? fundingWscript = _lightningScripts.FundingRedeemScript(_lightningKeyDerivation.PublicKeyFromPrivateKey(secrets.FundingPrivkey), acceptChannel.FundingPubkey);
+            var pubkey = _lightningKeyDerivation.PublicKeyFromPrivateKey(secrets.FundingPrivkey);
+
+            byte[]? fundingWscript = _lightningScripts.FundingRedeemScript(channelCandidate.OpenChannel.FundingPubkey, channelCandidate.AcceptChannel.FundingPubkey);
 
             var bitsign = _lightningTransactions.SignInput(commitmentTransaction.Transaction, secrets.FundingPrivkey, 0,
                 fundingWscript, channelCandidate.OpenChannel.FundingSatoshis, false);

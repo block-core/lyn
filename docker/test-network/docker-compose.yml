@@ -27,7 +27,9 @@ services:
     networks:
       - lnnet
     expose:
-      - "9735"
+      - "9732"
+    ports:
+      - "0.0.0.0:9732:9732"
     restart: always
 
   c-lightning-node:
@@ -44,9 +46,9 @@ services:
     expose:
       - "3002"
       - "4001"
-      - "9735"
+      - "9730"
     ports:
-      - "0.0.0.0:9735:9735"
+      - "0.0.0.0:9730:9730"
     restart: always
 
   eclair-node:
@@ -57,7 +59,9 @@ services:
     networks:
       - lnnet
     expose:
-      - "9735"
+      - "9731"
+    ports:
+      - "0.0.0.0:9731:9731"
     restart: always
 
   c-lightning-ui:

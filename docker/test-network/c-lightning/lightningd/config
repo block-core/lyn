@@ -1,4 +1,5 @@
 network=regtest
+addr=:9730
 
 bitcoin-rpcuser=regtest
 bitcoin-rpcpassword=regtest
