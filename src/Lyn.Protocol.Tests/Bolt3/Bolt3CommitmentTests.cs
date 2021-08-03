@@ -135,15 +135,13 @@ namespace Lyn.Protocol.Tests.Bolt3
             /* FIXME: naming here is kind of backwards: local revocation key
              * is derived from remote revocation basepoint, but it's local */
 
-            Keyset keyset = new Keyset
-            {
-                LocalRevocationKey = Context.RemoteRevocationKey,
-                LocalDelayedPaymentKey = Context.LocalDelayedkey,
-                LocalPaymentKey = Context.Localkey,
-                RemotePaymentKey = Context.Remotekey,
-                LocalHtlcKey = Context.LocalHtlckey,
-                RemoteHtlcKey = Context.RemoteHtlckey,
-            };
+            Keyset keyset = new Keyset(
+                Context.RemoteRevocationKey,
+                Context.LocalHtlckey,
+                Context.RemoteHtlckey,
+                Context.LocalDelayedkey,
+                Context.Localkey,
+                Context.Remotekey);
 
             int htlcOutputIndex = 0;
             for (int htlcIndex = 0; htlcIndex < localCommitmenTransactionOut.Htlcs.Count; htlcIndex++)

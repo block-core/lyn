@@ -5,6 +5,10 @@ namespace Lyn.Types.Serialization.Serializers
 {
     public class OutPointSerializer : IProtocolTypeSerializer<OutPoint>
     {
+        public OutPointSerializer()
+        {
+        }
+
         public OutPoint Deserialize(ref SequenceReader<byte> reader, ProtocolTypeSerializerOptions? options = null)
         {
             return new OutPoint

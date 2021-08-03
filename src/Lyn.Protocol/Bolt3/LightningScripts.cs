@@ -25,7 +25,9 @@ namespace Lyn.Protocol.Bolt3
                OpcodeType.OP_CHECKMULTISIG
             );
 
-            return script.ToBytes();
+            var p2Wsh = PayToWitScriptHashTemplate.Instance.GenerateScriptPubKey(new WitScriptId(script)); // todo: dan - move this to interface
+
+            return p2Wsh.ToBytes();
         }
 
         /* BOLT #3:

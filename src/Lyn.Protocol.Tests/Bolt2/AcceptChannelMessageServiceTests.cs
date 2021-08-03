@@ -1,5 +1,6 @@
 using System.Buffers;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Lyn.Protocol.Bolt1;
@@ -16,6 +17,7 @@ using Lyn.Types;
 using Lyn.Types.Bitcoin;
 using Lyn.Types.Bolt;
 using Lyn.Types.Fundamental;
+using Lyn.Types.Serialization;
 using Lyn.Types.Serialization.Serializers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -31,28 +33,31 @@ namespace Lyn.Protocol.Tests.Bolt2
         private InMemoryChannelCandidateRepository _candidateRepository;
         private readonly Mock<ISecretStore> _store;
 
+        private SerializationFactory serializationFactory;
+
+        private InMemoryPeerRepository inMemoryPeerRepository;
+
         public AcceptChannelMessageServiceTests()
         {
             _candidateRepository = new InMemoryChannelCandidateRepository();
-            
+
             _store = new Mock<ISecretStore>();
-            
-            var factory =
-                new SerializationFactory(new ServiceCollection().AddSerializationComponents().BuildServiceProvider());
-            
-                _sut = new AcceptChannelMessageService(new Logger<AcceptChannelMessageService>(new LoggerFactory()),
-                new LightningTransactions(new Logger<LightningTransactions>(new LoggerFactory()), factory,
-                    new LightningScripts()),
-                new TransactionHashCalculator(new TransactionSerializer(
-                    new TransactionInputSerializer(new OutPointSerializer()),
-                    new TransactionOutputSerializer(),
-                    new TransactionWitnessSerializer(new TransactionWitnessComponentSerializer()))),
-                new LightningScripts(),
-                new LightningKeyDerivation(),
-                _candidateRepository,
-                new ChainConfigProvider(),
-                _store.Object,
-                factory);
+
+            var ci = new ServiceCollection().AddSerializationComponents().BuildServiceProvider();
+            serializationFactory = new SerializationFactory(ci);
+
+            inMemoryPeerRepository = new InMemoryPeerRepository();
+
+            _sut = new AcceptChannelMessageService(new Logger<AcceptChannelMessageService>(new LoggerFactory()),
+            new LightningTransactions(new Logger<LightningTransactions>(new LoggerFactory()), serializationFactory,
+                new LightningScripts()),
+            new TransactionHashCalculator(ci.GetService<IProtocolTypeSerializer<Transaction>>()),
+            new LightningScripts(),
+            new LightningKeyDerivation(),
+            _candidateRepository,
+            new ChainConfigProvider(),
+            _store.Object,
+            inMemoryPeerRepository);
         }
 
         [Fact]
@@ -80,7 +85,6 @@ namespace Lyn.Protocol.Tests.Bolt2
                     Hex.FromString("0x03cf020f4341d3ef7af94b49f13d5d234ed82887529f122bb6d27d2ba645ac4340"),
                 MaxHtlcValueInFlightMsat = 5000000000
             };
-
 
             var openChannel = new OpenChannel
             {
@@ -110,9 +114,7 @@ namespace Lyn.Protocol.Tests.Bolt2
                 MaxHtlcValueInFlightMsat = 12000000
             };
 
-            var seed = new Secret(Hex.FromString( "0x179c322acdd402a29131762db49ff5011916a8e86b752dbae2a9a8d664cf6ce0"));
-            
-            
+            var seed = new Secret(Hex.FromString("0x179c322acdd402a29131762db49ff5011916a8e86b752dbae2a9a8d664cf6ce0"));
 
             //_sut.ProcessMessageAsync();
         }
@@ -120,22 +122,26 @@ namespace Lyn.Protocol.Tests.Bolt2
         [Fact]
         public void TestFromSeed()
         {
-            var seed = new Secret(Hex.FromString( "0x5e46094b865e688419c3bec96de09da2f1e40fd71f79588c34502a12332ef074"));
+            var remh = Hex.FromString("0200000001c9376d28e6529c71aebacd6b000522e4732fd52d1aecb1320a6d2ed8281b488f000000000013179b8001c785010000000000160014a479f849957e2dff8c1e3e3c1e63b6886baa89a21e069320");
+            var remt = serializationFactory.Deserialize<Transaction>(remh);
+            var remp = TransactionHelper.ParseToString(remt);
 
-            var nodeId = Hex.FromString("03702309a58b6067e51a93a213d72a9bdebf5f5f03960d9ff2bc311e301e4ba999"); 
-            
+            var loch = Hex.FromString("0x02000000000101153b6dfd2e48441fb928f28858c2fe39be2ea278cd63da56fbb4ad4b0491a43f0000000000b23f2f8001c785010000000000160014e3fbf99b451ca2637eadbca5846f58192eb22e320400483045022100eadba847f75037fc1e48ebe61356c943786ca608ad7201c159ec96a73356dcd6022018f554f9f02ae8e3eecb5f836a22f6197291b19f24a1bde562912902cf01965b014a000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000047522102cc8d0afc02e9cce14020f363207025d613e552a5b6a518b5018f60a7f81b05592102ea8f15eee07ad86986ce018c4fd1b2204fe24b107ddcb107d5cc86692dd5948c52ae91f79c20");
+            var loct = serializationFactory.Deserialize<Transaction>(loch);
+            var locp = TransactionHelper.ParseToString(loct);
+
+            var seed = new Secret(Hex.FromString("0x5e46094b865e688419c3bec96de09da2f1e40fd71f79588c34502a12332ef074"));
+
+            var nodeId = Hex.FromString("03702309a58b6067e51a93a213d72a9bdebf5f5f03960d9ff2bc311e301e4ba999");
+
             var rawAcceptChannel = "0xe4712a00c599e9be8dbc2f44e2624eb8a5ffd8b89eb1afe2d62e4d18adb4258a0000000000000222000000012a05f200000000000002710000000000000000010000000302d0001e03e795e84d991e34b591f1a7bf2fe7d0489557b3dcf18bd51cd05e4dbebe27bd3f02ba6c3df56bf7825d9d8386759bee9b85f1b1c600ca4c80bbc0d9f1baf236b7040388ba412e864141a791b465b45b3dea39d62f5c72978726d815d406007b35d84b03ff7cee4f9082560c3156a945c9e45e311537f8032b239ad03b76d91fc646db4702796917759bc5d00f29b5ebe0520278c96a1f6c0eb1ee3e13ea4cdd2495ececf8036170c4015d4614ad2117175498a91d59f919a514e4e9615353b1f0468695a171";
-            
-            var reader = new SequenceReader<byte>(new ReadOnlySequence<byte>(Hex.FromString(rawAcceptChannel)));
 
-            var deserialized = new AcceptChannelSerializer().Deserialize(ref reader);
-            
+            var deserializedAcceptChannel = serializationFactory.Deserialize<AcceptChannel>(Hex.FromString(rawAcceptChannel));
+
             _store.Setup(_ => _.GetSeed())
                 .Returns(seed);
 
-            var peerRepo = new InMemoryPeerRepository();
-
-            peerRepo.AddNewPeerAsync(new Peer
+            inMemoryPeerRepository.AddNewPeerAsync(new Peer
             {
                 Featurs = 0,
                 NodeId = nodeId
@@ -144,44 +150,38 @@ namespace Lyn.Protocol.Tests.Bolt2
             var generator = new Mock<IRandomNumberGenerator>();
 
             generator.Setup(_ => _.GetBytes(32))
-                .Returns(Hex.FromString("e4712a00c599e9be8dbc2f44e2624eb8a5ffd8b89eb1afe2d62e4d18adb4258a"));
-            
+                .Returns(deserializedAcceptChannel.TemporaryChannelId.GetBytes().ToArray());
+
             var startOpenChannelService = new StartOpenChannelService(
                 new Logger<OpenChannelMessageService>(new LoggerFactory()),
                 generator.Object,
                 new LightningKeyDerivation(),
                 _candidateRepository,
-                peerRepo,
+                inMemoryPeerRepository,
                 new ChainConfigProvider(),
                 new LynImplementedBoltFeatures(new ParseFeatureFlags()),
                 new ParseFeatureFlags(),
                 _store.Object);
 
-            
-            
             var openChannelResponse = startOpenChannelService.CreateOpenChannelAsync(new CreateOpenChannelIn(
                 nodeId,
                 new UInt256(Hex.FromString("0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206")),
-                16000000,0,1000,true))
+                16000000, 0, 1000, true))
                 .GetAwaiter().GetResult();
 
-            var expectedTransaction = Hex.FromString(
-                "020000000001017e3e2666942003b00119281be2665503f96543f099bb814a5454644796f08a02000000000035638880012c21f40000000000160014ee666c47268bf2571e1ffe51cd7c7a262f186ca6040047304402203a77357de8c239b83a6612a7cbcfb2d2041770a6ede0921761646bb057fe0e3d0220046662c9eb643c78b487e5b87014f3350a5f3cd09d718be5f9bd22d919f0e8130147304402207c45f65f5eb852f8e3861c2e490597a37497d1382b0455e5d5732ebb9513beba0220444849aa6e5d86b2d01f5e0303dfecdcb7708087f524db0db7ee8a6b631b9a520147522102b085ac037bb3b3ab6de81abf620e42df8d2a51ce4de2905b83bcd514e39f290f2103e795e84d991e34b591f1a7bf2fe7d0489557b3dcf18bd51cd05e4dbebe27bd3f52ae4616b020");
+            var expectedTransaction = Hex.FromString("020000000001017e3e2666942003b00119281be2665503f96543f099bb814a5454644796f08a02000000000035638880012c21f40000000000160014ee666c47268bf2571e1ffe51cd7c7a262f186ca6040047304402203a77357de8c239b83a6612a7cbcfb2d2041770a6ede0921761646bb057fe0e3d0220046662c9eb643c78b487e5b87014f3350a5f3cd09d718be5f9bd22d919f0e8130147304402207c45f65f5eb852f8e3861c2e490597a37497d1382b0455e5d5732ebb9513beba0220444849aa6e5d86b2d01f5e0303dfecdcb7708087f524db0db7ee8a6b631b9a520147522102b085ac037bb3b3ab6de81abf620e42df8d2a51ce4de2905b83bcd514e39f290f2103e795e84d991e34b591f1a7bf2fe7d0489557b3dcf18bd51cd05e4dbebe27bd3f52ae4616b020");
 
-            var transactionReader = new SequenceReader<byte>(new ReadOnlySequence<byte>(expectedTransaction));
-            
-            var transactionSerializer = new TransactionSerializer(
-                new TransactionInputSerializer(new OutPointSerializer()),
-                new TransactionOutputSerializer(),
-                new TransactionWitnessSerializer(new TransactionWitnessComponentSerializer()));
+            //var expectedTransaction = Hex.FromString("020000000116d700d0d653aa659a018da8936f9f48307117777037b52455d433d8ccd8face00000000003896d48001c785010000000000160014b2e7cc254f13a72fc66916ff7dc14caac9ef8140f5703d20");
 
-            var transaction = transactionSerializer.Deserialize(ref transactionReader);
+            var transaction = serializationFactory.Deserialize<Transaction>(expectedTransaction);
 
-            var result = _sut.ProcessMessageAsync(new PeerMessage<AcceptChannel>(nodeId, new BoltMessage {Payload = deserialized}))
+            var result = _sut.ProcessMessageAsync(new PeerMessage<AcceptChannel>(nodeId, new BoltMessage { Payload = deserializedAcceptChannel }))
                 .GetAwaiter().GetResult();
 
             var candidate = _candidateRepository.ChannelStates.First().Value;
 
+            var trx1 = TransactionHelper.ParseToString(transaction);
+            var trx2 = TransactionHelper.ParseToString(candidate.CommitmentTransaction);
 
             candidate.CommitmentTransaction.Should()
                 .BeEquivalentTo(transaction);
