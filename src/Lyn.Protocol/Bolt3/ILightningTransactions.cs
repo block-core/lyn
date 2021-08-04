@@ -8,7 +8,9 @@ namespace Lyn.Protocol.Bolt3
     {
         CommitmenTransactionOut CommitmentTransaction(CommitmentTransactionIn commitmentTransactionIn);
 
-        CompressedSignature SignInput(Transaction transaction, PrivateKey privateKey, uint inputIndex, byte[] redeemScript, Satoshis amountSats, bool anchorOutputs = false);
+        BitcoinSignature SignInput(Transaction transaction, PrivateKey privateKey, uint inputIndex, byte[] redeemScript, Satoshis amountSats, bool anchorOutputs = false);
+
+        CompressedSignature ToCompressedSignature(BitcoinSignature bitcoinSignature);
 
         BitcoinSignature FromCompressedSignature(CompressedSignature compressedSignature);
 

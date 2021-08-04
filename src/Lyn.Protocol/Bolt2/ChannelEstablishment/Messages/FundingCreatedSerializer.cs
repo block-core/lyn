@@ -18,7 +18,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment.Messages
 
             if (typeInstance.Signature != null)
             {
-                size += writer.WriteByteArray(typeInstance.Signature);
+                size += writer.WriteBytes(typeInstance.Signature);
             }
 
             return size;
@@ -31,7 +31,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment.Messages
                 TemporaryChannelId = new UInt256(reader.ReadUint256(true).GetBytes().ToArray()),
                 FundingTxid = reader.ReadUint256(),
                 FundingOutputIndex = reader.ReadUShort(),
-                Signature = reader.ReadByteArray()
+                Signature = reader.ReadBytes(CompressedSignature.LENGTH)
             };
         }
     }

@@ -149,9 +149,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                 channelCandidate.OpenChannel.FundingSatoshis,
                 optionAnchorOutputs);
 
-            var localsig = _lightningTransactions.FromCompressedSignature(fundingSign);
-
-            _lightningScripts.SetCommitmentInputWitness(commitmentTransaction.Transaction.Inputs[0], localsig, new BitcoinSignature(new byte[74]), fundingWscript);
+            _lightningScripts.SetCommitmentInputWitness(commitmentTransaction.Transaction.Inputs[0], fundingSign, new BitcoinSignature(new byte[74]), fundingWscript);
 
             channelCandidate.CommitmentTransaction = commitmentTransaction.Transaction;
 
@@ -160,7 +158,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             var trxhex = serializationFactory.Serialize(channelCandidate.CommitmentTransaction);
             _logger.LogInformation("committrx= " + Hex.ToString(trxhex));
-            _logger.LogInformation("commit local sig= " + Hex.ToString(localsig));
+            _logger.LogInformation("commit local sig= " + Hex.ToString(fundingSign));
 
             await _channelCandidateRepository.UpdateAsync(channelCandidate);
 
@@ -169,7 +167,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                 FundingTxid = fundingTransactionHash,
                 FundingOutputIndex = (ushort)fundingTransactionIndex,
                 TemporaryChannelId = acceptChannel.TemporaryChannelId,
-                Signature = fundingSign
+                Signature = _lightningTransactions.ToCompressedSignature(fundingSign)
             };
 
             var boltMessage = new BoltMessage

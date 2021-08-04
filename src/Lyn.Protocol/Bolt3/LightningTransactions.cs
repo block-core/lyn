@@ -406,7 +406,7 @@ namespace Lyn.Protocol.Bolt3
             return result;
         }
 
-        public CompressedSignature SignInput(Transaction transaction, PrivateKey privateKey, uint inputIndex, byte[] redeemScript, Satoshis amountSats, bool anchorOutputs = false)
+        public BitcoinSignature SignInput(Transaction transaction, PrivateKey privateKey, uint inputIndex, byte[] redeemScript, Satoshis amountSats, bool anchorOutputs = false)
         {
             // Currently we use NBitcoin to create the transaction hash to be signed,
             // the extra serialization to NBitcoin Transaction is costly so later
@@ -429,7 +429,7 @@ namespace Lyn.Protocol.Bolt3
             uint256? hashToSign = trx.GetSignatureHash(witnessCoin.GetScriptCode(), (int)inputIndex, sigHash, utxo, HashVersion.WitnessV0);
             TransactionSignature? sig = key.Sign(hashToSign, sigHash, useLowR: false);
 
-            return new CompressedSignature(sig.Signature.ToCompact());
+            return new BitcoinSignature(sig.ToBytes());
         }
 
         public BitcoinSignature FromCompressedSignature(CompressedSignature compressedSignature)
@@ -440,6 +440,13 @@ namespace Lyn.Protocol.Bolt3
             var transactionSignature = new TransactionSignature(ecdsaSignature);
 
             return new BitcoinSignature(transactionSignature.ToBytes());
+        }
+
+        public CompressedSignature ToCompressedSignature(BitcoinSignature bitcoinSignature)
+        {
+            TransactionSignature transactionSignature = new TransactionSignature(bitcoinSignature);
+
+            return new CompressedSignature(transactionSignature.Signature.ToCompact());
         }
 
         public CompressedSignature SignInputCompressed(Transaction transaction, PrivateKey privateKey, uint inputIndex, byte[] redeemScript, Satoshis amountSats, bool anchorOutputs = false)

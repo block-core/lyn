@@ -12,6 +12,6 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment.Messages
         public UInt256? TemporaryChannelId { get; set; }
         public UInt256? FundingTxid { get; set; }
         public ushort? FundingOutputIndex { get; set; }
-        public byte[]? Signature { get; set; }
+        public CompressedSignature? Signature { get; set; }
     }
 }
