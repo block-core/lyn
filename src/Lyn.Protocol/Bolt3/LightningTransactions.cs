@@ -7,6 +7,7 @@ using Lyn.Types.Bitcoin;
 using Lyn.Types.Fundamental;
 using Microsoft.Extensions.Logging;
 using NBitcoin;
+using NBitcoin.Crypto;
 using Transaction = Lyn.Types.Bitcoin.Transaction;
 
 namespace Lyn.Protocol.Bolt3
@@ -405,7 +406,7 @@ namespace Lyn.Protocol.Bolt3
             return result;
         }
 
-        public BitcoinSignature SignInput(Transaction transaction, PrivateKey privateKey, uint inputIndex, byte[] redeemScript, Satoshis amountSats, bool anchorOutputs = false)
+        public CompressedSignature SignInput(Transaction transaction, PrivateKey privateKey, uint inputIndex, byte[] redeemScript, Satoshis amountSats, bool anchorOutputs = false)
         {
             // Currently we use NBitcoin to create the transaction hash to be signed,
             // the extra serialization to NBitcoin Transaction is costly so later
@@ -428,7 +429,17 @@ namespace Lyn.Protocol.Bolt3
             uint256? hashToSign = trx.GetSignatureHash(witnessCoin.GetScriptCode(), (int)inputIndex, sigHash, utxo, HashVersion.WitnessV0);
             TransactionSignature? sig = key.Sign(hashToSign, sigHash, useLowR: false);
 
-            return new BitcoinSignature(sig.ToBytes());
+            return new CompressedSignature(sig.Signature.ToCompact());
+        }
+
+        public BitcoinSignature FromCompressedSignature(CompressedSignature compressedSignature)
+        {
+            if (!NBitcoin.Crypto.ECDSASignature.TryParseFromCompact((byte[])compressedSignature, out ECDSASignature ecdsaSignature))
+                throw new ApplicationException("invalid compact signature");
+
+            var transactionSignature = new TransactionSignature(ecdsaSignature);
+
+            return new BitcoinSignature(transactionSignature.ToBytes());
         }
 
         public CompressedSignature SignInputCompressed(Transaction transaction, PrivateKey privateKey, uint inputIndex, byte[] redeemScript, Satoshis amountSats, bool anchorOutputs = false)

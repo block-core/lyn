@@ -126,22 +126,32 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             var fundingTransactionHash = _transactionHashCalculator.ComputeHash(fundingTransaction);
             uint fundingTransactionIndex = 0;
 
-            bool optionAnchorOutputs = (peer.Featurs & Features.OptionAnchorOutputs) != 0;
+            // keep it fixed for now
+            fundingTransactionHash = new UInt256("fbe9c3d22880e69b47970864c3f3c9eec9eb976cbdf6c3d20e607eed08e773d5");
+
+            bool optionAnchorOutputs = false;// (peer.Featurs & Features.OptionAnchorOutputs) != 0;
+            bool optionStaticRemotekey = true;
 
             Secret seed = _secretStore.GetSeed();
             Secrets secrets = _lightningKeyDerivation.DeriveSecrets(seed);
 
-            var commitmentTransaction = CommitmenTransactionOut(channelCandidate, acceptChannel, secrets,
-                new OutPoint { Hash = fundingTransactionHash, Index = fundingTransactionIndex }, optionAnchorOutputs);
+            var fundingOutPoint = new OutPoint { Hash = fundingTransactionHash, Index = fundingTransactionIndex };
 
-            var pubkey = _lightningKeyDerivation.PublicKeyFromPrivateKey(secrets.FundingPrivkey);
+            var commitmentTransaction = CommitmenTransactionOut(channelCandidate, secrets, fundingOutPoint, optionAnchorOutputs, optionStaticRemotekey);
 
             byte[]? fundingWscript = _lightningScripts.FundingRedeemScript(channelCandidate.OpenChannel.FundingPubkey, channelCandidate.AcceptChannel.FundingPubkey);
 
-            var bitsign = _lightningTransactions.SignInput(commitmentTransaction.Transaction, secrets.FundingPrivkey, 0,
-                fundingWscript, channelCandidate.OpenChannel.FundingSatoshis, false);
+            var fundingSign = _lightningTransactions.SignInput(
+                commitmentTransaction.Transaction,
+                secrets.FundingPrivkey,
+                0,
+                fundingWscript,
+                channelCandidate.OpenChannel.FundingSatoshis,
+                optionAnchorOutputs);
 
-            _lightningScripts.SetCommitmentInputWitness(commitmentTransaction.Transaction.Inputs[0], new BitcoinSignature((byte[])bitsign), new BitcoinSignature(new byte[74]), fundingWscript);
+            var localsig = _lightningTransactions.FromCompressedSignature(fundingSign);
+
+            _lightningScripts.SetCommitmentInputWitness(commitmentTransaction.Transaction.Inputs[0], localsig, new BitcoinSignature(new byte[74]), fundingWscript);
 
             channelCandidate.CommitmentTransaction = commitmentTransaction.Transaction;
 
@@ -150,7 +160,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             var trxhex = serializationFactory.Serialize(channelCandidate.CommitmentTransaction);
             _logger.LogInformation("committrx= " + Hex.ToString(trxhex));
-            _logger.LogInformation("committrx sig= " + Hex.ToString(bitsign));
+            _logger.LogInformation("commit local sig= " + Hex.ToString(localsig));
 
             await _channelCandidateRepository.UpdateAsync(channelCandidate);
 
@@ -159,7 +169,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                 FundingTxid = fundingTransactionHash,
                 FundingOutputIndex = (ushort)fundingTransactionIndex,
                 TemporaryChannelId = acceptChannel.TemporaryChannelId,
-                Signature = bitsign
+                Signature = fundingSign
             };
 
             var boltMessage = new BoltMessage
@@ -170,8 +180,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             return new MessageProcessingOutput { Success = true, ResponseMessages = new[] { boltMessage } };
         }
 
-        private CommitmenTransactionOut CommitmenTransactionOut(ChannelCandidate? channelCandidate, AcceptChannel acceptChannel,
-            Secrets secrets, OutPoint inPoint, bool optionAnchorOutputs)
+        private CommitmenTransactionOut CommitmenTransactionOut(ChannelCandidate? channelCandidate, Secrets secrets, OutPoint inPoint, bool optionAnchorOutputs, bool optionStaticRemotekey)
         {
             // generate the commitment transaction how it will look like for the other side
 
@@ -198,6 +207,8 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             Basepoints localBasepoints = _lightningKeyDerivation.DeriveBasepoints(secrets);
 
+            _logger.LogDebug("{@localBasepoints}", localBasepoints);
+
             Basepoints remoteBasepoints = new Basepoints
             {
                 DelayedPayment = channelCandidate.AcceptChannel.DelayedPaymentBasepoint,
@@ -206,14 +217,16 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                 Revocation = channelCandidate.AcceptChannel.RevocationBasepoint
             };
 
+            _logger.LogDebug("{@remoteBasepoints}", remoteBasepoints);
+
             PublicKey perCommitmentPoint = channelCandidate.AcceptChannel.FirstPerCommitmentPoint;
 
-            SetKeys(commitmentTransactionIn, remoteBasepoints, localBasepoints, perCommitmentPoint, optionAnchorOutputs);
+            SetKeys(commitmentTransactionIn, remoteBasepoints, localBasepoints, perCommitmentPoint, optionStaticRemotekey);
 
             return _lightningTransactions.CommitmentTransaction(commitmentTransactionIn);
         }
 
-        private void SetKeys(CommitmentTransactionIn transaction, Basepoints localBasepoints, Basepoints remoteBasepoints, PublicKey perCommitmentPoint, bool optionAnchorOutputs)
+        private void SetKeys(CommitmentTransactionIn transaction, Basepoints localBasepoints, Basepoints remoteBasepoints, PublicKey perCommitmentPoint, bool optionStaticRemotekey)
         {
             var remoteRevocationKey = _lightningKeyDerivation.DeriveRevocationPublicKey(remoteBasepoints.Revocation, perCommitmentPoint);
 
@@ -221,7 +234,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             var localPaymentKey = _lightningKeyDerivation.DerivePublickey(localBasepoints.Payment, perCommitmentPoint);
 
-            var remotePaymentKey = optionAnchorOutputs ?
+            var remotePaymentKey = optionStaticRemotekey ?
                 remoteBasepoints.Payment :
                 _lightningKeyDerivation.DerivePublickey(remoteBasepoints.Payment, perCommitmentPoint);
 
@@ -235,6 +248,8 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                 localDelayedPaymentKey,
                 localPaymentKey,
                 remotePaymentKey);
+
+            _logger.LogDebug("{@keyset}", keyset);
 
             transaction.Keyset = keyset;
         }
