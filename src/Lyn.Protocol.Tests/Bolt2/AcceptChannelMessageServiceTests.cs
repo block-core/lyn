@@ -128,7 +128,7 @@ namespace Lyn.Protocol.Tests.Bolt2
 
             var locp = TransactionHelper.ParseToString(
                 serializationFactory.Deserialize<Transaction>(
-                    Hex.FromString("0x02000000000101d573e708ed7e600ed2c3f6bd6c97ebc9eec9f3c3640897479be68028d2c3e9fb00000000006eac468001c785010000000000160014133ce10abfb75c2c9a2556f7db0514dfb4a17e0704004730440220281ee5253a1a35fca5a232d6c28e76486199b63207011efc51d6c4ce91bf27c002203b2860e4b908f8987ff3606a9f1d7a916f052bc688f76a80cac96bbeab958c2e014a000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000047522102b085ac037bb3b3ab6de81abf620e42df8d2a51ce4de2905b83bcd514e39f290f21039527349907a9bfac81202cb7f23bf544453ca8b193971d27b0620a2ce5f8449652ae57b1b920")));
+                    Hex.FromString("0x020000000001018dfadc6cbb9926ca89c236a9ea7c6da1fb8877d38f5685645d4221fd71ab837200000000009d46b38001c78501000000000022002082433ee67f512b2fdd94dc06c4c9a9dcc25c33eefe063fb8f30837398e1708f8040047304402207546d5661301be5cfee3a1982abca002cb6dbfb6cb346836f69d7677d55582e1022009c248d73ce436d1663d7fddab05d6c0ba5a63af0e900e701c09d41be4179b8e01473044022075d73446e930c939cb137865d8a5fd01337cb88782a20e43ad06570be68ccdd402203e0e0b6e77456b73a98309024ef1b8aefcbb508b1d104af474cf28763c83957701475221022519c80cad01e3ecb61742bb951c33f91580e849d5fcd30f302f6afe2cbba7092102b085ac037bb3b3ab6de81abf620e42df8d2a51ce4de2905b83bcd514e39f290f52aee4872f20")));
 
             var seed = new Secret(Hex.FromString("0x5e46094b865e688419c3bec96de09da2f1e40fd71f79588c34502a12332ef074"));
 
@@ -181,9 +181,9 @@ namespace Lyn.Protocol.Tests.Bolt2
             var candidate = _candidateRepository.ChannelStates.First().Value;
 
             var trx1 = TransactionHelper.ParseToString(transaction);
-            var trx2 = TransactionHelper.ParseToString(candidate.CommitmentTransaction);
+            var trx2 = TransactionHelper.ParseToString(candidate.RemoteCommitmentTransaction);
 
-            candidate.CommitmentTransaction.Should()
+            candidate.RemoteCommitmentTransaction.Should()
                 .BeEquivalentTo(transaction);
         }
     }

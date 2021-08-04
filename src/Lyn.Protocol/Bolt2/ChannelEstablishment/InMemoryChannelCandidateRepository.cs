@@ -12,14 +12,24 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
         public Task CreateAsync(ChannelCandidate channelCandidate)
         {
-            ChannelStates.TryAdd((UInt256)channelCandidate.ChannelId, channelCandidate);
+            ChannelStates.TryAdd(channelCandidate.ChannelId, channelCandidate);
 
             return Task.CompletedTask;
         }
 
         public Task UpdateAsync(ChannelCandidate channelCandidate)
         {
-            ChannelStates.TryUpdate((UInt256)channelCandidate.ChannelId, channelCandidate, channelCandidate);
+            ChannelStates.TryUpdate(channelCandidate.ChannelId, channelCandidate, channelCandidate);
+
+            return Task.CompletedTask;
+        }
+
+        public Task UpdateChannelIdAsync(UInt256 tempChannelId, UInt256 channelId)
+        {
+            if (!ChannelStates.TryGetValue((UInt256)tempChannelId, out var channelState))
+                return Task.FromResult(default(ChannelCandidate?));
+
+            ChannelStates.TryAdd(channelId, channelState);
 
             return Task.CompletedTask;
         }

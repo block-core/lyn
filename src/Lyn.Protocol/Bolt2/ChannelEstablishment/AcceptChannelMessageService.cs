@@ -1,4 +1,5 @@
-﻿using System.Buffers;
+﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
 using Lyn.Protocol.Bolt2.ChannelEstablishment.Entities;
 using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages;
@@ -129,20 +130,21 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             //// keep it fixed for now
             //fundingTransactionHash = new UInt256("fbe9c3d22880e69b47970864c3f3c9eec9eb976cbdf6c3d20e607eed08e773d5");
 
-            bool optionAnchorOutputs = (peer.Featurs & Features.OptionAnchorOutputs) != 0;
-            bool optionStaticRemotekey = (peer.Featurs & Features.OptionStaticRemotekey) != 0; ;
+            // david: this params can go in channelchandidate
+            bool optionAnchorOutputs = false;// (peer.Featurs & Features.OptionAnchorOutputs) != 0;
+            bool optionStaticRemotekey = true; //(peer.Featurs & Features.OptionStaticRemotekey) != 0; ;
 
             Secret seed = _secretStore.GetSeed();
             Secrets secrets = _lightningKeyDerivation.DeriveSecrets(seed);
 
             var fundingOutPoint = new OutPoint { Hash = fundingTransactionHash, Index = fundingTransactionIndex };
 
-            var commitmentTransaction = CommitmenTransactionOut(channelCandidate, secrets, fundingOutPoint, optionAnchorOutputs, optionStaticRemotekey);
+            var remoteCommitmentTransaction = CommitmenTransactionOut(channelCandidate, secrets, fundingOutPoint, optionAnchorOutputs, optionStaticRemotekey);
 
             byte[]? fundingWscript = _lightningScripts.FundingRedeemScript(channelCandidate.OpenChannel.FundingPubkey, channelCandidate.AcceptChannel.FundingPubkey);
 
-            var fundingSign = _lightningTransactions.SignInput(
-                commitmentTransaction.Transaction,
+            var remoteFundingSign = _lightningTransactions.SignInput(
+                remoteCommitmentTransaction.Transaction,
                 secrets.FundingPrivkey,
                 0,
                 fundingWscript,
@@ -151,7 +153,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             //_lightningScripts.SetCommitmentInputWitness(commitmentTransaction.Transaction.Inputs[0], fundingSign, new BitcoinSignature(new byte[74]), fundingWscript);
 
-            channelCandidate.CommitmentTransaction = commitmentTransaction.Transaction;
+            channelCandidate.RemoteCommitmentTransaction = remoteCommitmentTransaction.Transaction;
 
             //var ci = new ServiceCollection().AddSerializationComponents().BuildServiceProvider();
             //var serializationFactory = new SerializationFactory(ci);
@@ -159,17 +161,25 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             //var trxhex = serializationFactory.Serialize(channelCandidate.CommitmentTransaction);
             //_logger.LogInformation("committrx= " + Hex.ToString(trxhex));
 
-            _logger.LogDebug("Remote Commitment signature = " + Hex.ToString(fundingSign));
+            _logger.LogDebug("Remote Commitment signature = " + Hex.ToString(remoteFundingSign));
 
-            await _channelCandidateRepository.UpdateAsync(channelCandidate);
+            UInt256 newChannelId = _lightningKeyDerivation.DeriveChannelId(fundingTransactionHash, (ushort)fundingTransactionIndex);
+
+            _logger.LogDebug("New channelid = {newChannelId}", newChannelId);
 
             var fundingCreated = new FundingCreated
             {
                 FundingTxid = fundingTransactionHash,
                 FundingOutputIndex = (ushort)fundingTransactionIndex,
                 TemporaryChannelId = acceptChannel.TemporaryChannelId,
-                Signature = _lightningTransactions.ToCompressedSignature(fundingSign)
+                Signature = _lightningTransactions.ToCompressedSignature(remoteFundingSign)
             };
+
+            channelCandidate.FundingCreated = fundingCreated;
+
+            await _channelCandidateRepository.UpdateAsync(channelCandidate);
+
+            await _channelCandidateRepository.UpdateChannelIdAsync(channelCandidate.ChannelId, newChannelId);
 
             var boltMessage = new BoltMessage
             {
