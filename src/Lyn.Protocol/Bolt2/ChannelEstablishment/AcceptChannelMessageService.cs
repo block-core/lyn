@@ -129,8 +129,8 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             // keep it fixed for now
             fundingTransactionHash = new UInt256("fbe9c3d22880e69b47970864c3f3c9eec9eb976cbdf6c3d20e607eed08e773d5");
 
-            bool optionAnchorOutputs = false;// (peer.Featurs & Features.OptionAnchorOutputs) != 0;
-            bool optionStaticRemotekey = true;
+            bool optionAnchorOutputs = (peer.Featurs & Features.OptionAnchorOutputs) != 0;
+            bool optionStaticRemotekey = (peer.Featurs & Features.OptionStaticRemotekey) != 0; ;
 
             Secret seed = _secretStore.GetSeed();
             Secrets secrets = _lightningKeyDerivation.DeriveSecrets(seed);
