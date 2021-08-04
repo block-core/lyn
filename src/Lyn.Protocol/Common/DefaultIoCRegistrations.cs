@@ -111,6 +111,7 @@ namespace Lyn.Protocol.Common
             services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<OpenChannel>>();
             services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<AcceptChannel>>();
             services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<FundingCreated>>();
+            services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<FundingSigned>>();
 
             return services;
         }

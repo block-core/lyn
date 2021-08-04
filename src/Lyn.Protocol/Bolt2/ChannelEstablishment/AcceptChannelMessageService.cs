@@ -126,8 +126,8 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             var fundingTransactionHash = _transactionHashCalculator.ComputeHash(fundingTransaction);
             uint fundingTransactionIndex = 0;
 
-            // keep it fixed for now
-            fundingTransactionHash = new UInt256("fbe9c3d22880e69b47970864c3f3c9eec9eb976cbdf6c3d20e607eed08e773d5");
+            //// keep it fixed for now
+            //fundingTransactionHash = new UInt256("fbe9c3d22880e69b47970864c3f3c9eec9eb976cbdf6c3d20e607eed08e773d5");
 
             bool optionAnchorOutputs = (peer.Featurs & Features.OptionAnchorOutputs) != 0;
             bool optionStaticRemotekey = (peer.Featurs & Features.OptionStaticRemotekey) != 0; ;
@@ -149,16 +149,17 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                 channelCandidate.OpenChannel.FundingSatoshis,
                 optionAnchorOutputs);
 
-            _lightningScripts.SetCommitmentInputWitness(commitmentTransaction.Transaction.Inputs[0], fundingSign, new BitcoinSignature(new byte[74]), fundingWscript);
+            //_lightningScripts.SetCommitmentInputWitness(commitmentTransaction.Transaction.Inputs[0], fundingSign, new BitcoinSignature(new byte[74]), fundingWscript);
 
             channelCandidate.CommitmentTransaction = commitmentTransaction.Transaction;
 
-            var ci = new ServiceCollection().AddSerializationComponents().BuildServiceProvider();
-            var serializationFactory = new SerializationFactory(ci);
+            //var ci = new ServiceCollection().AddSerializationComponents().BuildServiceProvider();
+            //var serializationFactory = new SerializationFactory(ci);
 
-            var trxhex = serializationFactory.Serialize(channelCandidate.CommitmentTransaction);
-            _logger.LogInformation("committrx= " + Hex.ToString(trxhex));
-            _logger.LogInformation("commit local sig= " + Hex.ToString(fundingSign));
+            //var trxhex = serializationFactory.Serialize(channelCandidate.CommitmentTransaction);
+            //_logger.LogInformation("committrx= " + Hex.ToString(trxhex));
+
+            _logger.LogDebug("Remote Commitment signature = " + Hex.ToString(fundingSign));
 
             await _channelCandidateRepository.UpdateAsync(channelCandidate);
 

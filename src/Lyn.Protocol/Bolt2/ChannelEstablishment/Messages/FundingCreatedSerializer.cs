@@ -28,7 +28,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment.Messages
         {
             return new FundingCreated
             {
-                TemporaryChannelId = new UInt256(reader.ReadUint256(true).GetBytes().ToArray()),
+                TemporaryChannelId = reader.ReadUint256(true),
                 FundingTxid = reader.ReadUint256(),
                 FundingOutputIndex = reader.ReadUShort(),
                 Signature = reader.ReadBytes(CompressedSignature.LENGTH)
