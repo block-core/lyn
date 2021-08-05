@@ -14,6 +14,7 @@ using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 using Lyn.Protocol.Bolt1;
 using Lyn.Protocol.Bolt1.Messages;
+using Lyn.Protocol.Bolt9;
 using Lyn.Types;
 using Lyn.Types.Fundamental;
 using Microsoft.Extensions.DependencyInjection;
@@ -31,6 +32,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
         private readonly IChainConfigProvider _chainConfigProvider;
         private readonly ISecretStore _secretStore;
         private readonly IPeerRepository _peerRepository;
+        private readonly IBoltFeatures _boltFeatures;
 
         public AcceptChannelMessageService(ILogger<AcceptChannelMessageService> logger,
             ILightningTransactions lightningTransactions,
@@ -40,7 +42,8 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             IChannelCandidateRepository channelCandidateRepository,
             IChainConfigProvider chainConfigProvider,
             ISecretStore secretStore,
-            IPeerRepository peerRepository)
+            IPeerRepository peerRepository,
+            IBoltFeatures boltFeatures)
         {
             _logger = logger;
             _lightningTransactions = lightningTransactions;
@@ -51,6 +54,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             _chainConfigProvider = chainConfigProvider;
             _secretStore = secretStore;
             _peerRepository = peerRepository;
+            _boltFeatures = boltFeatures;
         }
 
         public async Task<MessageProcessingOutput> ProcessMessageAsync(PeerMessage<AcceptChannel> message)
@@ -127,12 +131,15 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             var fundingTransactionHash = _transactionHashCalculator.ComputeHash(fundingTransaction);
             uint fundingTransactionIndex = 0;
 
-            //// keep it fixed for now
-            //fundingTransactionHash = new UInt256("fbe9c3d22880e69b47970864c3f3c9eec9eb976cbdf6c3d20e607eed08e773d5");
+            bool localOptionAnchorOutputs = (_boltFeatures.SupportedFeatures & Features.OptionAnchorOutputs) != 0;
+            bool remoteOptionAnchorOutput = (peer.Featurs & Features.OptionAnchorOutputs) != 0;
+
+            bool localOptionStaticRemotekey = (_boltFeatures.SupportedFeatures & Features.OptionStaticRemotekey) != 0;
+            bool remoteOptionStaticRemotekey = (peer.Featurs & Features.OptionStaticRemotekey) != 0;
 
             // david: this params can go in channelchandidate
-            bool optionAnchorOutputs = false;// (peer.Featurs & Features.OptionAnchorOutputs) != 0;
-            bool optionStaticRemotekey = true; //(peer.Featurs & Features.OptionStaticRemotekey) != 0; ;
+            bool optionAnchorOutputs = localOptionAnchorOutputs && remoteOptionAnchorOutput;
+            bool optionStaticRemotekey = localOptionStaticRemotekey && remoteOptionStaticRemotekey; // not sure why this must be on if other side supports it and we don't
 
             Secret seed = _secretStore.GetSeed();
             Secrets secrets = _lightningKeyDerivation.DeriveSecrets(seed);
@@ -151,17 +158,21 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                 channelCandidate.OpenChannel.FundingSatoshis,
                 optionAnchorOutputs);
 
-            //_lightningScripts.SetCommitmentInputWitness(commitmentTransaction.Transaction.Inputs[0], fundingSign, new BitcoinSignature(new byte[74]), fundingWscript);
+            _lightningScripts.SetCommitmentInputWitness(remoteCommitmentTransaction.Transaction.Inputs[0], remoteFundingSign, new BitcoinSignature(new byte[74]), fundingWscript);
 
             channelCandidate.RemoteCommitmentTransaction = remoteCommitmentTransaction.Transaction;
 
-            //var ci = new ServiceCollection().AddSerializationComponents().BuildServiceProvider();
-            //var serializationFactory = new SerializationFactory(ci);
+            if (_logger.IsEnabled(LogLevel.Debug))
+            {
+                // todo: dan inject SerializationFactory
+                var ci = new ServiceCollection().AddSerializationComponents().BuildServiceProvider();
+                var serializationFactory = new SerializationFactory(ci);
 
-            //var trxhex = serializationFactory.Serialize(channelCandidate.CommitmentTransaction);
-            //_logger.LogInformation("committrx= " + Hex.ToString(trxhex));
+                var trxhex = serializationFactory.Serialize(channelCandidate.RemoteCommitmentTransaction);
+                _logger.LogDebug("RemoteCommitmentTransaction = {trxhex}", Hex.ToString(trxhex));
+            }
 
-            _logger.LogDebug("Remote Commitment signature = " + Hex.ToString(remoteFundingSign));
+            _logger.LogDebug("Remote Commitment signature = {remoteFundingSign}", remoteFundingSign);
 
             UInt256 newChannelId = _lightningKeyDerivation.DeriveChannelId(fundingTransactionHash, (ushort)fundingTransactionIndex);
 
@@ -177,8 +188,8 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             channelCandidate.FundingCreated = fundingCreated;
 
+            // todo: David refactor- this go in to one method
             await _channelCandidateRepository.UpdateAsync(channelCandidate);
-
             await _channelCandidateRepository.UpdateChannelIdAsync(channelCandidate.ChannelId, newChannelId);
 
             var boltMessage = new BoltMessage

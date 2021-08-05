@@ -29,5 +29,10 @@ namespace Lyn.Types.Fundamental
         public static explicit operator BitcoinSignature(byte[] bytes) => new BitcoinSignature(bytes);
 
         public static explicit operator BitcoinSignature(ReadOnlySpan<byte> bytes) => new BitcoinSignature(bytes.ToArray());
+
+        public override string ToString()
+        {
+            return Hex.ToString(_value.AsSpan());
+        }
     }
 }

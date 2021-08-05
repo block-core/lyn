@@ -109,9 +109,12 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             var ci = new ServiceCollection().AddSerializationComponents().BuildServiceProvider();
             var serializationFactory = new SerializationFactory(ci);
-
             var trxhex = serializationFactory.Serialize(localCommitmentTransaction.Transaction);
-            _logger.LogInformation("committrx= " + Hex.ToString(trxhex));
+
+            if (_logger.IsEnabled(LogLevel.Debug))
+            {
+                _logger.LogDebug("LocalCommitmentTransaction = {trxhex}", Hex.ToString(trxhex));
+            }
 
             NBitcoin.Transaction? trx = NBitcoin.Network.Main.CreateTransaction();
             trx.FromBytes(trxhex);
@@ -119,7 +122,11 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             NBitcoin.TransactionBuilder builder = NBitcoin.Network.RegTest.CreateTransactionBuilder();
             var errors = builder.Check(trx);
 
-            return new MessageProcessingOutput { Success = true };
+            // for now we cant valiodate so we return erro and the trx itself, this will close the channel
+            _logger.LogDebug("Failing channel {ChannelId} for Invalid Signature", fundingSigned.ChannelId);
+            return MessageProcessingOutput.CreateErrorMessage(fundingSigned.ChannelId, true, $"Invalid Signature, LocalCommitmentTransaction = {Hex.ToString(trxhex)}");
+
+            // return new MessageProcessingOutput { Success = true };
         }
 
         private CommitmenTransactionOut CommitmenTransactionOut(ChannelCandidate? channelCandidate, Secrets secrets, OutPoint inPoint, bool optionAnchorOutputs, bool optionStaticRemotekey)

@@ -201,7 +201,7 @@ namespace Lyn.Protocol.Bolt3
 
                     Script? p2Wsh = PayToWitScriptHashTemplate.Instance.GenerateScriptPubKey(new WitScriptId(wscriptinst)); // todo: dan - move this to interface
 
-                    _logger.LogDebug("Htlc Amount = {amount}, WitnessScript = {wscriptinst}, p2Wsh = {p2Wsh} ", wscriptinst, amount, p2Wsh);
+                    _logger.LogDebug("Htlc Amount = {amount}, WitnessScript = {wscriptinst}, p2Wsh = {p2Wsh} ", amount, wscriptinst, p2Wsh);
 
                     outputs.Add(new HtlcToOutputMaping
                     {
@@ -239,7 +239,7 @@ namespace Lyn.Protocol.Bolt3
 
                     var p2Wsh = PayToWitScriptHashTemplate.Instance.GenerateScriptPubKey(new WitScriptId(wscriptinst)); // todo: dan - move this to interface
 
-                    _logger.LogDebug("Htlc Amount = {amount}, WitnessScript = {wscriptinst}, p2Wsh = {p2Wsh} ", wscriptinst, amount, p2Wsh);
+                    _logger.LogDebug("Htlc Amount = {amount}, WitnessScript = {wscriptinst}, p2Wsh = {p2Wsh} ", amount, wscriptinst, p2Wsh);
 
                     outputs.Add(new HtlcToOutputMaping
                     {
@@ -272,7 +272,7 @@ namespace Lyn.Protocol.Bolt3
 
                 var p2Wsh = PayToWitScriptHashTemplate.Instance.GenerateScriptPubKey(new WitScriptId(wscriptinst)); // todo: dan - move this to interface
 
-                _logger.LogDebug("Add a to_local output Amount = {amount}, WitnessScript = {wscriptinst}, p2Wsh = {p2Wsh} ", wscriptinst, amount, p2Wsh);
+                _logger.LogDebug("Add a to_local output Amount = {amount}, WitnessScript = {wscriptinst}, p2Wsh = {p2Wsh} ", amount, wscriptinst, p2Wsh);
 
                 outputs.Add(new HtlcToOutputMaping
                 {
@@ -311,7 +311,7 @@ namespace Lyn.Protocol.Bolt3
 
                     p2Wsh = PayToWitScriptHashTemplate.Instance.GenerateScriptPubKey(new WitScriptId(wscriptinst)); // todo: dan - move this to interface
 
-                    _logger.LogDebug("Add a to_remote output (anchor) Amount = {amount} WitnessScript = {wscriptinst}, p2Wsh = {p2Wsh}", wscriptinst, amount, p2Wsh);
+                    _logger.LogDebug("Add a to_remote output (anchor) Amount = {amount} WitnessScript = {wscriptinst}, p2Wsh = {p2Wsh}", amount, wscriptinst, p2Wsh);
                 }
                 else
                 {
@@ -319,7 +319,7 @@ namespace Lyn.Protocol.Bolt3
 
                     p2Wsh = PayToWitPubKeyHashTemplate.Instance.GenerateScriptPubKey(pubkey); // todo: dan - move this to interface
 
-                    _logger.LogDebug("Add a to_remote output Amount = {amount} pubkey = {pubkey}, p2Wsh = {p2Wsh}", pubkey, amount, p2Wsh);
+                    _logger.LogDebug("Add a to_remote output Amount = {amount} pubkey = {pubkey}, p2Wsh = {p2Wsh}", amount, pubkey, p2Wsh);
                 }
 
                 outputs.Add(new HtlcToOutputMaping
