@@ -406,6 +406,31 @@ namespace Lyn.Protocol.Bolt3
             return result;
         }
 
+        public bool CheckSignature(Transaction transaction, PublicKey publicKey, uint inputIndex, byte[] redeemScript, Satoshis amountSats, BitcoinSignature signature, bool anchorOutputs = false)
+        {
+            // this method can be optimized for example the redeem script can be extracted from the witness data
+
+            NBitcoin.PubKey pubKey = new PubKey(publicKey);
+
+            byte[] transactionbytes = _serializationFactory.Serialize(transaction);
+            NBitcoin.Transaction? trx = NBitcoin.Network.Main.CreateTransaction();
+            trx.FromBytes(transactionbytes);
+
+            // Create the P2WSH redeem script
+            var wscript = new Script(redeemScript);
+            var utxo = new NBitcoin.TxOut(Money.Satoshis((long)amountSats), wscript.WitHash);
+            var outpoint = new NBitcoin.OutPoint(trx.Inputs[inputIndex].PrevOut);
+            ScriptCoin witnessCoin = new ScriptCoin(new Coin(outpoint, utxo), wscript);
+
+            SigHash sigHash = anchorOutputs ? (SigHash.Single | SigHash.AnyoneCanPay) : SigHash.All;
+
+            uint256? hashToVerify = trx.GetSignatureHash(witnessCoin.GetScriptCode(), (int)inputIndex, sigHash, utxo, HashVersion.WitnessV0);
+
+            var valid = pubKey.Verify(hashToVerify, new ECDSASignature(signature));
+
+            return valid;
+        }
+
         public BitcoinSignature SignInput(Transaction transaction, PrivateKey privateKey, uint inputIndex, byte[] redeemScript, Satoshis amountSats, bool anchorOutputs = false)
         {
             // Currently we use NBitcoin to create the transaction hash to be signed,
@@ -447,32 +472,6 @@ namespace Lyn.Protocol.Bolt3
             TransactionSignature transactionSignature = new TransactionSignature(bitcoinSignature);
 
             return new CompressedSignature(transactionSignature.Signature.ToCompact());
-        }
-
-        public CompressedSignature SignInputCompressed(Transaction transaction, PrivateKey privateKey, uint inputIndex, byte[] redeemScript, Satoshis amountSats, bool anchorOutputs = false)
-        {
-            // Currently we use NBitcoin to create the transaction hash to be signed,
-            // the extra serialization to NBitcoin Transaction is costly so later
-            // we will move to generating the hash to sign and signatures directly in code.
-
-            var key = new NBitcoin.Key(privateKey);
-
-            byte[] transactionbytes = _serializationFactory.Serialize(transaction);
-            var trx = Network.Main.CreateTransaction();
-            trx.FromBytes(transactionbytes);
-
-            // Create the P2WSH redeem script
-            var wscript = new Script(redeemScript);
-            var utxo = new TxOut(Money.Satoshis((long)amountSats), wscript.WitHash);
-            var outpoint = new NBitcoin.OutPoint(trx.Inputs[inputIndex].PrevOut);
-            var witnessCoin = new ScriptCoin(new Coin(outpoint, utxo), wscript);
-
-            var sigHash = anchorOutputs ? (SigHash.Single | SigHash.AnyoneCanPay) : SigHash.All;
-
-            var hashToSign = trx.GetSignatureHash(witnessCoin.GetScriptCode(), (int)inputIndex, sigHash, utxo, HashVersion.WitnessV0);
-            var sig = key.SignCompact(hashToSign, true);
-
-            return new CompressedSignature(sig.AsSpan(1).ToArray());
         }
 
         public Transaction HtlcSuccessTransaction(HtlcTransactionIn htlcTransactionIn)

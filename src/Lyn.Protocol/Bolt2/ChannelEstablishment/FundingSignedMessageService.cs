@@ -12,6 +12,7 @@ using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 using Lyn.Protocol.Bolt1;
 using Lyn.Protocol.Bolt1.Messages;
+using Lyn.Protocol.Bolt9;
 using Lyn.Types;
 using Lyn.Types.Fundamental;
 using Microsoft.Extensions.DependencyInjection;
@@ -31,6 +32,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
         private readonly IChainConfigProvider _chainConfigProvider;
         private readonly ISecretStore _secretStore;
         private readonly IPeerRepository _peerRepository;
+        private readonly IBoltFeatures _boltFeatures;
 
         public FundingSignedMessageService(ILogger<FundingSignedMessageService> logger,
             ILightningTransactions lightningTransactions,
@@ -40,7 +42,8 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             IChannelCandidateRepository channelCandidateRepository,
             IChainConfigProvider chainConfigProvider,
             ISecretStore secretStore,
-            IPeerRepository peerRepository)
+            IPeerRepository peerRepository,
+            IBoltFeatures boltFeatures)
         {
             _logger = logger;
             _lightningTransactions = lightningTransactions;
@@ -51,6 +54,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             _chainConfigProvider = chainConfigProvider;
             _secretStore = secretStore;
             _peerRepository = peerRepository;
+            _boltFeatures = boltFeatures;
         }
 
         public async Task<MessageProcessingOutput> ProcessMessageAsync(PeerMessage<FundingSigned> message)
@@ -78,13 +82,19 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                 return MessageProcessingOutput.CreateErrorMessage(fundingSigned.ChannelId, true, "chainhash is unknowen");
             }
 
-            var remotesig = _lightningTransactions.FromCompressedSignature(fundingSigned.Signature);
+            var remoteFundingSig = _lightningTransactions.FromCompressedSignature(fundingSigned.Signature);
 
-            _logger.LogDebug("FundingSigned - signature = {remotesig}", remotesig);
+            _logger.LogDebug("FundingSigned - signature = {remotesig}", remoteFundingSig);
+
+            bool localOptionAnchorOutputs = (_boltFeatures.SupportedFeatures & Features.OptionAnchorOutputs) != 0;
+            bool remoteOptionAnchorOutput = (peer.Featurs & Features.OptionAnchorOutputs) != 0;
+
+            bool localOptionStaticRemotekey = (_boltFeatures.SupportedFeatures & Features.OptionStaticRemotekey) != 0;
+            bool remoteOptionStaticRemotekey = (peer.Featurs & Features.OptionStaticRemotekey) != 0;
 
             // david: this params can go in channelchandidate
-            bool optionAnchorOutputs = false;// (peer.Featurs & Features.OptionAnchorOutputs) != 0;
-            bool optionStaticRemotekey = true; //(peer.Featurs & Features.OptionStaticRemotekey) != 0; ;
+            bool optionAnchorOutputs = localOptionAnchorOutputs && remoteOptionAnchorOutput;
+            bool optionStaticRemotekey = localOptionStaticRemotekey && remoteOptionStaticRemotekey; // not sure why this must be on if other side supports it and we don't
 
             Secret seed = _secretStore.GetSeed();
             Secrets secrets = _lightningKeyDerivation.DeriveSecrets(seed);
@@ -103,9 +113,25 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                 channelCandidate.OpenChannel.FundingSatoshis,
                 optionAnchorOutputs);
 
-            _lightningScripts.SetCommitmentInputWitness(localCommitmentTransaction.Transaction.Inputs[0], localFundingSign, remotesig, fundingWscript);
-
             // VALIDATE THE TRANSACTION SIGNATURES
+
+            //_lightningScripts.SetCommitmentInputWitness(localCommitmentTransaction.Transaction.Inputs[0], localFundingSign, remotesig, fundingWscript);
+
+            var localSigValid = _lightningTransactions.CheckSignature(localCommitmentTransaction.Transaction,
+                channelCandidate.OpenChannel.FundingPubkey,
+                0,
+                fundingWscript,
+                channelCandidate.OpenChannel.FundingSatoshis,
+                localFundingSign,
+                optionAnchorOutputs);
+
+            var remoteSigValid = _lightningTransactions.CheckSignature(localCommitmentTransaction.Transaction,
+                channelCandidate.AcceptChannel.FundingPubkey,
+                0,
+                fundingWscript,
+                channelCandidate.OpenChannel.FundingSatoshis,
+                remoteFundingSig,
+                optionAnchorOutputs);
 
             var ci = new ServiceCollection().AddSerializationComponents().BuildServiceProvider();
             var serializationFactory = new SerializationFactory(ci);
@@ -145,9 +171,9 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                 FeeratePerKw = channelCandidate.OpenChannel.FeeratePerKw,
                 LocalFundingKey = channelCandidate.OpenChannel.FundingPubkey,
                 OptionAnchorOutputs = optionAnchorOutputs,
-                OtherPayMsat = channelCandidate.OpenChannel.PushMsat,
+                OtherPayMsat = ((MiliSatoshis)channelCandidate.OpenChannel.FundingSatoshis) - channelCandidate.OpenChannel.PushMsat,
                 RemoteFundingKey = channelCandidate.OpenChannel.FundingPubkey,
-                SelfPayMsat = ((MiliSatoshis)channelCandidate.OpenChannel.FundingSatoshis) - channelCandidate.OpenChannel.PushMsat,
+                SelfPayMsat = channelCandidate.OpenChannel.PushMsat,
                 ToSelfDelay = channelCandidate.OpenChannel.ToSelfDelay,
                 CnObscurer = _lightningScripts.CommitNumberObscurer(
                     channelCandidate.OpenChannel.PaymentBasepoint,

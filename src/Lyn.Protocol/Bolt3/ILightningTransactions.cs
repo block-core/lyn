@@ -10,12 +10,11 @@ namespace Lyn.Protocol.Bolt3
 
         BitcoinSignature SignInput(Transaction transaction, PrivateKey privateKey, uint inputIndex, byte[] redeemScript, Satoshis amountSats, bool anchorOutputs = false);
 
+        bool CheckSignature(Transaction transaction, PublicKey publicKey, uint inputIndex, byte[] redeemScript, Satoshis amountSats, BitcoinSignature signature, bool anchorOutputs = false);
+
         CompressedSignature ToCompressedSignature(BitcoinSignature bitcoinSignature);
 
         BitcoinSignature FromCompressedSignature(CompressedSignature compressedSignature);
-
-        CompressedSignature SignInputCompressed(Transaction transaction, PrivateKey privateKey, uint inputIndex,
-            byte[] redeemScript, Satoshis amountSats, bool anchorOutputs = false);
 
         Transaction HtlcSuccessTransaction(HtlcTransactionIn htlcTransactionIn);
 
