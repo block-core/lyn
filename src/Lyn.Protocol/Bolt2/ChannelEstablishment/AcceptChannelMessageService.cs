@@ -131,22 +131,16 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             var fundingTransactionHash = _transactionHashCalculator.ComputeHash(fundingTransaction);
             uint fundingTransactionIndex = 0;
 
-            bool localOptionAnchorOutputs = (_boltFeatures.SupportedFeatures & Features.OptionAnchorOutputs) != 0;
-            bool remoteOptionAnchorOutput = (peer.Featurs & Features.OptionAnchorOutputs) != 0;
-
-            bool localOptionStaticRemotekey = (_boltFeatures.SupportedFeatures & Features.OptionStaticRemotekey) != 0;
-            bool remoteOptionStaticRemotekey = (peer.Featurs & Features.OptionStaticRemotekey) != 0;
-
             // david: this params can go in channelchandidate
-            bool optionAnchorOutputs = localOptionAnchorOutputs && remoteOptionAnchorOutput;
-            bool optionStaticRemotekey = localOptionStaticRemotekey && remoteOptionStaticRemotekey; // not sure why this must be on if other side supports it and we don't
+            bool optionAnchorOutputs = (_boltFeatures.SupportedFeatures & peer.Featurs & Features.OptionAnchorOutputs) != 0;
+            bool optionStaticRemotekey = (_boltFeatures.SupportedFeatures & peer.Featurs & Features.OptionStaticRemotekey) != 0; // not sure why this must be on if other side supports it and we don't
 
             Secret seed = _secretStore.GetSeed();
             Secrets secrets = _lightningKeyDerivation.DeriveSecrets(seed);
 
             var fundingOutPoint = new OutPoint { Hash = fundingTransactionHash, Index = fundingTransactionIndex };
 
-            var remoteCommitmentTransaction = CommitmenTransactionOut(channelCandidate, secrets, fundingOutPoint, optionAnchorOutputs, optionStaticRemotekey);
+            var remoteCommitmentTransaction = CommitmentTransactionOut(channelCandidate, secrets, fundingOutPoint, optionAnchorOutputs, optionStaticRemotekey);
 
             byte[]? fundingWscript = _lightningScripts.FundingRedeemScript(channelCandidate.OpenChannel.FundingPubkey, channelCandidate.AcceptChannel.FundingPubkey);
 
@@ -200,7 +194,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             return new MessageProcessingOutput { Success = true, ResponseMessages = new[] { boltMessage } };
         }
 
-        private CommitmenTransactionOut CommitmenTransactionOut(ChannelCandidate? channelCandidate, Secrets secrets, OutPoint inPoint, bool optionAnchorOutputs, bool optionStaticRemotekey)
+        private CommitmenTransactionOut CommitmentTransactionOut(ChannelCandidate? channelCandidate, Secrets secrets, OutPoint inPoint, bool optionAnchorOutputs, bool optionStaticRemotekey)
         {
             // generate the commitment transaction how it will look like for the other side
 
@@ -219,29 +213,23 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                 OtherPayMsat = ((MiliSatoshis)channelCandidate.OpenChannel.FundingSatoshis) - channelCandidate.OpenChannel.PushMsat,
                 RemoteFundingKey = channelCandidate.OpenChannel.FundingPubkey,
                 SelfPayMsat = channelCandidate.OpenChannel.PushMsat,
-                ToSelfDelay = channelCandidate.OpenChannel.ToSelfDelay,
+                ToSelfDelay = channelCandidate.AcceptChannel.ToSelfDelay,
                 CnObscurer = _lightningScripts.CommitNumberObscurer(
                     channelCandidate.OpenChannel.PaymentBasepoint,
                     channelCandidate.AcceptChannel.PaymentBasepoint)
             };
 
-            Basepoints localBasepoints = _lightningKeyDerivation.DeriveBasepoints(secrets);
-
+            Basepoints localBasepoints = channelCandidate.AcceptChannel.GetBasePoints();
+            
             _logger.LogDebug("{@localBasepoints}", localBasepoints);
 
-            Basepoints remoteBasepoints = new Basepoints
-            {
-                DelayedPayment = channelCandidate.AcceptChannel.DelayedPaymentBasepoint,
-                Htlc = channelCandidate.AcceptChannel.HtlcBasepoint,
-                Payment = channelCandidate.AcceptChannel.PaymentBasepoint,
-                Revocation = channelCandidate.AcceptChannel.RevocationBasepoint
-            };
+            Basepoints remoteBasepoints = _lightningKeyDerivation.DeriveBasepoints(secrets);
 
             _logger.LogDebug("{@remoteBasepoints}", remoteBasepoints);
 
             PublicKey perCommitmentPoint = channelCandidate.AcceptChannel.FirstPerCommitmentPoint;
 
-            SetKeys(commitmentTransactionIn, remoteBasepoints, localBasepoints, perCommitmentPoint, optionStaticRemotekey);
+            SetKeys(commitmentTransactionIn, localBasepoints, remoteBasepoints, perCommitmentPoint, optionStaticRemotekey);
 
             return _lightningTransactions.CommitmentTransaction(commitmentTransactionIn);
         }

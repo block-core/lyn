@@ -406,7 +406,7 @@ namespace Lyn.Protocol.Bolt3
             return result;
         }
 
-        public bool CheckSignature(Transaction transaction, PublicKey publicKey, uint inputIndex, byte[] redeemScript, Satoshis amountSats, BitcoinSignature signature, bool anchorOutputs = false)
+        public bool VerifySignature(Transaction transaction, PublicKey publicKey, uint inputIndex, byte[] redeemScript, Satoshis amountSats, BitcoinSignature signature, bool anchorOutputs = false)
         {
             // this method can be optimized for example the redeem script can be extracted from the witness data
 

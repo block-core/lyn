@@ -1,4 +1,5 @@
 using Lyn.Protocol.Bolt1.Messages;
+using Lyn.Protocol.Bolt3.Types;
 using Lyn.Protocol.Common.Messages;
 using Lyn.Types.Bitcoin;
 using Lyn.Types.Bolt;
@@ -25,5 +26,14 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment.Messages
         public PublicKey? FirstPerCommitmentPoint { get; set; }
 
         // todo: dan add accept_channel_tlvs
+
+
+        public Basepoints GetBasePoints() => new ()
+        {
+            DelayedPayment = DelayedPaymentBasepoint,
+            Htlc = HtlcBasepoint,
+            Payment = PaymentBasepoint,
+            Revocation = RevocationBasepoint
+        };
     }
 }
