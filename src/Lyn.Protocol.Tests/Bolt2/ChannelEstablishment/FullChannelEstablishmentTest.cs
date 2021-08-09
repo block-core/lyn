@@ -1,4 +1,5 @@
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using FluentAssertions;
@@ -117,7 +118,7 @@ namespace Lyn.Protocol.Tests.Bolt2.ChannelEstablishment
                 .Returns(Hex.FromString("842508a1f5cbe1b5dda851def19edfe29671995c5670516e37259fa57b378a30"));
         }
 
-        private OpenChannel _expectedOpenChannel = new ()
+        private readonly OpenChannel _expectedOpenChannel = new ()
         {
             ChainHash = _chainHash,
             ChannelFlags = 1,
@@ -143,7 +144,7 @@ namespace Lyn.Protocol.Tests.Bolt2.ChannelEstablishment
             ToSelfDelay = 2016,
         };
 
-        private AcceptChannel _acceptChannelMessage = new ()
+        private readonly AcceptChannel _acceptChannel = new ()
         {
             ChannelReserveSatoshis = 160000,
             DelayedPaymentBasepoint =
@@ -165,7 +166,7 @@ namespace Lyn.Protocol.Tests.Bolt2.ChannelEstablishment
             ToSelfDelay = 720
         };
 
-        private FundingCreated _expectedFundingCreated = new ()
+        private readonly FundingCreated _expectedFundingCreated = new ()
         {
             FundingOutputIndex = 0,
             FundingTxid =
@@ -176,9 +177,9 @@ namespace Lyn.Protocol.Tests.Bolt2.ChannelEstablishment
                 new UInt256(Hex.FromString("842508a1f5cbe1b5dda851def19edfe29671995c5670516e37259fa57b378a30"))
         };
 
-        private FundingSigned _fundingSigned = new FundingSigned()
+        private readonly FundingSigned _fundingSigned = new FundingSigned()
         {
-            ChannelId = new UInt256(Hex.FromString("caff98114e40067b368402bba26dc6b9c2cf7a6a872610fb62082cc35db0b440")),
+            ChannelId = new UInt256(Hex.FromString("caff98114e40067b368402bba26dc6b9c2cf7a6a872610fb62082cc35db0b440").Reverse().ToArray()),
             Signature = Hex.FromString(
                 "0x7dda8bb401b0236edb0e97de360626ba64c8eebffc1399ca4ce17831c196d8b3232c4eea5db33d60811c1f6d131b4f4cd9a330d0f50dcb063daaf648e40a9b30")
         };
@@ -194,13 +195,18 @@ namespace Lyn.Protocol.Tests.Bolt2.ChannelEstablishment
 
             var acceptMessageResponse = await _acceptChannelMessageService.ProcessMessageAsync(
                 new PeerMessage<AcceptChannel>(_nodeId,
-                    new BoltMessage { Payload = _acceptChannelMessage }));
+                    new BoltMessage { Payload = _acceptChannel }));
 
             acceptMessageResponse.Should().BeEquivalentTo(new MessageProcessingOutput
             {
                 Success = true,
                 ResponseMessages = new[] { new BoltMessage { Payload = _expectedFundingCreated } }
             });
+
+            var response = await _fundingSignedMessageService.ProcessMessageAsync(
+                new PeerMessage<FundingSigned>(_nodeId, new BoltMessage { Payload = _fundingSigned }));
+
+            response.Success.Should().BeTrue();
         }
     }
 }
