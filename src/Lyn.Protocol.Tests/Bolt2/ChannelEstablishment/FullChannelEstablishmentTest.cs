@@ -1,6 +1,4 @@
-using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Lyn.Protocol.Bolt1;
@@ -21,7 +19,6 @@ using Lyn.Types.Serialization.Serializers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
-using Newtonsoft.Json;
 using Xunit;
 
 namespace Lyn.Protocol.Tests.Bolt2.ChannelEstablishment
@@ -46,8 +43,8 @@ namespace Lyn.Protocol.Tests.Bolt2.ChannelEstablishment
             Hex.FromString("0x02a8c859d0e7ce5b6d4f0c9d802d085342943d290f6dfb23b662a939d240f645f2");
 
         private static UInt256 _chainHash =
-            new (Hex.FromString("06226e46111a0b59caaf126043eb5bbf28c34f3a5e332a1fc7b2b73cf188910f"));
-        
+            new(Hex.FromString("06226e46111a0b59caaf126043eb5bbf28c34f3a5e332a1fc7b2b73cf188910f"));
+
         public FullChannelEstablishmentTest()
         {
             var loggerFactory = new LoggerFactory();
@@ -56,8 +53,9 @@ namespace Lyn.Protocol.Tests.Bolt2.ChannelEstablishment
             _peerRepository = new InMemoryPeerRepository();
 
             var parsingFeatures = new ParseFeatureFlags();
-            
-            _serializationFactory = new SerializationFactory(new ServiceCollection().AddSerializationComponents().BuildServiceProvider());
+
+            _serializationFactory =
+                new SerializationFactory(new ServiceCollection().AddSerializationComponents().BuildServiceProvider());
 
             _lightningScripts = new LightningScripts();
 
@@ -71,7 +69,7 @@ namespace Lyn.Protocol.Tests.Bolt2.ChannelEstablishment
                 new TransactionInputSerializer(new OutPointSerializer()),
                 new TransactionOutputSerializer(),
                 new TransactionWitnessSerializer(new TransactionWitnessComponentSerializer())));
-            
+
             _openChannelService = new StartOpenChannelService(new Logger<OpenChannelMessageService>(loggerFactory),
                 _randomNumberGenerator.Object,
                 _keyDerivation,
@@ -108,7 +106,8 @@ namespace Lyn.Protocol.Tests.Bolt2.ChannelEstablishment
 
             _peerRepository.AddNewPeerAsync(new Peer
             {
-                Featurs = Features.InitialRoutingSync | Features.VarOnionOptin | Features.GossipQueriesEx | Features.PaymentSecret | (Features)2,
+                Featurs = Features.InitialRoutingSync | Features.VarOnionOptin | Features.GossipQueriesEx |
+                          Features.PaymentSecret | (Features)2,
                 Id = 0,
                 GlobalFeatures = Features.OptionDataLossProtect,
                 NodeId = _nodeId
@@ -118,7 +117,7 @@ namespace Lyn.Protocol.Tests.Bolt2.ChannelEstablishment
                 .Returns(Hex.FromString("842508a1f5cbe1b5dda851def19edfe29671995c5670516e37259fa57b378a30"));
         }
 
-        private readonly OpenChannel _expectedOpenChannel = new ()
+        private readonly OpenChannel _expectedOpenChannel = new()
         {
             ChainHash = _chainHash,
             ChannelFlags = 1,
@@ -144,7 +143,7 @@ namespace Lyn.Protocol.Tests.Bolt2.ChannelEstablishment
             ToSelfDelay = 2016,
         };
 
-        private readonly AcceptChannel _acceptChannel = new ()
+        private readonly AcceptChannel _acceptChannel = new()
         {
             ChannelReserveSatoshis = 160000,
             DelayedPaymentBasepoint =
@@ -166,11 +165,11 @@ namespace Lyn.Protocol.Tests.Bolt2.ChannelEstablishment
             ToSelfDelay = 720
         };
 
-        private readonly FundingCreated _expectedFundingCreated = new ()
+        private readonly FundingCreated _expectedFundingCreated = new()
         {
             FundingOutputIndex = 0,
             FundingTxid =
-                new UInt256(Hex.FromString("caff98114e40067b368402bba26dc6b9c2cf7a6a872610fb62082cc35db0b440")),
+                new UInt256(Hex.FromString("0x40b4b05dc32c0862fb1026876a7acfc2b9c66da2bb0284367b06404e1198ffca")),
             Signature = Hex.FromString(
                 "0xb809fee80948c415d08e8a113168d2d507cb9e78d391dbde838212099b5b62752ce0883e1be4e99ba18bc947ab31ce9d44c6bc88fe0362eaeb4e0914d6063ed1"),
             TemporaryChannelId =
@@ -179,17 +178,18 @@ namespace Lyn.Protocol.Tests.Bolt2.ChannelEstablishment
 
         private readonly FundingSigned _fundingSigned = new FundingSigned()
         {
-            ChannelId = new UInt256(Hex.FromString("caff98114e40067b368402bba26dc6b9c2cf7a6a872610fb62082cc35db0b440").Reverse().ToArray()),
+            ChannelId = new UInt256(
+                Hex.FromString("0x40b4b05dc32c0862fb1026876a7acfc2b9c66da2bb0284367b06404e1198ffca")),
             Signature = Hex.FromString(
                 "0x7dda8bb401b0236edb0e97de360626ba64c8eebffc1399ca4ce17831c196d8b3232c4eea5db33d60811c1f6d131b4f4cd9a330d0f50dcb063daaf648e40a9b30")
         };
-        
+
         [Fact]
         public async Task FullChannelEstablishmentScenarioCompletesSuccessfully()
         {
             var openChannelResponse = await _openChannelService.CreateOpenChannelAsync(new CreateOpenChannelIn(_nodeId,
                 _chainHash, 16000000, 0, 1000, false));
-            
+
             openChannelResponse.Payload.Should()
                 .BeEquivalentTo(_expectedOpenChannel);
 
@@ -197,11 +197,11 @@ namespace Lyn.Protocol.Tests.Bolt2.ChannelEstablishment
                 new PeerMessage<AcceptChannel>(_nodeId,
                     new BoltMessage { Payload = _acceptChannel }));
 
-            acceptMessageResponse.Should().BeEquivalentTo(new MessageProcessingOutput
-            {
-                Success = true,
-                ResponseMessages = new[] { new BoltMessage { Payload = _expectedFundingCreated } }
-            });
+            acceptMessageResponse.Success.Should().BeTrue();
+            acceptMessageResponse.ResponseMessages
+                .Single()
+                .Payload.Should()
+                .BeEquivalentTo(_expectedFundingCreated);
 
             var response = await _fundingSignedMessageService.ProcessMessageAsync(
                 new PeerMessage<FundingSigned>(_nodeId, new BoltMessage { Payload = _fundingSigned }));

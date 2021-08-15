@@ -214,8 +214,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                 RemoteFundingKey = channelCandidate.OpenChannel.FundingPubkey,
                 SelfPayMsat = channelCandidate.OpenChannel.PushMsat,
                 ToSelfDelay = channelCandidate.AcceptChannel.ToSelfDelay,
-                CnObscurer = _lightningScripts.CommitNumberObscurer(
-                    channelCandidate.OpenChannel.PaymentBasepoint,
+                CnObscurer = _lightningScripts.CommitNumberObscurer(channelCandidate.OpenChannel.PaymentBasepoint,
                     channelCandidate.AcceptChannel.PaymentBasepoint)
             };
 
@@ -223,7 +222,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             
             _logger.LogDebug("{@localBasepoints}", localBasepoints);
 
-            Basepoints remoteBasepoints = _lightningKeyDerivation.DeriveBasepoints(secrets);
+            Basepoints remoteBasepoints = channelCandidate.OpenChannel.GetBasePoints();
 
             _logger.LogDebug("{@remoteBasepoints}", remoteBasepoints);
 
@@ -240,8 +239,6 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             var localDelayedPaymentKey = _lightningKeyDerivation.DerivePublickey(localBasepoints.DelayedPayment, perCommitmentPoint);
 
-            var localPaymentKey = _lightningKeyDerivation.DerivePublickey(localBasepoints.Payment, perCommitmentPoint);
-
             var remotePaymentKey = optionStaticRemotekey ?
                 remoteBasepoints.Payment :
                 _lightningKeyDerivation.DerivePublickey(remoteBasepoints.Payment, perCommitmentPoint);
@@ -254,7 +251,6 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                 localHtlckey,
                 remoteHtlckey,
                 localDelayedPaymentKey,
-                localPaymentKey,
                 remotePaymentKey);
 
             _logger.LogDebug("{@keyset}", keyset);

@@ -1,12 +1,10 @@
 using System;
 using System.Collections.Generic;
 using Lyn.Protocol.Bolt3.Types;
-using Lyn.Protocol.Common;
 using Lyn.Protocol.Common.Hashing;
 using Lyn.Types;
 using Lyn.Types.Bitcoin;
 using Lyn.Types.Fundamental;
-using NBitcoin;
 using Xunit;
 using OutPoint = Lyn.Types.Bitcoin.OutPoint;
 using Transaction = Lyn.Types.Bitcoin.Transaction;
@@ -140,7 +138,6 @@ namespace Lyn.Protocol.Tests.Bolt3
                 Context.LocalHtlckey,
                 Context.RemoteHtlckey,
                 Context.LocalDelayedkey,
-                Context.Localkey,
                 Context.Remotekey);
 
             int htlcOutputIndex = 0;
@@ -173,7 +170,7 @@ namespace Lyn.Protocol.Tests.Bolt3
                            FeeratePerKw = vectors.FeeratePerKw,
                            AmountMsat = htlc.Htlc.AmountMsat,
                            CommitOutPoint = outPoint,
-                           RevocationPubkey = keyset.LocalRevocationKey,
+                           RevocationPubkey = keyset.RevocationKey,
                            LocalDelayedkey = keyset.LocalDelayedPaymentKey,
                            ToSelfDelay = Context.ToSelfDelay,
                            CltvExpiry = (uint)htlc.CltvExpirey
@@ -196,7 +193,7 @@ namespace Lyn.Protocol.Tests.Bolt3
                            FeeratePerKw = vectors.FeeratePerKw,
                            AmountMsat = htlc.Htlc.AmountMsat,
                            CommitOutPoint = outPoint,
-                           RevocationPubkey = keyset.LocalRevocationKey,
+                           RevocationPubkey = keyset.RevocationKey,
                            LocalDelayedkey = keyset.LocalDelayedPaymentKey,
                            ToSelfDelay = Context.ToSelfDelay,
                        });

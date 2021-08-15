@@ -194,7 +194,7 @@ namespace Lyn.Protocol.Bolt3
                        commitmentTransactionIn.Keyset.LocalHtlcKey,
                        commitmentTransactionIn.Keyset.RemoteHtlcKey,
                        htlc.Rhash,
-                       commitmentTransactionIn.Keyset.LocalRevocationKey,
+                       commitmentTransactionIn.Keyset.RevocationKey,
                        commitmentTransactionIn.OptionAnchorOutputs);
 
                     var wscriptinst = new Script(wscript);
@@ -232,7 +232,7 @@ namespace Lyn.Protocol.Bolt3
                        commitmentTransactionIn.Keyset.LocalHtlcKey,
                        commitmentTransactionIn.Keyset.RemoteHtlcKey,
                        htlc.Rhash,
-                       commitmentTransactionIn.Keyset.LocalRevocationKey,
+                       commitmentTransactionIn.Keyset.RevocationKey,
                        commitmentTransactionIn.OptionAnchorOutputs);
 
                     var wscriptinst = new Script(wscript);
@@ -266,7 +266,7 @@ namespace Lyn.Protocol.Bolt3
                 // todo round down msat to sat in s common method
                 Satoshis amount = (Satoshis)commitmentTransactionIn.SelfPayMsat;
 
-                var wscript = _lightningScripts.GetRevokeableRedeemscript(commitmentTransactionIn.Keyset.LocalRevocationKey, commitmentTransactionIn.ToSelfDelay, commitmentTransactionIn.Keyset.LocalDelayedPaymentKey);
+                var wscript = _lightningScripts.GetRevokeableRedeemscript(commitmentTransactionIn.Keyset.RevocationKey, commitmentTransactionIn.ToSelfDelay, commitmentTransactionIn.Keyset.LocalDelayedPaymentKey);
 
                 var wscriptinst = new Script(wscript);
 
