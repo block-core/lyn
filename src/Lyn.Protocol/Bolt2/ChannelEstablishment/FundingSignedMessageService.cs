@@ -1,6 +1,4 @@
-﻿using System.Buffers;
-using System.Collections.Generic;
-using Lyn.Protocol.Bolt2.ChannelEstablishment.Entities;
+﻿using System.Collections.Generic;
 using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages;
 using Lyn.Protocol.Bolt3;
 using Lyn.Protocol.Bolt3.Types;
@@ -16,7 +14,6 @@ using Lyn.Protocol.Bolt9;
 using Lyn.Types;
 using Lyn.Types.Fundamental;
 using Microsoft.Extensions.DependencyInjection;
-using NBitcoin;
 using OutPoint = Lyn.Types.Bitcoin.OutPoint;
 
 namespace Lyn.Protocol.Bolt2.ChannelEstablishment
@@ -61,7 +58,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
         {
             FundingSigned fundingSigned = message.MessagePayload;
 
-            ChannelCandidate? channelCandidate = await _channelCandidateRepository.GetAsync(message.MessagePayload.ChannelId);
+            var channelCandidate = await _channelCandidateRepository.GetAsync(message.MessagePayload.ChannelId);
 
             if (channelCandidate == null)
             {
@@ -75,7 +72,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                 return MessageProcessingOutput.CreateErrorMessage(fundingSigned.ChannelId, true, "invalid peer");
             }
 
-            ChainParameters? chainParameters = _chainConfigProvider.GetConfiguration(channelCandidate.OpenChannel.ChainHash);
+            var chainParameters = _chainConfigProvider.GetConfiguration(channelCandidate.OpenChannel.ChainHash);
 
             if (chainParameters == null)
             {
@@ -86,45 +83,21 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             _logger.LogDebug("FundingSigned - signature = {remotesig}", remoteFundingSig);
 
-            bool localOptionAnchorOutputs = (_boltFeatures.SupportedFeatures & Features.OptionAnchorOutputs) != 0;
-            bool remoteOptionAnchorOutput = (peer.Featurs & Features.OptionAnchorOutputs) != 0;
-
-            bool localOptionStaticRemotekey = (_boltFeatures.SupportedFeatures & Features.OptionStaticRemotekey) != 0;
-            bool remoteOptionStaticRemotekey = (peer.Featurs & Features.OptionStaticRemotekey) != 0;
-
             // david: this params can go in channelchandidate
-            bool optionAnchorOutputs = localOptionAnchorOutputs && remoteOptionAnchorOutput;
-            bool optionStaticRemotekey = localOptionStaticRemotekey && remoteOptionStaticRemotekey; // not sure why this must be on if other side supports it and we don't
+            var optionAnchorOutputs = (_boltFeatures.SupportedFeatures & Features.OptionAnchorOutputs & peer.Featurs) != 0;
+            bool optionStaticRemotekey = (_boltFeatures.SupportedFeatures & Features.OptionStaticRemotekey & peer.Featurs) != 0;
 
-            Secret seed = _secretStore.GetSeed();
-            Secrets secrets = _lightningKeyDerivation.DeriveSecrets(seed);
+            var fundingOutPoint = new OutPoint
+            {
+                Hash = channelCandidate.FundingCreated.FundingTxid,
+                Index = (uint)channelCandidate.FundingCreated.FundingOutputIndex
+            };
 
-            var fundingOutPoint = new OutPoint { Hash = channelCandidate.FundingCreated.FundingTxid, Index = (uint)channelCandidate.FundingCreated.FundingOutputIndex };
+            var localCommitmentTransaction = LocalCommitmentTransactionOut(channelCandidate.OpenChannel, channelCandidate.AcceptChannel,
+                channelCandidate.ChannelOpener, fundingOutPoint, optionAnchorOutputs, optionStaticRemotekey);
 
-            var localCommitmentTransaction = CommitmenTransactionOut(channelCandidate, fundingOutPoint, optionAnchorOutputs, optionStaticRemotekey);
-
-            byte[]? fundingWscript = _lightningScripts.FundingRedeemScript(channelCandidate.OpenChannel.FundingPubkey, channelCandidate.AcceptChannel.FundingPubkey);
-
-            var localFundingSign = _lightningTransactions.SignInput(
-                localCommitmentTransaction.Transaction,
-                secrets.FundingPrivkey,
-                0,
-                fundingWscript,
-                channelCandidate.OpenChannel.FundingSatoshis,
-                optionAnchorOutputs);
-
-            // VALIDATE THE TRANSACTION SIGNATURES
-
-            //_lightningScripts.SetCommitmentInputWitness(localCommitmentTransaction.Transaction.Inputs[0], localFundingSign, remotesig, fundingWscript);
-
-            var localSigValid = _lightningTransactions.VerifySignature(localCommitmentTransaction.Transaction,
-                channelCandidate.OpenChannel.FundingPubkey,
-                0,
-                fundingWscript,
-                channelCandidate.OpenChannel.FundingSatoshis,
-                localFundingSign,
-                optionAnchorOutputs);
-
+            var fundingWscript = _lightningScripts.FundingRedeemScript(channelCandidate.OpenChannel.FundingPubkey, channelCandidate.AcceptChannel.FundingPubkey);
+            
             var remoteSigValid = _lightningTransactions.VerifySignature(localCommitmentTransaction.Transaction,
                 channelCandidate.AcceptChannel.FundingPubkey,
                 0,
@@ -133,69 +106,59 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                 remoteFundingSig,
                 optionAnchorOutputs);
 
-            if (remoteSigValid)
-            {
+            if (remoteSigValid) 
                 return new EmptySuccessResponse();
-            }
             
             var ci = new ServiceCollection().AddSerializationComponents().BuildServiceProvider();
             var serializationFactory = new SerializationFactory(ci);
             var trxhex = serializationFactory.Serialize(localCommitmentTransaction.Transaction);
-
+                
             if (_logger.IsEnabled(LogLevel.Debug))
             {
                 _logger.LogDebug("LocalCommitmentTransaction = {trxhex}", Hex.ToString(trxhex));
             }
-
-            NBitcoin.Transaction? trx = NBitcoin.Network.Main.CreateTransaction();
-            trx.FromBytes(trxhex);
-
-            NBitcoin.TransactionBuilder builder = NBitcoin.Network.RegTest.CreateTransactionBuilder();
-            var errors = builder.Check(trx);
-
             // for now we cant valiodate so we return erro and the trx itself, this will close the channel
             _logger.LogDebug("Failing channel {ChannelId} for Invalid Signature", fundingSigned.ChannelId);
             return MessageProcessingOutput.CreateErrorMessage(fundingSigned.ChannelId, true, $"Invalid Signature, LocalCommitmentTransaction = {Hex.ToString(trxhex)}");
 
-            // return new MessageProcessingOutput { Success = true };
         }
 
-        private CommitmenTransactionOut CommitmenTransactionOut(ChannelCandidate? channelCandidate, OutPoint inPoint, bool optionAnchorOutputs, bool optionStaticRemotekey)
+        private CommitmenTransactionOut LocalCommitmentTransactionOut(OpenChannel openChannel, AcceptChannel acceptChannel, 
+            ChannelSide side , OutPoint inPoint, bool optionAnchorOutputs, bool optionStaticRemoteKey)
         {
             // generate the commitment transaction how it will look like for the other side
 
             var commitmentTransactionIn = new CommitmentTransactionIn
             {
-                Funding = channelCandidate.OpenChannel.FundingSatoshis,
+                Funding = openChannel.FundingSatoshis,
                 Htlcs = new List<Htlc>(),
-                Opener = channelCandidate.ChannelOpener,
+                Opener = side,
                 Side = ChannelSide.Local,
                 CommitmentNumber = 0,
                 FundingTxout = inPoint,
-                DustLimitSatoshis = channelCandidate.OpenChannel.DustLimitSatoshis,
-                FeeratePerKw = channelCandidate.OpenChannel.FeeratePerKw,
-                LocalFundingKey = channelCandidate.OpenChannel.FundingPubkey,
-                RemoteFundingKey = channelCandidate.AcceptChannel.FundingPubkey,
+                DustLimitSatoshis = openChannel.DustLimitSatoshis,
+                FeeratePerKw = openChannel.FeeratePerKw,
+                LocalFundingKey = openChannel.FundingPubkey,
+                RemoteFundingKey = acceptChannel.FundingPubkey,
                 OptionAnchorOutputs = optionAnchorOutputs,
-                OtherPayMsat = channelCandidate.OpenChannel.PushMsat,
-                SelfPayMsat = ((MiliSatoshis)channelCandidate.OpenChannel.FundingSatoshis) - channelCandidate.OpenChannel.PushMsat,
-                ToSelfDelay = channelCandidate.AcceptChannel.ToSelfDelay,
+                OtherPayMsat = openChannel.PushMsat,
+                SelfPayMsat = ((MiliSatoshis)openChannel.FundingSatoshis) - openChannel.PushMsat,
+                ToSelfDelay = acceptChannel.ToSelfDelay,
                 CnObscurer = _lightningScripts.CommitNumberObscurer(
-                    channelCandidate.OpenChannel.PaymentBasepoint,
-                    channelCandidate.AcceptChannel.PaymentBasepoint)
+                    openChannel.PaymentBasepoint,
+                    acceptChannel.PaymentBasepoint)
             };
 
-            Basepoints localBasepoints = channelCandidate.OpenChannel.GetBasePoints();
+            var localBasePoints = openChannel.GetBasePoints();
 
-            _logger.LogDebug("{@localBasepoints}", localBasepoints);
+            _logger.LogDebug("{@localBasePoints}", localBasePoints);
 
-            Basepoints remoteBasepoints = channelCandidate.AcceptChannel.GetBasePoints();
+            var remoteBasePoints = acceptChannel.GetBasePoints();
 
-            _logger.LogDebug("{@remoteBasepoints}", remoteBasepoints);
-
-            PublicKey perCommitmentPoint = channelCandidate.OpenChannel.FirstPerCommitmentPoint;
-
-            commitmentTransactionIn.Keyset = SetKeys(localBasepoints, remoteBasepoints, perCommitmentPoint, optionStaticRemotekey);
+            _logger.LogDebug("{@remoteBasePoints}", remoteBasePoints);
+            
+            commitmentTransactionIn.Keyset = SetKeys(localBasePoints, remoteBasePoints, openChannel.FirstPerCommitmentPoint,
+                optionStaticRemoteKey);
 
             return _lightningTransactions.CommitmentTransaction(commitmentTransactionIn);
         }
@@ -206,9 +169,9 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             var localDelayedPublicKey = _lightningKeyDerivation.DerivePublickey(localBasepoints.DelayedPayment, perCommitmentPoint);
             
-            var remotePaymentKey = optionStaticRemotekey ?
-                remoteBasepoints.Payment :
-                _lightningKeyDerivation.DerivePublickey(remoteBasepoints.Payment, perCommitmentPoint);
+            var remotePaymentKey = optionStaticRemotekey 
+                ? remoteBasepoints.Payment 
+                : _lightningKeyDerivation.DerivePublickey(remoteBasepoints.Payment, perCommitmentPoint);
 
             var remoteHtlckey = _lightningKeyDerivation.DerivePublickey(remoteBasepoints.Htlc, perCommitmentPoint);
             var localHtlckey = _lightningKeyDerivation.DerivePublickey(localBasepoints.Htlc, perCommitmentPoint);

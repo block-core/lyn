@@ -176,7 +176,7 @@ namespace Lyn.Protocol.Tests.Bolt2.ChannelEstablishment
                 new UInt256(Hex.FromString("842508a1f5cbe1b5dda851def19edfe29671995c5670516e37259fa57b378a30"))
         };
 
-        private readonly FundingSigned _fundingSigned = new FundingSigned()
+        private readonly FundingSigned _fundingSigned = new ()
         {
             ChannelId = new UInt256(
                 Hex.FromString("0x40b4b05dc32c0862fb1026876a7acfc2b9c66da2bb0284367b06404e1198ffca")),

@@ -1,7 +1,4 @@
-using System.Buffers;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using FluentAssertions;
 using Lyn.Protocol.Bolt1;
 using Lyn.Protocol.Bolt1.Entities;
@@ -15,10 +12,8 @@ using Lyn.Protocol.Common.Messages;
 using Lyn.Protocol.Connection;
 using Lyn.Types;
 using Lyn.Types.Bitcoin;
-using Lyn.Types.Bolt;
 using Lyn.Types.Fundamental;
 using Lyn.Types.Serialization;
-using Lyn.Types.Serialization.Serializers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
