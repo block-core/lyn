@@ -1,5 +1,7 @@
-# lyn
-Lightning implementation in C#
+# Lyn - Lightning Your .NET
+Adopt the Lightning protocol in your own software to enable use-cases beyond blockchains.
+
+Lightning implementation in C#. Lyn is an open source development project working to implement the Basis of Lightning Technology (BOLT)
 
 The following bullet list represents the current status of Lyn:
 
@@ -13,3 +15,9 @@ The following bullet list represents the current status of Lyn:
   - [X] BOLT 9: Assigned Feature Flags
   - [ ] BOLT 10: DNS Bootstrap and Assisted Node Location
   - [ ] BOLT 11: Invoice Protocol for Lightning Payments
+
+## Funding
+
+The team behind Lyn is currently looking for additional funding to continue the development of our Lightning-implementation.
+
+Read more on our website: https://lyn.blockcore.net/
