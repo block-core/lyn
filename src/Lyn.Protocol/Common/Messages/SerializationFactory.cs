@@ -1,5 +1,6 @@
 using System;
 using System.Buffers;
+using System.Collections.Generic;
 using Lyn.Types.Serialization;
 
 namespace Lyn.Protocol.Common.Messages

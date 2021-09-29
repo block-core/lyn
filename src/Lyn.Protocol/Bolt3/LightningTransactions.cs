@@ -1,16 +1,13 @@
 ﻿using System;
-using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using Lyn.Protocol.Bolt3.Types;
-using Lyn.Protocol.Common;
 using Lyn.Protocol.Common.Messages;
 using Lyn.Types.Bitcoin;
 using Lyn.Types.Fundamental;
-using Lyn.Types.Serialization;
-using Lyn.Types.Serialization.Serializers;
 using Microsoft.Extensions.Logging;
 using NBitcoin;
+using NBitcoin.Crypto;
 using Transaction = Lyn.Types.Bitcoin.Transaction;
 
 namespace Lyn.Protocol.Bolt3
@@ -55,7 +52,7 @@ namespace Lyn.Protocol.Bolt3
                     new TransactionInput
                     {
                         PreviousOutput = commitmentTransactionIn.FundingTxout,
-                        Sequence = (uint) (0x80000000 | ((obscured >> 24) & 0xFFFFFF)),
+                        Sequence = (uint) (0x80000000 | ((obscured >> 24) & 0xFFFFFF))
                     }
                 }
             };
@@ -197,14 +194,14 @@ namespace Lyn.Protocol.Bolt3
                        commitmentTransactionIn.Keyset.LocalHtlcKey,
                        commitmentTransactionIn.Keyset.RemoteHtlcKey,
                        htlc.Rhash,
-                       commitmentTransactionIn.Keyset.LocalRevocationKey,
+                       commitmentTransactionIn.Keyset.RevocationKey,
                        commitmentTransactionIn.OptionAnchorOutputs);
 
                     var wscriptinst = new Script(wscript);
 
                     Script? p2Wsh = PayToWitScriptHashTemplate.Instance.GenerateScriptPubKey(new WitScriptId(wscriptinst)); // todo: dan - move this to interface
 
-                    _logger.LogDebug("Htlc Amount = {amount}, WitnessScript = {wscriptinst}, p2Wsh = {p2Wsh} ", wscriptinst, amount, p2Wsh);
+                    _logger.LogDebug("Htlc Amount = {amount}, WitnessScript = {wscriptinst}, p2Wsh = {p2Wsh} ", amount, wscriptinst, p2Wsh);
 
                     outputs.Add(new HtlcToOutputMaping
                     {
@@ -235,14 +232,14 @@ namespace Lyn.Protocol.Bolt3
                        commitmentTransactionIn.Keyset.LocalHtlcKey,
                        commitmentTransactionIn.Keyset.RemoteHtlcKey,
                        htlc.Rhash,
-                       commitmentTransactionIn.Keyset.LocalRevocationKey,
+                       commitmentTransactionIn.Keyset.RevocationKey,
                        commitmentTransactionIn.OptionAnchorOutputs);
 
                     var wscriptinst = new Script(wscript);
 
                     var p2Wsh = PayToWitScriptHashTemplate.Instance.GenerateScriptPubKey(new WitScriptId(wscriptinst)); // todo: dan - move this to interface
 
-                    _logger.LogDebug("Htlc Amount = {amount}, WitnessScript = {wscriptinst}, p2Wsh = {p2Wsh} ", wscriptinst, amount, p2Wsh);
+                    _logger.LogDebug("Htlc Amount = {amount}, WitnessScript = {wscriptinst}, p2Wsh = {p2Wsh} ", amount, wscriptinst, p2Wsh);
 
                     outputs.Add(new HtlcToOutputMaping
                     {
@@ -269,13 +266,13 @@ namespace Lyn.Protocol.Bolt3
                 // todo round down msat to sat in s common method
                 Satoshis amount = (Satoshis)commitmentTransactionIn.SelfPayMsat;
 
-                var wscript = _lightningScripts.GetRevokeableRedeemscript(commitmentTransactionIn.Keyset.LocalRevocationKey, commitmentTransactionIn.ToSelfDelay, commitmentTransactionIn.Keyset.LocalDelayedPaymentKey);
+                var wscript = _lightningScripts.GetRevokeableRedeemscript(commitmentTransactionIn.Keyset.RevocationKey, commitmentTransactionIn.ToSelfDelay, commitmentTransactionIn.Keyset.LocalDelayedPaymentKey);
 
                 var wscriptinst = new Script(wscript);
 
                 var p2Wsh = PayToWitScriptHashTemplate.Instance.GenerateScriptPubKey(new WitScriptId(wscriptinst)); // todo: dan - move this to interface
 
-                _logger.LogDebug("Add a to_local output Amount = {amount}, WitnessScript = {wscriptinst}, p2Wsh = {p2Wsh} ", wscriptinst, amount, p2Wsh);
+                _logger.LogDebug("Add a to_local output Amount = {amount}, WitnessScript = {wscriptinst}, p2Wsh = {p2Wsh} ", amount, wscriptinst, p2Wsh);
 
                 outputs.Add(new HtlcToOutputMaping
                 {
@@ -314,7 +311,7 @@ namespace Lyn.Protocol.Bolt3
 
                     p2Wsh = PayToWitScriptHashTemplate.Instance.GenerateScriptPubKey(new WitScriptId(wscriptinst)); // todo: dan - move this to interface
 
-                    _logger.LogDebug("Add a to_remote output (anchor) Amount = {amount} WitnessScript = {wscriptinst}, p2Wsh = {p2Wsh}", wscriptinst, amount, p2Wsh);
+                    _logger.LogDebug("Add a to_remote output (anchor) Amount = {amount} WitnessScript = {wscriptinst}, p2Wsh = {p2Wsh}", amount, wscriptinst, p2Wsh);
                 }
                 else
                 {
@@ -322,7 +319,7 @@ namespace Lyn.Protocol.Bolt3
 
                     p2Wsh = PayToWitPubKeyHashTemplate.Instance.GenerateScriptPubKey(pubkey); // todo: dan - move this to interface
 
-                    _logger.LogDebug("Add a to_remote output Amount = {amount} pubkey = {pubkey}, p2Wsh = {p2Wsh}", pubkey, amount, p2Wsh);
+                    _logger.LogDebug("Add a to_remote output Amount = {amount} pubkey = {pubkey}, p2Wsh = {p2Wsh}", amount, pubkey, p2Wsh);
                 }
 
                 outputs.Add(new HtlcToOutputMaping
@@ -409,6 +406,31 @@ namespace Lyn.Protocol.Bolt3
             return result;
         }
 
+        public bool VerifySignature(Transaction transaction, PublicKey publicKey, uint inputIndex, byte[] redeemScript, Satoshis amountSats, BitcoinSignature signature, bool anchorOutputs = false)
+        {
+            // this method can be optimized for example the redeem script can be extracted from the witness data
+
+            NBitcoin.PubKey pubKey = new PubKey(publicKey);
+
+            byte[] transactionbytes = _serializationFactory.Serialize(transaction);
+            NBitcoin.Transaction? trx = NBitcoin.Network.Main.CreateTransaction();
+            trx.FromBytes(transactionbytes);
+
+            // Create the P2WSH redeem script
+            var wscript = new Script(redeemScript);
+            var utxo = new NBitcoin.TxOut(Money.Satoshis((long)amountSats), wscript.WitHash);
+            var outpoint = new NBitcoin.OutPoint(trx.Inputs[inputIndex].PrevOut);
+            ScriptCoin witnessCoin = new ScriptCoin(new Coin(outpoint, utxo), wscript);
+
+            SigHash sigHash = anchorOutputs ? (SigHash.Single | SigHash.AnyoneCanPay) : SigHash.All;
+
+            uint256? hashToVerify = trx.GetSignatureHash(witnessCoin.GetScriptCode(), (int)inputIndex, sigHash, utxo, HashVersion.WitnessV0);
+
+            var valid = pubKey.Verify(hashToVerify, new ECDSASignature(signature));
+
+            return valid;
+        }
+
         public BitcoinSignature SignInput(Transaction transaction, PrivateKey privateKey, uint inputIndex, byte[] redeemScript, Satoshis amountSats, bool anchorOutputs = false)
         {
             // Currently we use NBitcoin to create the transaction hash to be signed,
@@ -433,6 +455,23 @@ namespace Lyn.Protocol.Bolt3
             TransactionSignature? sig = key.Sign(hashToSign, sigHash, useLowR: false);
 
             return new BitcoinSignature(sig.ToBytes());
+        }
+
+        public BitcoinSignature FromCompressedSignature(CompressedSignature compressedSignature)
+        {
+            if (!NBitcoin.Crypto.ECDSASignature.TryParseFromCompact((byte[])compressedSignature, out ECDSASignature ecdsaSignature))
+                throw new ApplicationException("invalid compact signature");
+
+            var transactionSignature = new TransactionSignature(ecdsaSignature);
+
+            return new BitcoinSignature(transactionSignature.ToBytes());
+        }
+
+        public CompressedSignature ToCompressedSignature(BitcoinSignature bitcoinSignature)
+        {
+            TransactionSignature transactionSignature = new TransactionSignature(bitcoinSignature);
+
+            return new CompressedSignature(transactionSignature.Signature.ToCompact());
         }
 
         public Transaction HtlcSuccessTransaction(HtlcTransactionIn htlcTransactionIn)

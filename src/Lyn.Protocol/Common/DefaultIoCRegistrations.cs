@@ -80,7 +80,6 @@ namespace Lyn.Protocol.Common
 
         private static IServiceCollection AddNoiseComponents(this IServiceCollection services)
         {
-            //services.AddSingleton<IHandshakeStateFactory, HandshakeStateFactory>();
             services.AddSingleton<IEllipticCurveActions, EllipticCurveActions>();
             services.AddTransient<IHashWithState, HashWithState>();
             services.AddSingleton<IHkdf, Hkdf>();
@@ -107,10 +106,12 @@ namespace Lyn.Protocol.Common
             services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<ErrorMessage>>();
             services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<PingMessage>>();
             services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<PongMessage>>();
-            
+
             // Bolt 3
             services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<OpenChannel>>();
             services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<AcceptChannel>>();
+            services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<FundingCreated>>();
+            services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<FundingSigned>>();
 
             return services;
         }

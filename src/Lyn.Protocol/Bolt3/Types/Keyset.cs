@@ -2,13 +2,21 @@
 
 namespace Lyn.Protocol.Bolt3.Types
 {
-    public struct Keyset
+    public class Keyset
     {
-        public PublicKey LocalRevocationKey { get; set; }
+        public Keyset(PublicKey revocationKey, PublicKey localHtlcKey, PublicKey remoteHtlcKey, PublicKey localDelayedPaymentKey, PublicKey remotePaymentKey)
+        {
+            RevocationKey = revocationKey;
+            LocalHtlcKey = localHtlcKey;
+            RemoteHtlcKey = remoteHtlcKey;
+            LocalDelayedPaymentKey = localDelayedPaymentKey;
+            RemotePaymentKey = remotePaymentKey;
+        }
+
+        public PublicKey RevocationKey { get; set; }
         public PublicKey LocalHtlcKey { get; set; }
         public PublicKey RemoteHtlcKey { get; set; }
         public PublicKey LocalDelayedPaymentKey { get; set; }
-        public PublicKey LocalPaymentKey { get; set; }
         public PublicKey RemotePaymentKey { get; set; }
     };
 }

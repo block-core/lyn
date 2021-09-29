@@ -1,12 +1,10 @@
 using System;
 using System.Collections.Generic;
 using Lyn.Protocol.Bolt3.Types;
-using Lyn.Protocol.Common;
 using Lyn.Protocol.Common.Hashing;
 using Lyn.Types;
 using Lyn.Types.Bitcoin;
 using Lyn.Types.Fundamental;
-using NBitcoin;
 using Xunit;
 using OutPoint = Lyn.Types.Bitcoin.OutPoint;
 using Transaction = Lyn.Types.Bitcoin.Transaction;
@@ -135,15 +133,12 @@ namespace Lyn.Protocol.Tests.Bolt3
             /* FIXME: naming here is kind of backwards: local revocation key
              * is derived from remote revocation basepoint, but it's local */
 
-            Keyset keyset = new Keyset
-            {
-                LocalRevocationKey = Context.RemoteRevocationKey,
-                LocalDelayedPaymentKey = Context.LocalDelayedkey,
-                LocalPaymentKey = Context.Localkey,
-                RemotePaymentKey = Context.Remotekey,
-                LocalHtlcKey = Context.LocalHtlckey,
-                RemoteHtlcKey = Context.RemoteHtlckey,
-            };
+            Keyset keyset = new Keyset(
+                Context.RemoteRevocationKey,
+                Context.LocalHtlckey,
+                Context.RemoteHtlckey,
+                Context.LocalDelayedkey,
+                Context.Remotekey);
 
             int htlcOutputIndex = 0;
             for (int htlcIndex = 0; htlcIndex < localCommitmenTransactionOut.Htlcs.Count; htlcIndex++)
@@ -175,7 +170,7 @@ namespace Lyn.Protocol.Tests.Bolt3
                            FeeratePerKw = vectors.FeeratePerKw,
                            AmountMsat = htlc.Htlc.AmountMsat,
                            CommitOutPoint = outPoint,
-                           RevocationPubkey = keyset.LocalRevocationKey,
+                           RevocationPubkey = keyset.RevocationKey,
                            LocalDelayedkey = keyset.LocalDelayedPaymentKey,
                            ToSelfDelay = Context.ToSelfDelay,
                            CltvExpiry = (uint)htlc.CltvExpirey
@@ -198,7 +193,7 @@ namespace Lyn.Protocol.Tests.Bolt3
                            FeeratePerKw = vectors.FeeratePerKw,
                            AmountMsat = htlc.Htlc.AmountMsat,
                            CommitOutPoint = outPoint,
-                           RevocationPubkey = keyset.LocalRevocationKey,
+                           RevocationPubkey = keyset.RevocationKey,
                            LocalDelayedkey = keyset.LocalDelayedPaymentKey,
                            ToSelfDelay = Context.ToSelfDelay,
                        });

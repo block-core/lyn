@@ -23,5 +23,12 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment.Entities
         public FundingSigned? FundingSignedRemote { get; set; }
         public byte[]? OpenChannelUpfrontShutdownScript { get; set; }
         public byte[]? AcceptChannelUpfrontShutdownScript { get; set; }
+
+        // do we need to keep the two params bellow?
+        // we only need the signatures as the trx can be
+        // recreated form the channel information
+        public Transaction? RemoteCommitmentTransaction { get; set; }
+
+        public Transaction? LocalCommitmentTransaction { get; set; }
     }
 }

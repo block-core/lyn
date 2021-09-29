@@ -123,22 +123,26 @@ namespace Lyn.Types.Bitcoin
         /// </returns>
         public override string ToString()
         {
-            return string.Create(EXPECTED_SIZE * 2, this, (dst, src) =>
-            {
-                ReadOnlySpan<byte> rawData = MemoryMarshal.AsBytes(MemoryMarshal.CreateReadOnlySpan(ref src.part1, EXPECTED_SIZE / sizeof(ulong)));
+            var rawData = MemoryMarshal.AsBytes(MemoryMarshal.CreateReadOnlySpan(ref part1, EXPECTED_SIZE / sizeof(ulong)));
 
-                const string hexValues = "0123456789abcdef"; // "0123456789ABCDEF";
+            return Hex.ToString(rawData);
 
-             int i = rawData.Length - 1;
-                int j = 0;
-
-                while (i >= 0)
-                {
-                    byte b = rawData[i--];
-                    dst[j++] = hexValues[b >> 4];
-                    dst[j++] = hexValues[b & 0xF];
-                }
-            });
+            // return string.Create(EXPECTED_SIZE * 2, this, (dst, src) =>
+            // {
+            //     ReadOnlySpan<byte> rawData = MemoryMarshal.AsBytes(MemoryMarshal.CreateReadOnlySpan(ref src.part1, EXPECTED_SIZE / sizeof(ulong)));
+            //
+            //     const string hexValues = "0123456789abcdef"; // "0123456789ABCDEF";
+            //
+            //     int i = rawData.Length - 1;
+            //     int j = 0;
+            //
+            //     while (i >= 0)
+            //     {
+            //         byte b = rawData[i--];
+            //         dst[j++] = hexValues[b >> 4];
+            //         dst[j++] = hexValues[b & 0xF];
+            //     }
+            // });
         }
 
         /// <summary>
@@ -174,7 +178,7 @@ namespace Lyn.Types.Bitcoin
             return new UInt256(hexString);
         }
 
-        public ReadOnlySpan<byte> GetBytes(bool bigEndian = false)
+        public ReadOnlySpan<byte> GetBytes()
         {
             // TODO: fix when moving to dotnet5
             // return MemoryMarshal.CreateReadOnlySpan(ref Unsafe.As<ulong, byte>(ref part1), EXPECTED_SIZE);
@@ -186,9 +190,6 @@ namespace Lyn.Types.Bitcoin
             temp[3] = part4;
 
             Span<byte> arrAsBytes = MemoryMarshal.Cast<ulong, byte>(temp);
-
-            if (bigEndian)
-                arrAsBytes.Reverse();
 
             return arrAsBytes.ToArray();
         }

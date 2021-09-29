@@ -15,6 +15,19 @@ namespace Lyn.Protocol.Bolt3
         {
         }
 
+        public UInt256 DeriveChannelId(UInt256 hash, ushort index)
+        {
+            var hashbytes = hash.GetBytes().ToArray();
+            var indexbytes = BitConverter.GetBytes(index);
+
+            hashbytes[30] ^= indexbytes[0];
+            hashbytes[31] ^= indexbytes[1];
+
+            UInt256 newChannelId = new UInt256(hashbytes);
+
+            return newChannelId;
+        }
+
         public Secrets DeriveSecrets(Secret seed)
         {
             // To derive out private keys we use BIP32 key derivation with hardened derivation

@@ -42,8 +42,9 @@ namespace Lyn.Protocol.Bolt1
 
         public Peer? TryGetPeerAsync(PublicKey nodeId)
         {
-            return Peers.FirstOrDefault().Value;
-            //return Peers.ContainsKey(nodeId) ? Peers[nodeId] : null;
+            var key = Peers.Keys.FirstOrDefault(_ => _.Equals(nodeId));
+
+            return key != null ? Peers[key] : null; //Hack for quick debug
         }
 
         public Task AddOrUpdatePeerAsync(Peer peer)
