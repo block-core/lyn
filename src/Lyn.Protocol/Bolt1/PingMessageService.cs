@@ -54,11 +54,7 @@ namespace Lyn.Protocol.Bolt1
                 Ignored = new byte[request.MessagePayload.NumPongBytes]
             };
 
-            return new MessageProcessingOutput
-            {
-                Success = true,
-                ResponseMessages = new[] {new BoltMessage {Payload = pong}}
-            };
+            return new SuccessWithOutputResponse(new BoltMessage {Payload = pong});
         }
 
         public int ActionTimeIntervalSeconds()

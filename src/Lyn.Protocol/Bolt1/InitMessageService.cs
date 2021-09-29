@@ -50,13 +50,7 @@ namespace Lyn.Protocol.Bolt1
 
             await _gossipRepository.AddNodeAsync(new GossipNode(request.NodeId));
             
-            return new MessageProcessingOutput
-            {
-                Success = true,
-                ResponseMessages = peerExists
-                    ? null
-                    : new[] {CreateInitMessage()}
-            };
+            return new SuccessWithOutputResponse(CreateInitMessage());
 
             //TODO David add sending the gossip timestamp filter *init message MUST be sent first
         }
@@ -82,11 +76,7 @@ namespace Lyn.Protocol.Bolt1
 
         public async Task<MessageProcessingOutput> GenerateInitAsync(PublicKey nodeId, CancellationToken token)
         {
-            var response = new MessageProcessingOutput
-            {
-                Success = true,
-                ResponseMessages = new[] {CreateInitMessage()}
-            };
+            var response = new SuccessWithOutputResponse(CreateInitMessage());
 
             if (_repository.PeerExists(nodeId)) 
                 return response;

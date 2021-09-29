@@ -62,21 +62,21 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             if (channelCandidate == null)
             {
-                return MessageProcessingOutput.CreateErrorMessage(fundingSigned.ChannelId, true, "open channel is in an invalid state");
+                return new ErrorCloseChannelResponse(fundingSigned.ChannelId, "open channel is in an invalid state");
             }
 
             var peer = _peerRepository.TryGetPeerAsync(message.NodeId);
 
             if (peer == null)
             {
-                return MessageProcessingOutput.CreateErrorMessage(fundingSigned.ChannelId, true, "invalid peer");
+                return new ErrorCloseChannelResponse(fundingSigned.ChannelId, "invalid peer");
             }
 
             var chainParameters = _chainConfigProvider.GetConfiguration(channelCandidate.OpenChannel.ChainHash);
 
             if (chainParameters == null)
             {
-                return MessageProcessingOutput.CreateErrorMessage(fundingSigned.ChannelId, true, "chainhash is unknowen");
+                return new ErrorCloseChannelResponse(fundingSigned.ChannelId,  "chainhash is unknowen");
             }
 
             var remoteFundingSig = _lightningTransactions.FromCompressedSignature(fundingSigned.Signature);
@@ -119,7 +119,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             }
             // for now we cant valiodate so we return erro and the trx itself, this will close the channel
             _logger.LogDebug("Failing channel {ChannelId} for Invalid Signature", fundingSigned.ChannelId);
-            return MessageProcessingOutput.CreateErrorMessage(fundingSigned.ChannelId, true, $"Invalid Signature, LocalCommitmentTransaction = {Hex.ToString(trxhex)}");
+            return new ErrorCloseChannelResponse(fundingSigned.ChannelId,  $"Invalid Signature, LocalCommitmentTransaction = {Hex.ToString(trxhex)}");
 
         }
 

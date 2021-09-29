@@ -65,7 +65,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             if (channelCandidate == null)
             {
-                return MessageProcessingOutput.CreateErrorMessage(acceptChannel.TemporaryChannelId, true, "open channel is in an invalid state");
+                return new ErrorCloseChannelResponse(acceptChannel.TemporaryChannelId, "open channel is in an invalid state");
             }
 
             if (channelCandidate.ChannelOpener == ChannelSide.Local
@@ -76,36 +76,36 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             }
             else
             {
-                return MessageProcessingOutput.CreateErrorMessage(acceptChannel.TemporaryChannelId, true, "open channel is in an invalid state");
+                return new ErrorCloseChannelResponse(acceptChannel.TemporaryChannelId, "open channel is in an invalid state");
             }
 
             var peer = _peerRepository.TryGetPeerAsync(message.NodeId);
 
             if (peer == null)
             {
-                return MessageProcessingOutput.CreateErrorMessage(acceptChannel.TemporaryChannelId, true, "invalid peer");
+                return new ErrorCloseChannelResponse(acceptChannel.TemporaryChannelId, "invalid peer");
             }
 
             ChainParameters? chainParameters = _chainConfigProvider.GetConfiguration(channelCandidate.OpenChannel.ChainHash);
 
             if (chainParameters == null)
             {
-                return MessageProcessingOutput.CreateErrorMessage(acceptChannel.TemporaryChannelId, true, "chainhash is unknowen");
+                return new ErrorCloseChannelResponse(acceptChannel.TemporaryChannelId,  "chainhash is unknowen");
             }
 
             if (acceptChannel.MinimumDepth > chainParameters.ChannelBoundariesConfig.MinimumDepth)
             {
-                return MessageProcessingOutput.CreateErrorMessage(acceptChannel.TemporaryChannelId, true, "minimum_depth is unreasonably large");
+                return new ErrorCloseChannelResponse(acceptChannel.TemporaryChannelId,  "minimum_depth is unreasonably large");
             }
 
             if (acceptChannel.DustLimitSatoshis > channelCandidate.OpenChannel.ChannelReserveSatoshis)
             {
-                return MessageProcessingOutput.CreateErrorMessage(acceptChannel.TemporaryChannelId, true, "channel_reserve_satoshis is less than dust_limit_satoshis within the open_channel message");
+                return new ErrorCloseChannelResponse(acceptChannel.TemporaryChannelId, "channel_reserve_satoshis is less than dust_limit_satoshis within the open_channel message");
             }
 
             if (channelCandidate.OpenChannel.DustLimitSatoshis > acceptChannel.ChannelReserveSatoshis)
             {
-                return MessageProcessingOutput.CreateErrorMessage(acceptChannel.TemporaryChannelId, true, "channel_reserve_satoshis from the open_channel message is less than dust_limit_satoshis");
+                return new ErrorCloseChannelResponse(acceptChannel.TemporaryChannelId, "channel_reserve_satoshis from the open_channel message is less than dust_limit_satoshis");
             }
 
             channelCandidate.AcceptChannel = acceptChannel;
@@ -191,7 +191,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                 Payload = fundingCreated,
             };
 
-            return new MessageProcessingOutput { Success = true, ResponseMessages = new[] { boltMessage } };
+            return new SuccessWithOutputResponse(boltMessage);
         }
 
         private CommitmenTransactionOut CommitmentTransactionOut(ChannelCandidate? channelCandidate, Secrets secrets, OutPoint inPoint, bool optionAnchorOutputs, bool optionStaticRemotekey)
