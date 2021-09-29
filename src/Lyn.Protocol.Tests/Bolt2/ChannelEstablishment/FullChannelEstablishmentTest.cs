@@ -198,9 +198,9 @@ namespace Lyn.Protocol.Tests.Bolt2.ChannelEstablishment
                     new BoltMessage { Payload = _acceptChannel }));
 
             acceptMessageResponse.Success.Should().BeTrue();
-            acceptMessageResponse.ResponseMessages
-                .Single()
-                .Payload.Should()
+            acceptMessageResponse.ResponseMessages.Should()
+                .ContainSingle()
+                .Which.Payload.Should()
                 .BeEquivalentTo(_expectedFundingCreated);
 
             var response = await _fundingSignedMessageService.ProcessMessageAsync(
