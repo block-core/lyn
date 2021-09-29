@@ -76,7 +76,7 @@ namespace Lyn.Protocol.Tests.Bolt2
                 },
             };
 
-            _peerRepository.Setup(_ => _.TryGetPeerAsync(message.NodeId)).Returns(new Peer());
+            _peerRepository.Setup(_ => _.TryGetPeerAsync(message.NodeId)).Returns(Task.FromResult<Peer?>(new Peer()));
             _chainConfigProvider.Setup(_ => _.GetConfiguration(message.MessagePayload.ChainHash)).Returns(chainParameters);
             _lightningTransactions.Setup(_ => _.GetBaseFee(It.IsAny<Satoshis>(), It.IsAny<bool>(), 0)).Returns(100);
 

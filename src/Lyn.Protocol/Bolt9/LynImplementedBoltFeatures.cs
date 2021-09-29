@@ -19,6 +19,11 @@ namespace Lyn.Protocol.Bolt9
             _globalBytes = parseFeatureFlags.ParseNFeatures(FEATURES, 13);
         }
 
+        public bool SupportsFeature(Features feature)
+        {
+            return (SupportedFeatures & feature) != 0;
+        }
+
         public byte[] GetSupportedFeatures() => _bytes;
 
         public byte[] GetSupportedGlobalFeatures() => _globalBytes;

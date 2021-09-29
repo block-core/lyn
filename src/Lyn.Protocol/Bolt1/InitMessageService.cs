@@ -37,15 +37,14 @@ namespace Lyn.Protocol.Bolt1
             if (!_boltFeatures.ValidateRemoteFeatureAreCompatible(request.MessagePayload.Features, request.MessagePayload.GlobalFeatures))
                 throw new ArgumentException(nameof(request.MessagePayload.Features)); //TODO David we need to define the way to close a connection gracefully
 
-            var peer = _repository.TryGetPeerAsync(request.NodeId);
+            var peer = await _repository.TryGetPeerAsync(request.NodeId);
             
-            var peerExists = peer != null;
-
             peer ??= new Peer {NodeId = request.NodeId};
 
-            peer.Featurs = _featureFlags.ParseFeatures(request.MessagePayload.Features);
+            peer.Features = _featureFlags.ParseFeatures(request.MessagePayload.Features);
             peer.GlobalFeatures = _featureFlags.ParseFeatures(request.MessagePayload.GlobalFeatures);
-
+            peer.MutuallySupportedFeatures = peer.Features & _boltFeatures.SupportedFeatures;
+            
             await _repository.AddOrUpdatePeerAsync(peer);
 
             await _gossipRepository.AddNodeAsync(new GossipNode(request.NodeId));

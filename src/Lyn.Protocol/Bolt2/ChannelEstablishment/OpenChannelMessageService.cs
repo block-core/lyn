@@ -51,7 +51,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
         {
             OpenChannel openChannel = message.MessagePayload;
 
-            var peer = _peerRepository.TryGetPeerAsync(message.NodeId);
+            var peer = await _peerRepository.TryGetPeerAsync(message.NodeId);
 
             if (peer == null)
             {
@@ -81,7 +81,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                 return new ErrorCloseChannelResponse(openChannel.TemporaryChannelId,  "chainhash is unknowen");
             }
 
-            bool optionAnchorOutputs = (peer.Featurs & Features.OptionAnchorOutputs) != 0;
+            bool optionAnchorOutputs = (peer.Features & Features.OptionAnchorOutputs) != 0;
 
             string failReason = CheckMessage(openChannel, chainParameters, optionAnchorOutputs);
 
@@ -92,8 +92,8 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             byte[]? remoteUpfrontShutdownScript = null;
             byte[]? localUpfrontShutdownScript = chainParameters.ChannelConfig.UpfrontShutdownScript;
-            bool localSupportUpfrontShutdownScript = (_boltFeatures.SupportedFeatures & Features.OptionUpfrontShutdownScript) != 0;
-            bool remoteSupportUpfrontShutdownScript = (peer.Featurs & Features.OptionUpfrontShutdownScript) != 0;
+            bool localSupportUpfrontShutdownScript = _boltFeatures.SupportsFeature(Features.OptionUpfrontShutdownScript);
+            bool remoteSupportUpfrontShutdownScript = peer.SupportsFeature(Features.OptionUpfrontShutdownScript);
 
             if (remoteSupportUpfrontShutdownScript)
             {

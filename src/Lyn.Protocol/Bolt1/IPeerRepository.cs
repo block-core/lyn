@@ -10,7 +10,7 @@ namespace Lyn.Protocol.Bolt1
         Task AddNewPeerAsync(Peer peer);
         Task AddErrorMessageToPeerAsync(PublicKey nodeId, PeerCommunicationIssue errorMessage);
         bool PeerExists(PublicKey nodeId);
-        Peer? TryGetPeerAsync(PublicKey nodeId);
+        Task<Peer?> TryGetPeerAsync(PublicKey nodeId);
         Task AddOrUpdatePeerAsync(Peer peer);
     }
 }

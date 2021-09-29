@@ -54,7 +54,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
         public async Task<BoltMessage> CreateOpenChannelAsync(CreateOpenChannelIn createOpenChannelIn)
         {
-            var peer = _peerRepository.TryGetPeerAsync(createOpenChannelIn.NodeId);
+            var peer = await _peerRepository.TryGetPeerAsync(createOpenChannelIn.NodeId);
 
             if (peer == null)
                 throw new ApplicationException($"Peer was not found or is not connected");
@@ -73,8 +73,8 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             if (createOpenChannelIn.PrivateChannel && !chainParameters.ChannelBoundariesConfig.AllowPrivateChannels)
                 throw new ApplicationException($"Private channels are not enabled");
 
-            bool localSupportLargeChannels = (_boltFeatures.SupportedFeatures & Features.OptionSupportLargeChannel) != 0;
-            bool remoteSupportLargeChannels = (peer.Featurs & Features.OptionSupportLargeChannel) != 0;
+            var localSupportLargeChannels = _boltFeatures.SupportsFeature(Features.OptionSupportLargeChannel);
+            var remoteSupportLargeChannels = peer.SupportsFeature(Features.OptionSupportLargeChannel);
 
             if (localSupportLargeChannels == false || remoteSupportLargeChannels == false)
             {
@@ -117,9 +117,9 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             openChannel.MaxHtlcValueInFlightMsat = chainParameters.ChannelConfig.MaxHtlcValueInFlight;
             openChannel.MaxAcceptedHtlcs = chainParameters.ChannelConfig.MaxAcceptedHtlcs;
 
-            byte[]? upfrontShutdownScript = chainParameters.ChannelConfig.UpfrontShutdownScript;
-            bool localSupportUpfrontShutdownScript = (_boltFeatures.SupportedFeatures & Features.OptionUpfrontShutdownScript) != 0;
-            bool remoteSupportUpfrontShutdownScript = (peer.Featurs & Features.OptionUpfrontShutdownScript) != 0;
+            var upfrontShutdownScript = chainParameters.ChannelConfig.UpfrontShutdownScript;
+            var localSupportUpfrontShutdownScript = _boltFeatures.SupportsFeature(Features.OptionUpfrontShutdownScript);
+            var remoteSupportUpfrontShutdownScript = peer.SupportsFeature(Features.OptionUpfrontShutdownScript);
 
             if (localSupportUpfrontShutdownScript && remoteSupportUpfrontShutdownScript)
             {

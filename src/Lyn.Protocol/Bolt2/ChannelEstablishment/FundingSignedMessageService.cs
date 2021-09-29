@@ -65,7 +65,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                 return new ErrorCloseChannelResponse(fundingSigned.ChannelId, "open channel is in an invalid state");
             }
 
-            var peer = _peerRepository.TryGetPeerAsync(message.NodeId);
+            var peer = await _peerRepository.TryGetPeerAsync(message.NodeId);
 
             if (peer == null)
             {
@@ -84,8 +84,8 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             _logger.LogDebug("FundingSigned - signature = {remotesig}", remoteFundingSig);
 
             // david: this params can go in channelchandidate
-            var optionAnchorOutputs = (_boltFeatures.SupportedFeatures & Features.OptionAnchorOutputs & peer.Featurs) != 0;
-            bool optionStaticRemotekey = (_boltFeatures.SupportedFeatures & Features.OptionStaticRemotekey & peer.Featurs) != 0;
+            var optionAnchorOutputs = _boltFeatures.SupportsFeature(Features.OptionAnchorOutputs);
+            var optionStaticRemoteKey = _boltFeatures.SupportsFeature(Features.OptionStaticRemotekey);
 
             var fundingOutPoint = new OutPoint
             {
@@ -94,7 +94,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             };
 
             var localCommitmentTransaction = LocalCommitmentTransactionOut(channelCandidate.OpenChannel, channelCandidate.AcceptChannel,
-                channelCandidate.ChannelOpener, fundingOutPoint, optionAnchorOutputs, optionStaticRemotekey);
+                channelCandidate.ChannelOpener, fundingOutPoint, optionAnchorOutputs, optionStaticRemoteKey);
 
             var fundingWscript = _lightningScripts.FundingRedeemScript(channelCandidate.OpenChannel.FundingPubkey, channelCandidate.AcceptChannel.FundingPubkey);
             

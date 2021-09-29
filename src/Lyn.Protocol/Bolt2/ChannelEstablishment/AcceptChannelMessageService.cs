@@ -79,7 +79,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                 return new ErrorCloseChannelResponse(acceptChannel.TemporaryChannelId, "open channel is in an invalid state");
             }
 
-            var peer = _peerRepository.TryGetPeerAsync(message.NodeId);
+            var peer = await _peerRepository.TryGetPeerAsync(message.NodeId);
 
             if (peer == null)
             {
@@ -132,15 +132,15 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             uint fundingTransactionIndex = 0;
 
             // david: this params can go in channelchandidate
-            bool optionAnchorOutputs = (_boltFeatures.SupportedFeatures & peer.Featurs & Features.OptionAnchorOutputs) != 0;
-            bool optionStaticRemotekey = (_boltFeatures.SupportedFeatures & peer.Featurs & Features.OptionStaticRemotekey) != 0; // not sure why this must be on if other side supports it and we don't
+            var optionAnchorOutputs = _boltFeatures.SupportsFeature(Features.OptionAnchorOutputs);
+            var optionStaticRemoteKey = _boltFeatures.SupportsFeature(Features.OptionStaticRemotekey); // not sure why this must be on if other side supports it and we don't
 
             Secret seed = _secretStore.GetSeed();
             Secrets secrets = _lightningKeyDerivation.DeriveSecrets(seed);
 
             var fundingOutPoint = new OutPoint { Hash = fundingTransactionHash, Index = fundingTransactionIndex };
 
-            var remoteCommitmentTransaction = CommitmentTransactionOut(channelCandidate, secrets, fundingOutPoint, optionAnchorOutputs, optionStaticRemotekey);
+            var remoteCommitmentTransaction = CommitmentTransactionOut(channelCandidate, secrets, fundingOutPoint, optionAnchorOutputs, optionStaticRemoteKey);
 
             byte[]? fundingWscript = _lightningScripts.FundingRedeemScript(channelCandidate.OpenChannel.FundingPubkey, channelCandidate.AcceptChannel.FundingPubkey);
 

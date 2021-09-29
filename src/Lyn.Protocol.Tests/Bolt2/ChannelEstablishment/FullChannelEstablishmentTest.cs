@@ -106,7 +106,7 @@ namespace Lyn.Protocol.Tests.Bolt2.ChannelEstablishment
 
             _peerRepository.AddNewPeerAsync(new Peer
             {
-                Featurs = Features.InitialRoutingSync | Features.VarOnionOptin | Features.GossipQueriesEx |
+                Features = Features.InitialRoutingSync | Features.VarOnionOptin | Features.GossipQueriesEx |
                           Features.PaymentSecret | (Features)2,
                 Id = 0,
                 GlobalFeatures = Features.OptionDataLossProtect,
