@@ -17,6 +17,8 @@ services:
       - "18443"
       - "12005"
       - "12006"
+    ports:
+      - "0.0.0.0:18443:18443"
     restart: always
 
   lnd-node:
@@ -34,7 +36,6 @@ services:
 
   c-lightning-node:
     container_name: c-lightning-node
-    hostname: c-lightning-node
     hostname: lightning
     build:
       context: c-lightning
