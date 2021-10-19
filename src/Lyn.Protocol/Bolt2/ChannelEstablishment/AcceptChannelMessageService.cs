@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Buffers;
 using System.Collections.Generic;
+using System.Linq;
 using Lyn.Protocol.Bolt2.ChannelEstablishment.Entities;
 using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages;
 using Lyn.Protocol.Bolt3;
@@ -14,7 +15,9 @@ using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 using Lyn.Protocol.Bolt1;
 using Lyn.Protocol.Bolt1.Messages;
+using Lyn.Protocol.Bolt2.Wallet;
 using Lyn.Protocol.Bolt9;
+using Lyn.Protocol.Common.Hashing;
 using Lyn.Types;
 using Lyn.Types.Fundamental;
 using Microsoft.Extensions.DependencyInjection;
@@ -33,6 +36,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
         private readonly ISecretStore _secretStore;
         private readonly IPeerRepository _peerRepository;
         private readonly IBoltFeatures _boltFeatures;
+        private readonly IWalletTransactions _walletTransactions;
 
         public AcceptChannelMessageService(ILogger<AcceptChannelMessageService> logger,
             ILightningTransactions lightningTransactions,
@@ -43,7 +47,8 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             IChainConfigProvider chainConfigProvider,
             ISecretStore secretStore,
             IPeerRepository peerRepository,
-            IBoltFeatures boltFeatures)
+            IBoltFeatures boltFeatures, 
+            IWalletTransactions walletTransactions)
         {
             _logger = logger;
             _lightningTransactions = lightningTransactions;
@@ -55,6 +60,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             _secretStore = secretStore;
             _peerRepository = peerRepository;
             _boltFeatures = boltFeatures;
+            _walletTransactions = walletTransactions;
         }
 
         public async Task<MessageProcessingOutput> ProcessMessageAsync(PeerMessage<AcceptChannel> message)
@@ -114,22 +120,14 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             var fundingScript = _lightningScripts.FundingWitnessScript(channelCandidate.OpenChannel.FundingPubkey, channelCandidate.AcceptChannel.FundingPubkey);
 
-            // todo: create the transaction with the fundingScript as output and the input will be taken and signed from a wallet interface (create a wallet interface)
-
-            var fundingTransaction = new Transaction
+            channelCandidate.FundingTransaction =await _walletTransactions.GenerateTransactionForOutputAsync(new TransactionOutput
             {
-                Outputs = new[]
-                {
-                    new TransactionOutput
-                    {
-                        PublicKeyScript = fundingScript,
-                        Value = channelCandidate.OpenChannel.FundingSatoshis
-                    }
-                }
-            };
-
-            var fundingTransactionHash = _transactionHashCalculator.ComputeHash(fundingTransaction);
-            uint fundingTransactionIndex = 0;
+                PublicKeyScript = fundingScript,
+                Value = channelCandidate.OpenChannel.FundingSatoshis
+            });
+            
+            var fundingTransactionHash = _transactionHashCalculator.ComputeHash(channelCandidate.FundingTransaction);
+            uint fundingTransactionIndex = 1;
 
             // david: this params can go in channelchandidate
             var optionAnchorOutputs = _boltFeatures.SupportsFeature(Features.OptionAnchorOutputs);

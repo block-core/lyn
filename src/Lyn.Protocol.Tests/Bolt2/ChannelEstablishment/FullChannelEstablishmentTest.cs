@@ -6,10 +6,12 @@ using Lyn.Protocol.Bolt1.Entities;
 using Lyn.Protocol.Bolt1.Messages;
 using Lyn.Protocol.Bolt2.ChannelEstablishment;
 using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages;
+using Lyn.Protocol.Bolt2.Wallet;
 using Lyn.Protocol.Bolt3;
 using Lyn.Protocol.Bolt9;
 using Lyn.Protocol.Common;
 using Lyn.Protocol.Common.Blockchain;
+using Lyn.Protocol.Common.Hashing;
 using Lyn.Protocol.Common.Messages;
 using Lyn.Protocol.Connection;
 using Lyn.Types;
@@ -70,15 +72,20 @@ namespace Lyn.Protocol.Tests.Bolt2.ChannelEstablishment
                 new TransactionOutputSerializer(),
                 new TransactionWitnessSerializer(new TransactionWitnessComponentSerializer())));
 
-            _openChannelService = new StartOpenChannelService(new Logger<OpenChannelMessageService>(loggerFactory),
+            var walletLookup = new Mock<IWalletTransactions>();
+
+            walletLookup.Setup(_ => _.IsAmountAvailableAsync(It.IsAny<Satoshis>()))
+                .ReturnsAsync(true);
+            
+            _openChannelService = new StartOpenChannelService(new Logger<StartOpenChannelService>(loggerFactory),
                 _randomNumberGenerator.Object,
                 _keyDerivation,
                 _candidateRepository,
                 _peerRepository,
                 new ChainConfigProvider(),
                 new LynImplementedBoltFeatures(parsingFeatures),
-                parsingFeatures,
-                new SecretStore());
+                new SecretStore(),
+                walletLookup.Object);
 
             _acceptChannelMessageService = new AcceptChannelMessageService(
                 new Logger<AcceptChannelMessageService>(loggerFactory),
@@ -89,19 +96,20 @@ namespace Lyn.Protocol.Tests.Bolt2.ChannelEstablishment
                 _candidateRepository,
                 new ChainConfigProvider(),
                 new SecretStore(),
-                _peerRepository, new LynImplementedBoltFeatures(parsingFeatures));
+                _peerRepository, 
+                new LynImplementedBoltFeatures(parsingFeatures),
+                walletLookup.Object);
 
             _fundingSignedMessageService = new FundingSignedMessageService(
                 new Logger<FundingSignedMessageService>(loggerFactory),
                 lightningTransactions,
-                hashCalculator,
                 _lightningScripts,
                 _keyDerivation,
                 _candidateRepository,
                 new ChainConfigProvider(),
-                new SecretStore(),
                 _peerRepository,
-                new LynImplementedBoltFeatures(parsingFeatures));
+                new LynImplementedBoltFeatures(parsingFeatures),
+                walletLookup.Object);
 
 
             _peerRepository.AddNewPeerAsync(new Peer

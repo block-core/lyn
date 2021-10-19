@@ -8,12 +8,14 @@ using Lyn.Protocol.Bolt1.TlvStreams;
 using Lyn.Protocol.Bolt2.ChannelEstablishment;
 using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages;
 using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages.TlvRecords;
+using Lyn.Protocol.Bolt2.Wallet;
 using Lyn.Protocol.Bolt3;
 using Lyn.Protocol.Bolt7;
 using Lyn.Protocol.Bolt7.Messages;
 using Lyn.Protocol.Bolt8;
 using Lyn.Protocol.Bolt9;
 using Lyn.Protocol.Common.Blockchain;
+using Lyn.Protocol.Common.Hashing;
 using Lyn.Protocol.Common.Messages;
 using Lyn.Protocol.Connection;
 using Lyn.Types.Serialization;
@@ -127,6 +129,7 @@ namespace Lyn.Protocol.Common
 
             services.AddSingleton<IStartOpenChannelService, StartOpenChannelService>(); //TODO Dan this is not control and setup services
             services.AddSingleton<IChannelCandidateRepository, InMemoryChannelCandidateRepository>();
+            services.AddSingleton<IWalletTransactions, WalletTransactions>();
 
             return services;
         }

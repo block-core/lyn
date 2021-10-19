@@ -1,10 +1,8 @@
-﻿using System;
-using System.Buffers;
-using Lyn.Protocol.Common.Hashing;
+﻿using System.Buffers;
 using Lyn.Types.Bitcoin;
 using Lyn.Types.Serialization;
 
-namespace Lyn.Protocol.Common
+namespace Lyn.Protocol.Common.Hashing
 {
     public class TransactionHashCalculator : ITransactionHashCalculator
     {

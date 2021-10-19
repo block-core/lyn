@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 using Lyn.Protocol.Bolt1;
 using Lyn.Protocol.Bolt1.Messages;
+using Lyn.Protocol.Bolt2.Wallet;
 using Lyn.Protocol.Bolt9;
 using Lyn.Types;
 using Lyn.Types.Fundamental;
@@ -22,36 +23,33 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
     {
         private readonly ILogger<FundingSignedMessageService> _logger;
         private readonly ILightningTransactions _lightningTransactions;
-        private readonly ITransactionHashCalculator _transactionHashCalculator;
         private readonly ILightningScripts _lightningScripts;
         private readonly ILightningKeyDerivation _lightningKeyDerivation;
         private readonly IChannelCandidateRepository _channelCandidateRepository;
         private readonly IChainConfigProvider _chainConfigProvider;
-        private readonly ISecretStore _secretStore;
         private readonly IPeerRepository _peerRepository;
         private readonly IBoltFeatures _boltFeatures;
+        private readonly IWalletTransactions _walletTransactions;
 
         public FundingSignedMessageService(ILogger<FundingSignedMessageService> logger,
             ILightningTransactions lightningTransactions,
-            ITransactionHashCalculator transactionHashCalculator,
             ILightningScripts lightningScripts,
             ILightningKeyDerivation lightningKeyDerivation,
             IChannelCandidateRepository channelCandidateRepository,
             IChainConfigProvider chainConfigProvider,
-            ISecretStore secretStore,
             IPeerRepository peerRepository,
-            IBoltFeatures boltFeatures)
+            IBoltFeatures boltFeatures, 
+            IWalletTransactions walletTransactions)
         {
             _logger = logger;
             _lightningTransactions = lightningTransactions;
-            _transactionHashCalculator = transactionHashCalculator;
             _lightningScripts = lightningScripts;
             _lightningKeyDerivation = lightningKeyDerivation;
             _channelCandidateRepository = channelCandidateRepository;
             _chainConfigProvider = chainConfigProvider;
-            _secretStore = secretStore;
             _peerRepository = peerRepository;
             _boltFeatures = boltFeatures;
+            _walletTransactions = walletTransactions;
         }
 
         public async Task<MessageProcessingOutput> ProcessMessageAsync(PeerMessage<FundingSigned> message)
@@ -106,21 +104,24 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                 remoteFundingSig,
                 optionAnchorOutputs);
 
-            if (remoteSigValid) 
-                return new EmptySuccessResponse();
-            
-            var ci = new ServiceCollection().AddSerializationComponents().BuildServiceProvider();
-            var serializationFactory = new SerializationFactory(ci);
-            var trxhex = serializationFactory.Serialize(localCommitmentTransaction.Transaction);
-                
-            if (_logger.IsEnabled(LogLevel.Debug))
+            if (!remoteSigValid)
             {
-                _logger.LogDebug("LocalCommitmentTransaction = {trxhex}", Hex.ToString(trxhex));
+                var ci = new ServiceCollection().AddSerializationComponents().BuildServiceProvider();
+                var serializationFactory = new SerializationFactory(ci);
+                var trxhex = serializationFactory.Serialize(localCommitmentTransaction.Transaction);
+                
+                if (_logger.IsEnabled(LogLevel.Debug))
+                {
+                    _logger.LogDebug("LocalCommitmentTransaction = {trxhex}", Hex.ToString(trxhex));
+                }
+                // for now we cant valiodate so we return erro and the trx itself, this will close the channel
+                _logger.LogDebug("Failing channel {ChannelId} for Invalid Signature", fundingSigned.ChannelId);
+                return new ErrorCloseChannelResponse(fundingSigned.ChannelId,  $"Invalid Signature, LocalCommitmentTransaction = {Hex.ToString(trxhex)}");
             }
-            // for now we cant valiodate so we return erro and the trx itself, this will close the channel
-            _logger.LogDebug("Failing channel {ChannelId} for Invalid Signature", fundingSigned.ChannelId);
-            return new ErrorCloseChannelResponse(fundingSigned.ChannelId,  $"Invalid Signature, LocalCommitmentTransaction = {Hex.ToString(trxhex)}");
 
+            await _walletTransactions.PublishTransactionAsync(channelCandidate.FundingTransaction);
+            
+            return new EmptySuccessResponse();
         }
 
         private CommitmenTransactionOut LocalCommitmentTransactionOut(OpenChannel openChannel, AcceptChannel acceptChannel, 
