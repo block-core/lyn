@@ -30,5 +30,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment.Entities
         public Transaction? RemoteCommitmentTransaction { get; set; }
 
         public Transaction? LocalCommitmentTransaction { get; set; }
+
+        public Transaction? FundingTransaction { get; set; }
     }
 }
