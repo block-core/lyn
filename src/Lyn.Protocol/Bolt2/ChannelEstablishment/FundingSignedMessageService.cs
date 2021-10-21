@@ -82,8 +82,8 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             _logger.LogDebug("FundingSigned - signature = {remotesig}", remoteFundingSig);
 
             // david: this params can go in channelchandidate
-            var optionAnchorOutputs = _boltFeatures.SupportsFeature(Features.OptionAnchorOutputs);
-            var optionStaticRemoteKey = _boltFeatures.SupportsFeature(Features.OptionStaticRemotekey);
+            var optionAnchorOutputs = peer.MutuallySupportedFeature(Features.OptionAnchorOutputs);
+            var optionStaticRemoteKey = peer.MutuallySupportedFeature(Features.OptionStaticRemotekey);
 
             var fundingOutPoint = new OutPoint
             {
@@ -119,6 +119,9 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                 return new ErrorCloseChannelResponse(fundingSigned.ChannelId,  $"Invalid Signature, LocalCommitmentTransaction = {Hex.ToString(trxhex)}");
             }
 
+            channelCandidate.FundingSignedRemote = fundingSigned;
+            await _channelCandidateRepository.UpdateAsync(channelCandidate);
+            
             await _walletTransactions.PublishTransactionAsync(channelCandidate.FundingTransaction);
             
             return new EmptySuccessResponse();

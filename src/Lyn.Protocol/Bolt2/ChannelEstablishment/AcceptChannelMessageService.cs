@@ -1,7 +1,4 @@
-﻿using System;
-using System.Buffers;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 using Lyn.Protocol.Bolt2.ChannelEstablishment.Entities;
 using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages;
 using Lyn.Protocol.Bolt3;
@@ -138,7 +135,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             var fundingOutPoint = new OutPoint { Hash = fundingTransactionHash, Index = fundingTransactionIndex };
 
-            var remoteCommitmentTransaction = CommitmentTransactionOut(channelCandidate, secrets, fundingOutPoint, optionAnchorOutputs, optionStaticRemoteKey);
+            var remoteCommitmentTransaction = CommitmentTransactionOut(channelCandidate, fundingOutPoint, optionAnchorOutputs, optionStaticRemoteKey);
 
             byte[]? fundingWscript = _lightningScripts.FundingRedeemScript(channelCandidate.OpenChannel.FundingPubkey, channelCandidate.AcceptChannel.FundingPubkey);
 
@@ -192,16 +189,18 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             return new SuccessWithOutputResponse(boltMessage);
         }
 
-        private CommitmenTransactionOut CommitmentTransactionOut(ChannelCandidate? channelCandidate, Secrets secrets, OutPoint inPoint, bool optionAnchorOutputs, bool optionStaticRemotekey)
+        private CommitmenTransactionOut CommitmentTransactionOut(ChannelCandidate? channelCandidate, OutPoint inPoint, bool optionAnchorOutputs, bool optionStaticRemotekey)
         {
             // generate the commitment transaction how it will look like for the other side
 
             var commitmentTransactionIn = new CommitmentTransactionIn
             {
                 Funding = channelCandidate.OpenChannel.FundingSatoshis,
+                
                 Htlcs = new List<Htlc>(),
                 Opener = channelCandidate.ChannelOpener,
                 Side = ChannelSide.Remote,
+                
                 CommitmentNumber = 0,
                 FundingTxout = inPoint,
                 DustLimitSatoshis = channelCandidate.AcceptChannel.DustLimitSatoshis,

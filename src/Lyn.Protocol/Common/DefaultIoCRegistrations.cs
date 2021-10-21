@@ -8,6 +8,7 @@ using Lyn.Protocol.Bolt1.TlvStreams;
 using Lyn.Protocol.Bolt2.ChannelEstablishment;
 using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages;
 using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages.TlvRecords;
+using Lyn.Protocol.Bolt2.NormalOperations;
 using Lyn.Protocol.Bolt2.Wallet;
 using Lyn.Protocol.Bolt3;
 using Lyn.Protocol.Bolt7;
@@ -114,6 +115,8 @@ namespace Lyn.Protocol.Common
             services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<AcceptChannel>>();
             services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<FundingCreated>>();
             services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<FundingSigned>>();
+            services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<FundingLocked>>();
+            
 
             return services;
         }
@@ -130,6 +133,7 @@ namespace Lyn.Protocol.Common
             services.AddSingleton<IStartOpenChannelService, StartOpenChannelService>(); //TODO Dan this is not control and setup services
             services.AddSingleton<IChannelCandidateRepository, InMemoryChannelCandidateRepository>();
             services.AddSingleton<IWalletTransactions, WalletTransactions>();
+            services.AddSingleton<IPaymentChannelRepository,InMemoryPaymentChannelRepository>();
 
             return services;
         }

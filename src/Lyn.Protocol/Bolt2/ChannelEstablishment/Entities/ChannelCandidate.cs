@@ -1,10 +1,6 @@
 ﻿using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages;
-using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages.TlvRecords;
-using Lyn.Protocol.Bolt2.Configuration;
 using Lyn.Protocol.Bolt3.Types;
 using Lyn.Types.Bitcoin;
-using Lyn.Types.Bolt;
-using Lyn.Types.Fundamental;
 
 namespace Lyn.Protocol.Bolt2.ChannelEstablishment.Entities
 {
@@ -32,5 +28,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment.Entities
         public Transaction? LocalCommitmentTransaction { get; set; }
 
         public Transaction? FundingTransaction { get; set; }
+
+        public bool FundingLockedSent { get; set; }
     }
 }
