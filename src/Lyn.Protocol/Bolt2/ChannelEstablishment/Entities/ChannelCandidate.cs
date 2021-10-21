@@ -15,6 +15,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment.Entities
         public AcceptChannel? AcceptChannel { get; set; }
         public FundingCreated? FundingCreated { get; set; }
         public FundingLocked? FundingLocked { get; set; }
+        
         public FundingSigned? FundingSignedLocal { get; set; }
         public FundingSigned? FundingSignedRemote { get; set; }
         public byte[]? OpenChannelUpfrontShutdownScript { get; set; }
@@ -28,7 +29,5 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment.Entities
         public Transaction? LocalCommitmentTransaction { get; set; }
 
         public Transaction? FundingTransaction { get; set; }
-
-        public bool FundingLockedSent { get; set; }
     }
 }

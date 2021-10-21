@@ -4,6 +4,7 @@ using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages;
 using Lyn.Protocol.Bolt2.Entities;
 using Lyn.Protocol.Bolt2.NormalOperations;
 using Lyn.Protocol.Bolt3;
+using Lyn.Protocol.Bolt3.Types;
 using Lyn.Protocol.Common.Messages;
 using Lyn.Protocol.Connection;
 using Lyn.Types.Bitcoin;
@@ -32,19 +33,25 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
         public async Task<MessageProcessingOutput> ProcessMessageAsync(PeerMessage<FundingLocked> message)
         {
+            _logger.LogDebug("Processing funding locked from peer");
             var channelCandidate = await _channelCandidateRepository.GetAsync(message.MessagePayload.ChannelId);
 
             if (channelCandidate == null)
             {
+                _logger.LogWarning($"Channel candidate not found in the repository for channel id {message.MessagePayload.ChannelId}");
+                
                 return new ErrorCloseChannelResponse(message.MessagePayload.ChannelId,
                     "open channel is in an invalid state");
             }
 
             channelCandidate.FundingLocked = message.MessagePayload;
 
-            if (!channelCandidate.FundingLockedSent)
+            if (channelCandidate.ChannelOpener !=  ChannelSide.Local) // We will be publishing to block chain in that case
             {
+                _logger.LogDebug("Confirmation of funding transaction not received yet");
+                
                 await _channelCandidateRepository.UpdateAsync(channelCandidate); //Waiting for confirmation from our side as well
+                
                 return new EmptySuccessResponse();
             }
 
@@ -75,6 +82,8 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             await _paymentChannelRepository.AddNewPaymentChannelAsync(paymentChannel);
             
+            _logger.LogDebug("Payment channel created");
+            
             //TODO update gossip repo with new channel
 
             var seed = _secretStore.GetSeed();
@@ -83,10 +92,12 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             var fundingLockedResponse = new FundingLocked
             {
                 ChannelId = channelCandidate.FundingLocked.ChannelId,
-                NextPerCommitmentPoint = _lightningKeyDerivation.PerCommitmentPoint(secrets.Shaseed, 1)
+                NextPerCommitmentPoint = _lightningKeyDerivation.PerCommitmentPoint(secrets.Shaseed, 1) //TODO use Commitment number and increment here?
             };
             
-            return new SuccessWithOutputResponse(new BoltMessage{Payload = fundingLockedResponse});
+            _logger.LogDebug("Replaying with funding locked ");
+
+            return new SuccessWithOutputResponse(new BoltMessage { Payload = fundingLockedResponse });
         }
     }
 }
