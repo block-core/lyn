@@ -2,7 +2,7 @@ using System.Buffers;
 using Lyn.Types.Fundamental;
 using Lyn.Types.Serialization;
 
-namespace Lyn.Protocol.Bolt2.ChannelEstablishment.Messages
+namespace Lyn.Protocol.Bolt2.MessageRetransmission.Messages
 {
     public class ChannelReestablishSerializer : IProtocolTypeSerializer<ChannelReestablish>
     {
@@ -13,8 +13,8 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment.Messages
             size += writer.WriteUint256(typeInstance.ChannelId);
             size += writer.WriteULong(typeInstance.NextCommitmentNumber, true);
             size += writer.WriteULong(typeInstance.NextRevocationNumber, true);
-            size += writer.WriteBytes(typeInstance.CurrentPerCommitmentPoint);
-            size += writer.WriteBytes(typeInstance.LastPerCommitmentSecret);
+            size += writer.WriteBytes(typeInstance.MyCurrentPerCommitmentPoint);
+            size += writer.WriteBytes(typeInstance.YourLastPerCommitmentSecret);
 
             return size;
         }
@@ -25,7 +25,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment.Messages
                 reader.ReadULong(true),
                 reader.ReadULong(true),
                 reader.ReadBytes(PublicKey.LENGTH),
-                reader.ReadBytes(PublicKey.LENGTH));
+                new Secret(reader.ReadBytes(PrivateKey.LENGTH).ToArray()));
         }
     }
 }

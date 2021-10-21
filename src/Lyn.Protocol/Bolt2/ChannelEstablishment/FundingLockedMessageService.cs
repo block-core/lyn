@@ -34,6 +34,16 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
         public async Task<MessageProcessingOutput> ProcessMessageAsync(PeerMessage<FundingLocked> message)
         {
             _logger.LogDebug("Processing funding locked from peer");
+
+            var existingChannel =
+                await _paymentChannelRepository.TryGetPaymentChannelAsync(message.MessagePayload.ChannelId); //TODO validate the message before using it
+
+            if (existingChannel != null)
+            {
+                // this was a reconnection process for a new channel can just ignore the message
+                return new EmptySuccessResponse();
+            }
+            
             var channelCandidate = await _channelCandidateRepository.GetAsync(message.MessagePayload.ChannelId);
 
             if (channelCandidate == null)
@@ -92,7 +102,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             var fundingLockedResponse = new FundingLocked
             {
                 ChannelId = channelCandidate.FundingLocked.ChannelId,
-                NextPerCommitmentPoint = _lightningKeyDerivation.PerCommitmentPoint(secrets.Shaseed, 1) //TODO use Commitment number and increment here?
+                NextPerCommitmentPoint = _lightningKeyDerivation.PerCommitmentPoint(secrets.Shaseed, paymentChannel.LocalCommitmentNumber + 1)
             };
             
             _logger.LogDebug("Replaying with funding locked ");

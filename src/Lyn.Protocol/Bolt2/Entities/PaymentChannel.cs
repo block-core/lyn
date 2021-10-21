@@ -36,14 +36,16 @@ namespace Lyn.Protocol.Bolt2.Entities
 
         public PublicKey[] PreviousPerCommitmentPoints { get; set; } //TODO David
 
+        public Secret[] PreviousPerCommitmentSecrets { get; set; }
+
         public CompressedSignature CompressedSignature { get; set; }
 
         
         
         public Satoshis FundingSatoshis { get; set; }
         
-        public ulong CommitmentNumber { get; set; }
-        
+        public ulong LocalCommitmentNumber { get; set; }
+        public ulong RemoteCommitmentNumber { get; set; }
         public OutPoint InPoint { get; set; }
         
         public Satoshis LocalDustLimitSatoshis { get; set; }

@@ -4,11 +4,13 @@ namespace Lyn.Types.Fundamental
 {
     public class PrivateKey
     {
+        public const ushort LENGTH = 32;
+        
         protected readonly byte[] _value;
-
+        
         public PrivateKey(byte[] value)
         {
-            if (value.Length > 32)
+            if (value.Length > LENGTH)
                 throw new ArgumentOutOfRangeException(nameof(value));
 
             _value = value;
