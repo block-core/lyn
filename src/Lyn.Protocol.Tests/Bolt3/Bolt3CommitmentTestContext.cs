@@ -137,12 +137,7 @@ namespace Lyn.Protocol.Tests.Bolt3
             // more bytes in the array then just drop the last to bytes form the array to compute the hex
             Assert.Equal("0x2bb038521914", Hex.ToString(BitConverter.GetBytes(CnObscurer).Reverse().ToArray().AsSpan().Slice(2)));
 
-            Keyset.LocalRevocationKey = RemoteRevocationKey;
-            Keyset.LocalDelayedPaymentKey = LocalDelayedkey;
-            Keyset.LocalPaymentKey = Localkey;
-            Keyset.RemotePaymentKey = Remotekey;
-            Keyset.LocalHtlcKey = LocalHtlckey;
-            Keyset.RemoteHtlcKey = RemoteHtlckey;
+            Keyset = new Keyset(RemoteRevocationKey, LocalHtlckey, RemoteHtlckey, LocalDelayedkey, Remotekey);
         }
     }
 }

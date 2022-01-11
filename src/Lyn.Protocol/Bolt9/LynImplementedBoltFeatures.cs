@@ -5,7 +5,7 @@ namespace Lyn.Protocol.Bolt9
 {
     public class LynImplementedBoltFeatures : IBoltFeatures
     {
-        private const Features FEATURES = Features.InitialRoutingSync ;//| Features.GossipQueries; this will need to be added back when the gossip queries are fully supported
+        private const Features FEATURES = Features.InitialRoutingSync | Features.OptionStaticRemotekey;//| Features.GossipQueries; this will need to be added back when the gossip queries are fully supported
 
         private readonly byte[] _bytes;
         private readonly BitArray _FeaturesBitArray;
@@ -18,8 +18,9 @@ namespace Lyn.Protocol.Bolt9
             _FeaturesBitArray = new BitArray(_bytes);
             _globalBytes = parseFeatureFlags.ParseNFeatures(FEATURES, 13);
         }
-        
+
         public byte[] GetSupportedFeatures() => _bytes;
+
         public byte[] GetSupportedGlobalFeatures() => _globalBytes;
 
         public bool ValidateRemoteFeatureAreCompatible(byte[] remoteNodeFeatures, byte[] remoteNodeGlobalFeatures)
@@ -31,7 +32,7 @@ namespace Lyn.Protocol.Bolt9
             {
                 remoteBitArray[i] = remoteBitArray[i] || remoteGlobalBitArray[i];
             }
-            
+
             return _FeaturesBitArray.Length > remoteBitArray.Length
                 ? CheckFlagsInBothAndLongerForRequiredFlags(remoteBitArray, _FeaturesBitArray)
                 : CheckFlagsInBothAndLongerForRequiredFlags(_FeaturesBitArray, remoteBitArray);

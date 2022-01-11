@@ -5,9 +5,12 @@ namespace Lyn.Protocol.Bolt3
 {
     public interface ILightningScripts
     {
-        byte[] CreaateFundingTransactionScript(PublicKey pubkey1, PublicKey pubkey2);
+        byte[] FundingWitnessScript(PublicKey pubkey1, PublicKey pubkey2);
+
         byte[] GetRevokeableRedeemscript(PublicKey revocationKey, ushort contestDelay, PublicKey broadcasterDelayedPaymentKey);
+
         byte[] AnchorToRemoteRedeem(PublicKey remoteKey);
+
         byte[] AnchorOutput(PublicKey fundingPubkey);
 
         byte[] GetHtlcOfferedRedeemscript(
@@ -30,8 +33,11 @@ namespace Lyn.Protocol.Bolt3
             PublicKey accepterPaymentBasepoint);
 
         byte[] FundingRedeemScript(PublicKey pubkey1, PublicKey pubkey2);
+
         void SetCommitmentInputWitness(TransactionInput transactionInput, BitcoinSignature localSignature, BitcoinSignature remoteSignature, byte[] pubkeyScriptToRedeem);
+
         void SetHtlcSuccessInputWitness(TransactionInput transactionInput, BitcoinSignature localSignature, BitcoinSignature remoteSignature, Preimage preimage, byte[] pubkeyScriptToRedeem);
+
         void SetHtlcTimeoutInputWitness(TransactionInput transactionInput, BitcoinSignature localSignature, BitcoinSignature remoteSignature, byte[] pubkeyScriptToRedeem);
     }
 }

@@ -133,8 +133,16 @@ namespace Lyn.Types.Serialization
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int WriteUint256(this IBufferWriter<byte> writer, UInt256 value, bool isBigEndian = false)
         {
-            var span = value.GetBytes(isBigEndian);
+            var span = value.GetBytes();
+
+            if (isBigEndian)
+            {
+                // todo: this can move in to uint256 for better performance
+                span = span.ToArray().Reverse().ToArray();
+            }
+
             writer.Write(span);
+
             return span.Length;
         }
 

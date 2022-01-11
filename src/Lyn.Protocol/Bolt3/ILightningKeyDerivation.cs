@@ -7,6 +7,8 @@ namespace Lyn.Protocol.Bolt3
 {
     public interface ILightningKeyDerivation
     {
+        UInt256 DeriveChannelId(UInt256 hash, ushort index);
+
         Secrets DeriveSecrets(Secret seed);
 
         Basepoints DeriveBasepoints(Secrets secrets);

@@ -11,6 +11,8 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
         Task UpdateAsync(ChannelCandidate channelCandidate);
 
+        Task UpdateChannelIdAsync(UInt256 tempChannelId, UInt256 channelId);
+
         Task<ChannelCandidate?> GetAsync(UInt256 channelId);
     }
 }
