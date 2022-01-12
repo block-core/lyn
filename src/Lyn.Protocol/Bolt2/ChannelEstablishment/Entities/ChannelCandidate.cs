@@ -1,6 +1,7 @@
 ﻿using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages;
 using Lyn.Protocol.Bolt3.Types;
 using Lyn.Types.Bitcoin;
+using Lyn.Types.Bolt;
 
 namespace Lyn.Protocol.Bolt2.ChannelEstablishment.Entities
 {
@@ -10,6 +11,8 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment.Entities
     public class ChannelCandidate
     {
         public UInt256? ChannelId { get; set; }
+        
+        public ShortChannelId? ShortChannelId { get; set; }
         public ChannelSide ChannelOpener { get; set; }
         public OpenChannel? OpenChannel { get; set; }
         public AcceptChannel? AcceptChannel { get; set; }

@@ -1,12 +1,18 @@
 using System;
 using System.Threading.Tasks;
+using Lyn.Protocol.Bolt1;
 using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages;
 using Lyn.Protocol.Bolt2.Entities;
 using Lyn.Protocol.Bolt2.NormalOperations;
 using Lyn.Protocol.Bolt3;
 using Lyn.Protocol.Bolt3.Types;
+using Lyn.Protocol.Bolt7;
+using Lyn.Protocol.Bolt7.Entities;
+using Lyn.Protocol.Bolt7.Messages;
+using Lyn.Protocol.Bolt9;
 using Lyn.Protocol.Common.Messages;
 using Lyn.Protocol.Connection;
+using Lyn.Types;
 using Lyn.Types.Bitcoin;
 using Microsoft.Extensions.Logging;
 
@@ -17,18 +23,24 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
         private readonly ILogger<FundingLockedMessageService> _logger;
         private readonly IChannelCandidateRepository _channelCandidateRepository;
         private readonly IPaymentChannelRepository _paymentChannelRepository;
+        private readonly IPeerRepository _peerRepository;
         private readonly ISecretStore _secretStore;
         private readonly ILightningKeyDerivation _lightningKeyDerivation;
+        private readonly IGossipRepository _gossipRepository;
+        private readonly IParseFeatureFlags _featureFlags;
 
         public FundingLockedMessageService(ILogger<FundingLockedMessageService> logger, 
             IChannelCandidateRepository channelCandidateRepository, IPaymentChannelRepository paymentChannelRepository, 
-            ISecretStore secretStore, ILightningKeyDerivation lightningKeyDerivation)
+            ISecretStore secretStore, ILightningKeyDerivation lightningKeyDerivation, IGossipRepository gossipRepository, IPeerRepository peerRepository, IParseFeatureFlags featureFlags)
         {
             _logger = logger;
             _channelCandidateRepository = channelCandidateRepository;
             _paymentChannelRepository = paymentChannelRepository;
             _secretStore = secretStore;
             _lightningKeyDerivation = lightningKeyDerivation;
+            _gossipRepository = gossipRepository;
+            _peerRepository = peerRepository;
+            _featureFlags = featureFlags;
         }
 
         public async Task<MessageProcessingOutput> ProcessMessageAsync(PeerMessage<FundingLocked> message)
@@ -54,6 +66,9 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                     "open channel is in an invalid state");
             }
 
+            var peer = await _peerRepository.TryGetPeerAsync(message.NodeId)
+                ?? throw new ArgumentException(nameof(message.NodeId));
+
             channelCandidate.FundingLocked = message.MessagePayload;
 
             if (channelCandidate.ChannelOpener !=  ChannelSide.Local) // We will be publishing to block chain in that case
@@ -68,6 +83,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             //Time to create the payment channel
             PaymentChannel paymentChannel = new PaymentChannel(
                 channelCandidate.ChannelId ?? throw new InvalidOperationException(),
+                channelCandidate.ShortChannelId ?? throw new InvalidOperationException(),
                 channelCandidate.FundingSignedRemote?.Signature ?? throw new InvalidOperationException(),
                 message.MessagePayload.NextPerCommitmentPoint ?? throw new InvalidOperationException(),
                 new[]
@@ -95,6 +111,16 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             _logger.LogDebug("Payment channel created");
             
             //TODO update gossip repo with new channel
+            await _gossipRepository.AddGossipChannelAsync(new GossipChannel(new ChannelAnnouncement()
+            {
+                ShortChannelId = channelCandidate.ShortChannelId,
+                Features = _featureFlags.ParseFeatures(peer.MutuallySupportedFeatures) ,
+                ChainHash = channelCandidate.OpenChannel.ChainHash,
+                NodeId1 = message.NodeId,
+                BitcoinKey1 = channelCandidate.AcceptChannel.FundingPubkey,
+                BitcoinKey2 = channelCandidate.OpenChannel.FundingPubkey,
+                NodeId2 =  
+            }));
 
             var seed = _secretStore.GetSeed();
             var secrets = _lightningKeyDerivation.DeriveSecrets(seed);
