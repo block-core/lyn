@@ -78,6 +78,8 @@ namespace Lyn.Protocol.Common
 
             services.AddTransient(typeof(IBoltMessageSender<>), typeof(BoltMessageSender<>));
 
+            services.AddSingleton<INodeSettings, NodeSettings>();
+            
             return services;
         }
 

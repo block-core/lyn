@@ -10,6 +10,7 @@ using Lyn.Protocol.Bolt7;
 using Lyn.Protocol.Bolt7.Entities;
 using Lyn.Protocol.Bolt7.Messages;
 using Lyn.Protocol.Bolt9;
+using Lyn.Protocol.Common;
 using Lyn.Protocol.Common.Messages;
 using Lyn.Protocol.Connection;
 using Lyn.Types;
@@ -28,10 +29,12 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
         private readonly ILightningKeyDerivation _lightningKeyDerivation;
         private readonly IGossipRepository _gossipRepository;
         private readonly IParseFeatureFlags _featureFlags;
+        private readonly INodeSettings _nodeSettings;
 
         public FundingLockedMessageService(ILogger<FundingLockedMessageService> logger, 
             IChannelCandidateRepository channelCandidateRepository, IPaymentChannelRepository paymentChannelRepository, 
-            ISecretStore secretStore, ILightningKeyDerivation lightningKeyDerivation, IGossipRepository gossipRepository, IPeerRepository peerRepository, IParseFeatureFlags featureFlags)
+            ISecretStore secretStore, ILightningKeyDerivation lightningKeyDerivation, IGossipRepository gossipRepository, 
+            IPeerRepository peerRepository, IParseFeatureFlags featureFlags, INodeSettings nodeSettings)
         {
             _logger = logger;
             _channelCandidateRepository = channelCandidateRepository;
@@ -41,6 +44,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             _gossipRepository = gossipRepository;
             _peerRepository = peerRepository;
             _featureFlags = featureFlags;
+            _nodeSettings = nodeSettings;
         }
 
         public async Task<MessageProcessingOutput> ProcessMessageAsync(PeerMessage<FundingLocked> message)
@@ -119,7 +123,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                 NodeId1 = message.NodeId,
                 BitcoinKey1 = channelCandidate.AcceptChannel.FundingPubkey,
                 BitcoinKey2 = channelCandidate.OpenChannel.FundingPubkey,
-                NodeId2 =  
+                NodeId2 = _nodeSettings.GetNodeId()   
             }));
 
             var seed = _secretStore.GetSeed();
