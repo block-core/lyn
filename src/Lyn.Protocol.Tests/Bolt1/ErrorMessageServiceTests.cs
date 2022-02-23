@@ -1,6 +1,8 @@
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Lyn.Protocol.Bolt1;
+using Lyn.Protocol.Bolt1.Entities;
 using Lyn.Protocol.Bolt1.Messages;
 using Lyn.Protocol.Common.Messages;
 using Lyn.Protocol.Connection;
@@ -44,7 +46,10 @@ namespace Lyn.Protocol.Tests.Bolt1
 
             await _sut.ProcessMessageAsync(message);
             
-            _repository.Verify(_ => _.AddErrorMessageToPeerAsync(message.NodeId,message.MessagePayload));
+            _repository.Verify(_ => _.AddErrorMessageToPeerAsync(message.NodeId,It.Is<PeerCommunicationIssue>(p 
+                => p.ChannelId == message.MessagePayload.ChannelId &&
+                   p.MessageText == Encoding.ASCII.GetString(message.MessagePayload.Data) &&
+                   p.MessageType == message.Message.Type)));
         }
     }
 }
