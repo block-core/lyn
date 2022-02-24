@@ -6,6 +6,8 @@ namespace Lyn.Protocol.Bolt9
     {
         Features SupportedFeatures { get; }
 
+        bool SupportsFeature(Features feature);
+        
         byte[] GetSupportedFeatures();
         byte[] GetSupportedGlobalFeatures();
 

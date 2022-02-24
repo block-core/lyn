@@ -4,10 +4,12 @@ using Lyn.Protocol.Bolt1;
 using Lyn.Protocol.Bolt1.Entities;
 using Lyn.Protocol.Bolt2.ChannelEstablishment;
 using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages;
+using Lyn.Protocol.Bolt2.Wallet;
 using Lyn.Protocol.Bolt3;
 using Lyn.Protocol.Bolt9;
 using Lyn.Protocol.Common;
 using Lyn.Protocol.Common.Blockchain;
+using Lyn.Protocol.Common.Hashing;
 using Lyn.Protocol.Common.Messages;
 using Lyn.Protocol.Connection;
 using Lyn.Types;
@@ -54,7 +56,8 @@ namespace Lyn.Protocol.Tests.Bolt2
             new ChainConfigProvider(),
             _store.Object,
             inMemoryPeerRepository,
-            _features.Object);
+            _features.Object,
+            new Mock<IWalletTransactions>().Object);
         }
     }
 }

@@ -5,7 +5,7 @@ namespace Lyn.Protocol.Bolt9
 {
     public class LynImplementedBoltFeatures : IBoltFeatures
     {
-        private const Features FEATURES = Features.InitialRoutingSync | Features.OptionStaticRemotekey;//| Features.GossipQueries; this will need to be added back when the gossip queries are fully supported
+        private const Features FEATURES = Features.InitialRoutingSync;//| Features.OptionStaticRemotekey;| Features.GossipQueries; this will need to be added back when the gossip queries are fully supported
 
         private readonly byte[] _bytes;
         private readonly BitArray _FeaturesBitArray;
@@ -17,6 +17,11 @@ namespace Lyn.Protocol.Bolt9
             _bytes = parseFeatureFlags.ParseFeatures(FEATURES);
             _FeaturesBitArray = new BitArray(_bytes);
             _globalBytes = parseFeatureFlags.ParseNFeatures(FEATURES, 13);
+        }
+
+        public bool SupportsFeature(Features feature)
+        {
+            return (SupportedFeatures & feature) != 0;
         }
 
         public byte[] GetSupportedFeatures() => _bytes;

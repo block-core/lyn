@@ -9,8 +9,20 @@ namespace Lyn.Protocol.Bolt1.Entities
         
         public PublicKey NodeId { get; set; }
 
-        public Features Featurs { get; set; }
+        public Features Features { get; set; }
 
         public Features GlobalFeatures { get; set; }
+
+        public Features MutuallySupportedFeatures { get; set; }
+
+        public bool SupportsFeature(Features feature)
+        {
+            return (Features & Features.OptionUpfrontShutdownScript) != 0;
+        }
+        
+        public bool MutuallySupportedFeature(Features feature)
+        {
+            return (MutuallySupportedFeatures & Features.OptionUpfrontShutdownScript) != 0;
+        }
     }
 }

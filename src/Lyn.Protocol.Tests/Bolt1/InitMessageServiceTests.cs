@@ -127,7 +127,7 @@ namespace Lyn.Protocol.Tests.Bolt1
             _sut.ProcessMessageAsync(message);
 
             _repository.Verify(_ => _.AddOrUpdatePeerAsync(It.Is<Peer>(p
-                => (ulong)p.Featurs  == (ulong)parsedFeatures &&
+                => (ulong)p.Features  == (ulong)parsedFeatures &&
                    p.NodeId.Equals(message.NodeId))));
         }
         
@@ -158,17 +158,17 @@ namespace Lyn.Protocol.Tests.Bolt1
             var peer = new Peer
             {
                 NodeId = message.NodeId,
-                Featurs = (Features) RandomMessages.GetRandomNumberUInt16()
+                Features = (Features) RandomMessages.GetRandomNumberUInt16()
             };
 
             _repository.Setup(_ => _.TryGetPeerAsync(message.NodeId))
-                .Returns(peer);
+                .Returns(Task.FromResult<Peer?>(peer));
 
             _sut.ProcessMessageAsync(message);
 
             _repository.Verify(_ => _.AddOrUpdatePeerAsync(peer));
             
-            Assert.Equal(peer.Featurs,parsedFeatures);
+            Assert.Equal(peer.Features,parsedFeatures);
         }
 
         [Fact]

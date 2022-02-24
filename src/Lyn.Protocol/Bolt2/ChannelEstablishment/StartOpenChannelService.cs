@@ -9,37 +9,36 @@ using Lyn.Protocol.Bolt9;
 using Lyn.Protocol.Common;
 using Lyn.Protocol.Common.Blockchain;
 using Lyn.Protocol.Common.Messages;
-using Lyn.Types.Bolt;
 using Lyn.Types.Fundamental;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Lyn.Protocol.Bolt2.Wallet;
 using Lyn.Types.Bitcoin;
 
 namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 {
     public class StartOpenChannelService : IStartOpenChannelService
     {
-        private readonly ILogger<OpenChannelMessageService> _logger;
+        private readonly ILogger<StartOpenChannelService> _logger;
         private readonly IRandomNumberGenerator _randomNumberGenerator;
         private readonly ILightningKeyDerivation _lightningKeyDerivation;
         private readonly IChannelCandidateRepository _channelStateRepository;
         private readonly IPeerRepository _peerRepository;
         private readonly IChainConfigProvider _chainConfigProvider;
         private readonly IBoltFeatures _boltFeatures;
-        private readonly IParseFeatureFlags _parseFeatureFlags;
         private readonly ISecretStore _secretStore;
+        private readonly IWalletTransactions _transactionsLookups;
 
-        public StartOpenChannelService(ILogger<OpenChannelMessageService> logger,
+        public StartOpenChannelService(ILogger<StartOpenChannelService> logger,
             IRandomNumberGenerator randomNumberGenerator,
             ILightningKeyDerivation lightningKeyDerivation,
             IChannelCandidateRepository channelStateRepository,
             IPeerRepository peerRepository,
             IChainConfigProvider chainConfigProvider,
             IBoltFeatures boltFeatures,
-            IParseFeatureFlags parseFeatureFlags,
-            ISecretStore secretStore)
+            ISecretStore secretStore, IWalletTransactions transactionsLookups)
         {
             _logger = logger;
             _randomNumberGenerator = randomNumberGenerator;
@@ -48,13 +47,13 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             _peerRepository = peerRepository;
             _chainConfigProvider = chainConfigProvider;
             _boltFeatures = boltFeatures;
-            _parseFeatureFlags = parseFeatureFlags;
             _secretStore = secretStore;
+            _transactionsLookups = transactionsLookups;
         }
 
         public async Task<BoltMessage> CreateOpenChannelAsync(CreateOpenChannelIn createOpenChannelIn)
         {
-            var peer = _peerRepository.TryGetPeerAsync(createOpenChannelIn.NodeId);
+            var peer = await _peerRepository.TryGetPeerAsync(createOpenChannelIn.NodeId);
 
             if (peer == null)
                 throw new ApplicationException($"Peer was not found or is not connected");
@@ -64,17 +63,20 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             if (chainParameters == null)
                 throw new ApplicationException($"Invalid chain hash");
 
-            OpenChannel openChannel = new();
-
-            openChannel.ChainHash = chainParameters.Chainhash;
-
-            openChannel.TemporaryChannelId = new UInt256(_randomNumberGenerator.GetBytes(32));
-
+            if (! await _transactionsLookups.IsAmountAvailableAsync(createOpenChannelIn.FundingAmount))
+                throw new InvalidOperationException("The amount is not available"); //TODO David change this to return false rather than exception? 
+            
+            OpenChannel openChannel = new()
+            {
+                ChainHash = chainParameters.Chainhash,
+                TemporaryChannelId = new UInt256(_randomNumberGenerator.GetBytes(32))
+            };
+            
             if (createOpenChannelIn.PrivateChannel && !chainParameters.ChannelBoundariesConfig.AllowPrivateChannels)
                 throw new ApplicationException($"Private channels are not enabled");
 
-            bool localSupportLargeChannels = (_boltFeatures.SupportedFeatures & Features.OptionSupportLargeChannel) != 0;
-            bool remoteSupportLargeChannels = (peer.Featurs & Features.OptionSupportLargeChannel) != 0;
+            var localSupportLargeChannels = _boltFeatures.SupportsFeature(Features.OptionSupportLargeChannel);
+            var remoteSupportLargeChannels = peer.SupportsFeature(Features.OptionSupportLargeChannel);
 
             if (localSupportLargeChannels == false || remoteSupportLargeChannels == false)
             {
@@ -117,9 +119,9 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             openChannel.MaxHtlcValueInFlightMsat = chainParameters.ChannelConfig.MaxHtlcValueInFlight;
             openChannel.MaxAcceptedHtlcs = chainParameters.ChannelConfig.MaxAcceptedHtlcs;
 
-            byte[]? upfrontShutdownScript = chainParameters.ChannelConfig.UpfrontShutdownScript;
-            bool localSupportUpfrontShutdownScript = (_boltFeatures.SupportedFeatures & Features.OptionUpfrontShutdownScript) != 0;
-            bool remoteSupportUpfrontShutdownScript = (peer.Featurs & Features.OptionUpfrontShutdownScript) != 0;
+            var upfrontShutdownScript = chainParameters.ChannelConfig.UpfrontShutdownScript;
+            var localSupportUpfrontShutdownScript = _boltFeatures.SupportsFeature(Features.OptionUpfrontShutdownScript);
+            var remoteSupportUpfrontShutdownScript = peer.SupportsFeature(Features.OptionUpfrontShutdownScript);
 
             if (localSupportUpfrontShutdownScript && remoteSupportUpfrontShutdownScript)
             {

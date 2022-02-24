@@ -15,6 +15,7 @@ using Moq;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Lyn.Protocol.Bolt2.Wallet;
 using Xunit;
 
 namespace Lyn.Protocol.Tests.Bolt2
@@ -25,13 +26,13 @@ namespace Lyn.Protocol.Tests.Bolt2
 
         private readonly Mock<IPeerRepository> _peerRepository = new();
         private readonly Mock<IBoltFeatures> _features = new();
-        private readonly Mock<ILogger<OpenChannelMessageService>> _logger = new();
+        private readonly Mock<ILogger<StartOpenChannelService>> _logger = new();
         private readonly Mock<IRandomNumberGenerator> _randomNumberGenerator = new();
         private readonly LightningKeyDerivation _lightningKeyDerivation = new();
         private readonly Mock<IChannelCandidateRepository> _channelStateRepository = new();
         private readonly Mock<IChainConfigProvider> _chainConfigProvider = new();
-        private readonly Mock<IParseFeatureFlags> _parseFeatureFlags = new();
         private readonly Mock<ISecretStore> _secretProvider = new();
+        private readonly Mock<IWalletTransactions> _transactionsLookups = new();
 
         private readonly Secret _randomSecret;
 
@@ -40,8 +41,8 @@ namespace Lyn.Protocol.Tests.Bolt2
             _sut = new StartOpenChannelService(_logger.Object,
                 _randomNumberGenerator.Object, _lightningKeyDerivation,
                 _channelStateRepository.Object, _peerRepository.Object,
-                _chainConfigProvider.Object, _features.Object,
-                _parseFeatureFlags.Object, _secretProvider.Object);
+                _chainConfigProvider.Object, _features.Object, _secretProvider.Object,
+                _transactionsLookups.Object);
 
             _randomSecret = new Secret(RandomMessages.GetRandomByteArray(32));
 
@@ -70,7 +71,7 @@ namespace Lyn.Protocol.Tests.Bolt2
                 },
             };
 
-            _peerRepository.Setup(_ => _.TryGetPeerAsync(message.NodeId)).Returns(new Peer());
+            _peerRepository.Setup(_ =>  _.TryGetPeerAsync(message.NodeId)).Returns(Task.FromResult<Peer?>(new Peer()));
             _chainConfigProvider.Setup(_ => _.GetConfiguration(message.ChainHash)).Returns(chainParameters);
 
             return chainParameters;
@@ -95,9 +96,17 @@ namespace Lyn.Protocol.Tests.Bolt2
             return (fundingPubkey, basepoints);
         }
 
+        private void WithEnoughFundsInTheWallet()
+        {
+            _transactionsLookups.Setup(_ => _.IsAmountAvailableAsync(It.IsAny<Satoshis>()))
+                .Returns(Task.FromResult<bool>(true));
+        }
+        
         [Fact]
         public async Task StartOpenChannelSuccess()
         {
+            WithEnoughFundsInTheWallet();
+            
             var message = NewStartChannelMessage();
 
             var config = WithExistingPeerAndChainParameters(message);

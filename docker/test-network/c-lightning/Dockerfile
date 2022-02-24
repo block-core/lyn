@@ -28,7 +28,7 @@ RUN chmod +x /usr/local/bin/logtail.sh
 ADD wait-for-bitcoind.sh /usr/local/bin
 RUN chmod +x /usr/local/bin/wait-for-bitcoind.sh
 
-RUN curl -sL https://deb.nodesource.com/setup_10.x | bash -  \
+RUN curl -sL https://deb.nodesource.com/setup_14.x | bash -  \
   && apt-get install -y nodejs \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
