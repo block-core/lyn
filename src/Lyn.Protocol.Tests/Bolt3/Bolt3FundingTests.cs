@@ -88,7 +88,7 @@ namespace Lyn.Protocol.Tests.Bolt3
                 }
             };
 
-            var newtrxToSign = Transaction.Parse(Hex.ToString(serializationFactory.Serialize(newtrx)).Substring(2), NBitcoin.Network.RegTest);
+            var newtrxToSign = Transaction.Parse(Hex.ToString(serializationFactory.Serialize(newtrx)), NBitcoin.Network.RegTest);
 
             uint256? newtrxToSignHash = newtrxToSign.GetSignatureHash(
                 block1.Transactions[0].Outputs[0].ScriptPubKey,
@@ -104,7 +104,7 @@ namespace Lyn.Protocol.Tests.Bolt3
                 Op.GetPushOp(block1Privkey.PubKey.ToBytes()))
                 .ToBytes();
 
-            Assert.Equal(trx.ToHex(), Hex.ToString(serializationFactory.Serialize(newtrx)).Substring(2));
+            Assert.Equal(trx.ToHex(), Hex.ToString(serializationFactory.Serialize(newtrx)));
 
             // Check that the funding transaction scripts are equal.
             Assert.Equal(trx.Outputs[0].ScriptPubKey, scriptWit);

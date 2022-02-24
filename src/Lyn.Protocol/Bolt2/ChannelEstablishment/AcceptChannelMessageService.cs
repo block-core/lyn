@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using Lyn.Protocol.Bolt2.ChannelEstablishment.Entities;
 using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages;
 using Lyn.Protocol.Bolt3;
@@ -124,9 +126,9 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             });
             
             var fundingTransactionHash = _transactionHashCalculator.ComputeHash(channelCandidate.FundingTransaction);
-            uint fundingTransactionIndex = 1;
+            var fundingTransactionIndex = GetFundingTransactionOutputIndex(channelCandidate, fundingScript);
 
-            // david: this params can go in channelchandidate
+            // David: this params can go in channel candidate
             var optionAnchorOutputs = _boltFeatures.SupportsFeature(Features.OptionAnchorOutputs);
             var optionStaticRemoteKey = _boltFeatures.SupportsFeature(Features.OptionStaticRemotekey); // not sure why this must be on if other side supports it and we don't
 
@@ -187,6 +189,20 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             };
 
             return new SuccessWithOutputResponse(boltMessage);
+        }
+
+        private static uint GetFundingTransactionOutputIndex(ChannelCandidate channelCandidate, byte[] fundingScript)
+        {
+            for (uint i = 0; i < channelCandidate.FundingTransaction.Outputs.Length; i++)
+            {
+                var output = channelCandidate.FundingTransaction.Outputs[i];
+                if (output.Value != channelCandidate.OpenChannel.FundingSatoshis ||
+                    !output.PublicKeyScript.SequenceEqual(fundingScript)) continue;
+                return i;
+            }
+
+            throw new ArgumentOutOfRangeException(
+                "Failed to find the funding transaction output in the transaction returned from the wallet");
         }
 
         private CommitmenTransactionOut CommitmentTransactionOut(ChannelCandidate? channelCandidate, OutPoint inPoint, bool optionAnchorOutputs, bool optionStaticRemotekey)
