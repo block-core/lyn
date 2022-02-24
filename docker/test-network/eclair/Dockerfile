@@ -31,6 +31,7 @@ ADD wait-for-bitcoind.sh /usr/local/bin
 RUN chmod +x /usr/local/bin/wait-for-bitcoind.sh
 
 EXPOSE 9735
+EXPOSE 8080
 ENTRYPOINT ["/usr/local/bin/eclair-entrypoint.sh"]
 
 # Show logs from beginning and keep following
