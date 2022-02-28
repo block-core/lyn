@@ -128,7 +128,7 @@ namespace Lyn.Protocol.Tests.Bolt3
 
             byte[] localTransactionBytes = Context.SerializationFactory.Serialize(localTransaction);
 
-            Assert.Equal(vectors.OutputCommitTx, Hex.ToString(localTransactionBytes.AsSpan()).Substring(2));
+            Assert.Equal(vectors.OutputCommitTx, Hex.ToString(localTransactionBytes.AsSpan()));
 
             /* FIXME: naming here is kind of backwards: local revocation key
              * is derived from remote revocation basepoint, but it's local */
@@ -243,7 +243,7 @@ namespace Lyn.Protocol.Tests.Bolt3
 
                 byte[] htlcTransactionBytes = Context.SerializationFactory.Serialize(htlcTransaction);
 
-                Assert.Equal(expectedHtlcHex, Hex.ToString(htlcTransactionBytes.AsSpan()).Substring(2));
+                Assert.Equal(expectedHtlcHex, Hex.ToString(htlcTransactionBytes.AsSpan()));
             }
         }
 

@@ -5,8 +5,9 @@ namespace Lyn.Protocol.Bolt1.Messages
     [Flags]
     public enum Features : ulong 
     {
-        OptionDataLossProtect = 0,
         OptionDataLossProtectRequired = 1 << 0,
+        OptionDataLossProtect = 1 << 1,
+        NotSupported = 1 << 2,
         InitialRoutingSync = 1 << 3,
         OptionUpfrontShutdownScriptRequired = 1 << 4,
         OptionUpfrontShutdownScript = 1 << 5,

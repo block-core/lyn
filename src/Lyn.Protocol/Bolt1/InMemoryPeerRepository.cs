@@ -12,7 +12,7 @@ namespace Lyn.Protocol.Bolt1
     {
         public ConcurrentDictionary<PublicKey, Peer> Peers = new();
 
-        public ConcurrentDictionary<PublicKey, List<ErrorMessage>> ErrorMessages = new();
+        public ConcurrentDictionary<PublicKey, List<PeerCommunicationIssue>> ErrorMessages = new();
 
         public Task AddNewPeerAsync(Peer peer)
         {
@@ -21,7 +21,7 @@ namespace Lyn.Protocol.Bolt1
             return Task.CompletedTask;
         }
 
-        public Task AddErrorMessageToPeerAsync(PublicKey peerId, ErrorMessage errorMessage)
+        public Task AddErrorMessageToPeerAsync(PublicKey peerId, PeerCommunicationIssue errorMessage)
         {
             if (ErrorMessages.ContainsKey(peerId))
             {
@@ -29,7 +29,7 @@ namespace Lyn.Protocol.Bolt1
             }
             else
             {
-                ErrorMessages.TryAdd(peerId, new List<ErrorMessage> { errorMessage });
+                ErrorMessages.TryAdd(peerId, new List<PeerCommunicationIssue> { errorMessage });
             }
 
             return Task.CompletedTask;
@@ -40,11 +40,13 @@ namespace Lyn.Protocol.Bolt1
             return Peers.ContainsKey(nodeId);
         }
 
-        public Peer? TryGetPeerAsync(PublicKey nodeId)
+        public Task<Peer?> TryGetPeerAsync(PublicKey nodeId)
         {
             var key = Peers.Keys.FirstOrDefault(_ => _.Equals(nodeId));
 
-            return key != null ? Peers[key] : null; //Hack for quick debug
+            return key != null 
+                ? Task.FromResult<Peer?>(Peers[key])  
+                : Task.FromResult<Peer?>(null);
         }
 
         public Task AddOrUpdatePeerAsync(Peer peer)

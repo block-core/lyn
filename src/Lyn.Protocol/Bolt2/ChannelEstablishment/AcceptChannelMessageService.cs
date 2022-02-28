@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Buffers;
 using System.Collections.Generic;
+using System.Linq;
 using Lyn.Protocol.Bolt2.ChannelEstablishment.Entities;
 using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages;
 using Lyn.Protocol.Bolt3;
@@ -14,7 +14,9 @@ using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 using Lyn.Protocol.Bolt1;
 using Lyn.Protocol.Bolt1.Messages;
+using Lyn.Protocol.Bolt2.Wallet;
 using Lyn.Protocol.Bolt9;
+using Lyn.Protocol.Common.Hashing;
 using Lyn.Types;
 using Lyn.Types.Fundamental;
 using Microsoft.Extensions.DependencyInjection;
@@ -33,6 +35,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
         private readonly ISecretStore _secretStore;
         private readonly IPeerRepository _peerRepository;
         private readonly IBoltFeatures _boltFeatures;
+        private readonly IWalletTransactions _walletTransactions;
 
         public AcceptChannelMessageService(ILogger<AcceptChannelMessageService> logger,
             ILightningTransactions lightningTransactions,
@@ -43,7 +46,8 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             IChainConfigProvider chainConfigProvider,
             ISecretStore secretStore,
             IPeerRepository peerRepository,
-            IBoltFeatures boltFeatures)
+            IBoltFeatures boltFeatures, 
+            IWalletTransactions walletTransactions)
         {
             _logger = logger;
             _lightningTransactions = lightningTransactions;
@@ -55,6 +59,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             _secretStore = secretStore;
             _peerRepository = peerRepository;
             _boltFeatures = boltFeatures;
+            _walletTransactions = walletTransactions;
         }
 
         public async Task<MessageProcessingOutput> ProcessMessageAsync(PeerMessage<AcceptChannel> message)
@@ -65,7 +70,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             if (channelCandidate == null)
             {
-                return MessageProcessingOutput.CreateErrorMessage(acceptChannel.TemporaryChannelId, true, "open channel is in an invalid state");
+                return new ErrorCloseChannelResponse(acceptChannel.TemporaryChannelId, "open channel is in an invalid state");
             }
 
             if (channelCandidate.ChannelOpener == ChannelSide.Local
@@ -76,36 +81,36 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             }
             else
             {
-                return MessageProcessingOutput.CreateErrorMessage(acceptChannel.TemporaryChannelId, true, "open channel is in an invalid state");
+                return new ErrorCloseChannelResponse(acceptChannel.TemporaryChannelId, "open channel is in an invalid state");
             }
 
-            var peer = _peerRepository.TryGetPeerAsync(message.NodeId);
+            var peer = await _peerRepository.TryGetPeerAsync(message.NodeId);
 
             if (peer == null)
             {
-                return MessageProcessingOutput.CreateErrorMessage(acceptChannel.TemporaryChannelId, true, "invalid peer");
+                return new ErrorCloseChannelResponse(acceptChannel.TemporaryChannelId, "invalid peer");
             }
 
             ChainParameters? chainParameters = _chainConfigProvider.GetConfiguration(channelCandidate.OpenChannel.ChainHash);
 
             if (chainParameters == null)
             {
-                return MessageProcessingOutput.CreateErrorMessage(acceptChannel.TemporaryChannelId, true, "chainhash is unknowen");
+                return new ErrorCloseChannelResponse(acceptChannel.TemporaryChannelId,  "chainhash is unknowen");
             }
 
             if (acceptChannel.MinimumDepth > chainParameters.ChannelBoundariesConfig.MinimumDepth)
             {
-                return MessageProcessingOutput.CreateErrorMessage(acceptChannel.TemporaryChannelId, true, "minimum_depth is unreasonably large");
+                return new ErrorCloseChannelResponse(acceptChannel.TemporaryChannelId,  "minimum_depth is unreasonably large");
             }
 
             if (acceptChannel.DustLimitSatoshis > channelCandidate.OpenChannel.ChannelReserveSatoshis)
             {
-                return MessageProcessingOutput.CreateErrorMessage(acceptChannel.TemporaryChannelId, true, "channel_reserve_satoshis is less than dust_limit_satoshis within the open_channel message");
+                return new ErrorCloseChannelResponse(acceptChannel.TemporaryChannelId, "channel_reserve_satoshis is less than dust_limit_satoshis within the open_channel message");
             }
 
             if (channelCandidate.OpenChannel.DustLimitSatoshis > acceptChannel.ChannelReserveSatoshis)
             {
-                return MessageProcessingOutput.CreateErrorMessage(acceptChannel.TemporaryChannelId, true, "channel_reserve_satoshis from the open_channel message is less than dust_limit_satoshis");
+                return new ErrorCloseChannelResponse(acceptChannel.TemporaryChannelId, "channel_reserve_satoshis from the open_channel message is less than dust_limit_satoshis");
             }
 
             channelCandidate.AcceptChannel = acceptChannel;
@@ -114,33 +119,25 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             var fundingScript = _lightningScripts.FundingWitnessScript(channelCandidate.OpenChannel.FundingPubkey, channelCandidate.AcceptChannel.FundingPubkey);
 
-            // todo: create the transaction with the fundingScript as output and the input will be taken and signed from a wallet interface (create a wallet interface)
-
-            var fundingTransaction = new Transaction
+            channelCandidate.FundingTransaction =await _walletTransactions.GenerateTransactionForOutputAsync(new TransactionOutput
             {
-                Outputs = new[]
-                {
-                    new TransactionOutput
-                    {
-                        PublicKeyScript = fundingScript,
-                        Value = channelCandidate.OpenChannel.FundingSatoshis
-                    }
-                }
-            };
+                PublicKeyScript = fundingScript,
+                Value = channelCandidate.OpenChannel.FundingSatoshis
+            });
+            
+            var fundingTransactionHash = _transactionHashCalculator.ComputeHash(channelCandidate.FundingTransaction);
+            var fundingTransactionIndex = GetFundingTransactionOutputIndex(channelCandidate, fundingScript);
 
-            var fundingTransactionHash = _transactionHashCalculator.ComputeHash(fundingTransaction);
-            uint fundingTransactionIndex = 0;
-
-            // david: this params can go in channelchandidate
-            bool optionAnchorOutputs = (_boltFeatures.SupportedFeatures & peer.Featurs & Features.OptionAnchorOutputs) != 0;
-            bool optionStaticRemotekey = (_boltFeatures.SupportedFeatures & peer.Featurs & Features.OptionStaticRemotekey) != 0; // not sure why this must be on if other side supports it and we don't
+            // David: this params can go in channel candidate
+            var optionAnchorOutputs = _boltFeatures.SupportsFeature(Features.OptionAnchorOutputs);
+            var optionStaticRemoteKey = _boltFeatures.SupportsFeature(Features.OptionStaticRemotekey); // not sure why this must be on if other side supports it and we don't
 
             Secret seed = _secretStore.GetSeed();
             Secrets secrets = _lightningKeyDerivation.DeriveSecrets(seed);
 
             var fundingOutPoint = new OutPoint { Hash = fundingTransactionHash, Index = fundingTransactionIndex };
 
-            var remoteCommitmentTransaction = CommitmentTransactionOut(channelCandidate, secrets, fundingOutPoint, optionAnchorOutputs, optionStaticRemotekey);
+            var remoteCommitmentTransaction = CommitmentTransactionOut(channelCandidate, fundingOutPoint, optionAnchorOutputs, optionStaticRemoteKey);
 
             byte[]? fundingWscript = _lightningScripts.FundingRedeemScript(channelCandidate.OpenChannel.FundingPubkey, channelCandidate.AcceptChannel.FundingPubkey);
 
@@ -191,19 +188,35 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                 Payload = fundingCreated,
             };
 
-            return new MessageProcessingOutput { Success = true, ResponseMessages = new[] { boltMessage } };
+            return new SuccessWithOutputResponse(boltMessage);
         }
 
-        private CommitmenTransactionOut CommitmentTransactionOut(ChannelCandidate? channelCandidate, Secrets secrets, OutPoint inPoint, bool optionAnchorOutputs, bool optionStaticRemotekey)
+        private static uint GetFundingTransactionOutputIndex(ChannelCandidate channelCandidate, byte[] fundingScript)
+        {
+            for (uint i = 0; i < channelCandidate.FundingTransaction.Outputs.Length; i++)
+            {
+                var output = channelCandidate.FundingTransaction.Outputs[i];
+                if (output.Value != channelCandidate.OpenChannel.FundingSatoshis ||
+                    !output.PublicKeyScript.SequenceEqual(fundingScript)) continue;
+                return i;
+            }
+
+            throw new ArgumentOutOfRangeException(
+                "Failed to find the funding transaction output in the transaction returned from the wallet");
+        }
+
+        private CommitmenTransactionOut CommitmentTransactionOut(ChannelCandidate? channelCandidate, OutPoint inPoint, bool optionAnchorOutputs, bool optionStaticRemotekey)
         {
             // generate the commitment transaction how it will look like for the other side
 
             var commitmentTransactionIn = new CommitmentTransactionIn
             {
                 Funding = channelCandidate.OpenChannel.FundingSatoshis,
+                
                 Htlcs = new List<Htlc>(),
                 Opener = channelCandidate.ChannelOpener,
                 Side = ChannelSide.Remote,
+                
                 CommitmentNumber = 0,
                 FundingTxout = inPoint,
                 DustLimitSatoshis = channelCandidate.AcceptChannel.DustLimitSatoshis,

@@ -3,6 +3,7 @@ namespace Lyn.Protocol.Common.Messages
     public enum MessageType : ushort
     {
         //Setup & Control
+        Warning = 1,
         Init = 16,
         Error = 17,
         Ping = 18,

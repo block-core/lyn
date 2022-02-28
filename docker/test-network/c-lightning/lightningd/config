@@ -10,5 +10,3 @@ log-level=debug
 log-file=/lightningd/lightningd.log
 
 plugin=/rest/plugin.js
-rest-port=3002
-rest-docport=4001

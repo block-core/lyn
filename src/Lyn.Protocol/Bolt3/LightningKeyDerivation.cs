@@ -17,10 +17,10 @@ namespace Lyn.Protocol.Bolt3
         public UInt256 DeriveChannelId(UInt256 hash, ushort index)
         {
             var hashbytes = hash.GetBytes().ToArray();
-            var indexbytes = BitConverter.GetBytes(index);
+            var indexbytes = BitConverter.GetBytes( index);
 
-            hashbytes[30] ^= indexbytes[0];
-            hashbytes[31] ^= indexbytes[1];
+            hashbytes[30] ^= indexbytes[1]; //Big endian
+            hashbytes[31] ^= indexbytes[0];
 
             UInt256 newChannelId = new UInt256(hashbytes);
 
