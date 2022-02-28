@@ -1,6 +1,6 @@
 ﻿using Lyn.Types.Bitcoin;
 
-namespace Lyn.Protocol.Common.Hashing
+namespace Lyn.Protocol.Common.Crypto
 {
     public interface ITransactionHashCalculator
     {
