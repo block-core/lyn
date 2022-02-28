@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Buffers;
-using Lyn.Protocol.Common.Hashing;
+using Lyn.Protocol.Common.Crypto;
 using Lyn.Types.Bitcoin;
 using Lyn.Types.Serialization;
 

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Lyn.Protocol.Bolt3.Types;
-using Lyn.Protocol.Common.Hashing;
+using Lyn.Protocol.Common.Crypto;
 using Lyn.Types.Bitcoin;
 using Lyn.Types.Fundamental;
 using NBitcoin;

@@ -3,7 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 using Lyn.Types.Bitcoin;
 
-namespace Lyn.Protocol.Common.Hashing
+namespace Lyn.Protocol.Common.Crypto
 {
     public static partial class HashGenerator
     {
@@ -55,6 +55,14 @@ namespace Lyn.Protocol.Common.Hashing
             if (!sha.TryComputeHash(data, result, out _)) throw new HashGeneratorException($"Failed to perform {nameof(DoubleSha512AsUInt256)}");
             if (!sha.TryComputeHash(result, result, out _)) throw new HashGeneratorException($"Failed to perform {nameof(DoubleSha512AsUInt256)}");
             return new UInt256(result.Slice(0, 32));
+        }
+
+        public static ReadOnlySpan<byte> HmacSha256(byte[] key, ReadOnlySpan<byte> data)
+        {
+            using var hmac = new HMACSHA256(key);
+            Span<byte> result = new byte[32];
+            if (!hmac.TryComputeHash(data, result, out _)) throw new HashGeneratorException($"Failed to perform {nameof(HmacSha256)}");
+            return result;
         }
 
         [DoesNotReturn]
