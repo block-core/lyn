@@ -19,22 +19,22 @@ namespace Lyn.Types
 
         public static string ToString(ReadOnlySpan<byte> span)
         {
-            return $"0x{Convert.ToHexString(span).ToLower()}";
+            return Convert.ToHexString(span).ToLower();
         }
 
         public static string ToString(Span<byte> span)
         {
-            return $"0x{Convert.ToHexString(span).ToLower()}";
+            return Convert.ToHexString(span).ToLower();
         }
 
         public static string ToString(IEnumerable<byte> arr)
         {
-            return $"0x{Convert.ToHexString(arr.ToArray()).ToLower()}";
+            return Convert.ToHexString(arr.ToArray()).ToLower();
         }
         
         public static string ToString(byte[] arr)
         {
-            return $"0x{Convert.ToHexString(arr).ToLower()}";
+            return Convert.ToHexString(arr).ToLower();
         }
     }
 }

@@ -6,7 +6,6 @@ using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages.TlvRecords;
 using Lyn.Protocol.Bolt3;
 using Lyn.Protocol.Bolt3.Types;
 using Lyn.Protocol.Bolt9;
-using Lyn.Protocol.Common;
 using Lyn.Protocol.Common.Blockchain;
 using Lyn.Protocol.Common.Messages;
 using Lyn.Protocol.Connection;
@@ -52,11 +51,11 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
         {
             OpenChannel openChannel = message.MessagePayload;
 
-            var peer = _peerRepository.TryGetPeerAsync(message.NodeId);
+            var peer = await _peerRepository.TryGetPeerAsync(message.NodeId);
 
             if (peer == null)
             {
-                return MessageProcessingOutput.CreateErrorMessage(openChannel.TemporaryChannelId, true, "invalid peer");
+                return new ErrorCloseChannelResponse(openChannel.TemporaryChannelId, "invalid peer");
             }
 
             ChannelCandidate? currentState = await _channelCandidateRepository.GetAsync(message.MessagePayload.TemporaryChannelId);
@@ -71,7 +70,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                 }
                 else
                 {
-                    return MessageProcessingOutput.CreateErrorMessage(openChannel.TemporaryChannelId, true, "open channel is in an invalid state");
+                    return new ErrorCloseChannelResponse(openChannel.TemporaryChannelId,  "open channel is in an invalid state");
                 }
             }
 
@@ -79,22 +78,22 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             if (chainParameters == null)
             {
-                return MessageProcessingOutput.CreateErrorMessage(openChannel.TemporaryChannelId, true, "chainhash is unknowen");
+                return new ErrorCloseChannelResponse(openChannel.TemporaryChannelId,  "chainhash is unknowen");
             }
 
-            bool optionAnchorOutputs = (peer.Featurs & Features.OptionAnchorOutputs) != 0;
+            bool optionAnchorOutputs = (peer.Features & Features.OptionAnchorOutputs) != 0;
 
             string failReason = CheckMessage(openChannel, chainParameters, optionAnchorOutputs);
 
             if (!string.IsNullOrEmpty(failReason))
             {
-                return MessageProcessingOutput.CreateErrorMessage(openChannel.TemporaryChannelId, true, failReason);
+                return new ErrorCloseChannelResponse(openChannel.TemporaryChannelId, failReason);
             }
 
             byte[]? remoteUpfrontShutdownScript = null;
             byte[]? localUpfrontShutdownScript = chainParameters.ChannelConfig.UpfrontShutdownScript;
-            bool localSupportUpfrontShutdownScript = (_boltFeatures.SupportedFeatures & Features.OptionUpfrontShutdownScript) != 0;
-            bool remoteSupportUpfrontShutdownScript = (peer.Featurs & Features.OptionUpfrontShutdownScript) != 0;
+            bool localSupportUpfrontShutdownScript = _boltFeatures.SupportsFeature(Features.OptionUpfrontShutdownScript);
+            bool remoteSupportUpfrontShutdownScript = peer.SupportsFeature(Features.OptionUpfrontShutdownScript);
 
             if (remoteSupportUpfrontShutdownScript)
             {
@@ -102,7 +101,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
                 if (remoteUpfrontShutdownScript == null)
                 {
-                    return MessageProcessingOutput.CreateErrorMessage(openChannel.TemporaryChannelId, true, "failed to open channel");
+                    return new ErrorCloseChannelResponse(openChannel.TemporaryChannelId,  "failed to open channel");
                 }
             }
 
@@ -161,7 +160,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                 }
             };
 
-            return new MessageProcessingOutput { Success = true, ResponseMessages = new[] { boltMessage } };
+            return new SuccessWithOutputResponse(boltMessage);
         }
 
         private string CheckMessage(OpenChannel openChannel, ChainParameters chainParameters, bool optionAnchorOutputs)

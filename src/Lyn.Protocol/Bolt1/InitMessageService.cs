@@ -37,26 +37,19 @@ namespace Lyn.Protocol.Bolt1
             if (!_boltFeatures.ValidateRemoteFeatureAreCompatible(request.MessagePayload.Features, request.MessagePayload.GlobalFeatures))
                 throw new ArgumentException(nameof(request.MessagePayload.Features)); //TODO David we need to define the way to close a connection gracefully
 
-            var peer = _repository.TryGetPeerAsync(request.NodeId);
+            var peer = await _repository.TryGetPeerAsync(request.NodeId);
             
-            var peerExists = peer != null;
-
             peer ??= new Peer {NodeId = request.NodeId};
 
-            peer.Featurs = _featureFlags.ParseFeatures(request.MessagePayload.Features);
+            peer.Features = _featureFlags.ParseFeatures(request.MessagePayload.Features);
             peer.GlobalFeatures = _featureFlags.ParseFeatures(request.MessagePayload.GlobalFeatures);
-
+            peer.MutuallySupportedFeatures = peer.Features & _boltFeatures.SupportedFeatures;
+            
             await _repository.AddOrUpdatePeerAsync(peer);
 
             await _gossipRepository.AddNodeAsync(new GossipNode(request.NodeId));
             
-            return new MessageProcessingOutput
-            {
-                Success = true,
-                ResponseMessages = peerExists
-                    ? null
-                    : new[] {CreateInitMessage()}
-            };
+            return new SuccessWithOutputResponse(CreateInitMessage());
 
             //TODO David add sending the gossip timestamp filter *init message MUST be sent first
         }
@@ -82,11 +75,7 @@ namespace Lyn.Protocol.Bolt1
 
         public async Task<MessageProcessingOutput> GenerateInitAsync(PublicKey nodeId, CancellationToken token)
         {
-            var response = new MessageProcessingOutput
-            {
-                Success = true,
-                ResponseMessages = new[] {CreateInitMessage()}
-            };
+            var response = new SuccessWithOutputResponse(CreateInitMessage());
 
             if (_repository.PeerExists(nodeId)) 
                 return response;

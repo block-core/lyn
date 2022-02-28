@@ -21,4 +21,8 @@
   <ItemGroup>
     <ProjectReference Include="..\Lyn.Types\Lyn.Types.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Common\Blockchain\ITransactionBuilder.cs" />
+  </ItemGroup>
 </Project>

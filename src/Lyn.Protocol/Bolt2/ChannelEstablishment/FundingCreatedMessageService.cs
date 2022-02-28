@@ -21,7 +21,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             _logger.LogDebug("FundingCreated");
 
-            return new MessageProcessingOutput { Success = true };
+            return new EmptySuccessResponse();
         }
     }
 }

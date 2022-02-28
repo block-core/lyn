@@ -4,7 +4,7 @@ using Lyn.Protocol.Common.Crypto;
 using Lyn.Types.Bitcoin;
 using Lyn.Types.Serialization;
 
-namespace Lyn.Protocol.Common
+namespace Lyn.Protocol.Common.Hashing
 {
     public class TransactionHashCalculator : ITransactionHashCalculator
     {

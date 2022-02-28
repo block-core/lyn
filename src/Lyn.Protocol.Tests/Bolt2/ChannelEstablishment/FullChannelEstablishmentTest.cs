@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using FluentAssertions;
@@ -6,10 +7,12 @@ using Lyn.Protocol.Bolt1.Entities;
 using Lyn.Protocol.Bolt1.Messages;
 using Lyn.Protocol.Bolt2.ChannelEstablishment;
 using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages;
+using Lyn.Protocol.Bolt2.Wallet;
 using Lyn.Protocol.Bolt3;
 using Lyn.Protocol.Bolt9;
 using Lyn.Protocol.Common;
 using Lyn.Protocol.Common.Blockchain;
+using Lyn.Protocol.Common.Hashing;
 using Lyn.Protocol.Common.Messages;
 using Lyn.Protocol.Connection;
 using Lyn.Types;
@@ -45,6 +48,8 @@ namespace Lyn.Protocol.Tests.Bolt2.ChannelEstablishment
         private static UInt256 _chainHash =
             new(Hex.FromString("06226e46111a0b59caaf126043eb5bbf28c34f3a5e332a1fc7b2b73cf188910f"));
 
+        Mock<IWalletTransactions> walletLookup;
+        
         public FullChannelEstablishmentTest()
         {
             var loggerFactory = new LoggerFactory();
@@ -69,16 +74,21 @@ namespace Lyn.Protocol.Tests.Bolt2.ChannelEstablishment
                 new TransactionInputSerializer(new OutPointSerializer()),
                 new TransactionOutputSerializer(),
                 new TransactionWitnessSerializer(new TransactionWitnessComponentSerializer())));
+            
+            walletLookup = new Mock<IWalletTransactions>();
 
-            _openChannelService = new StartOpenChannelService(new Logger<OpenChannelMessageService>(loggerFactory),
+            walletLookup.Setup(_ => _.IsAmountAvailableAsync(It.IsAny<Satoshis>()))
+                .ReturnsAsync(true);
+            
+            _openChannelService = new StartOpenChannelService(new Logger<StartOpenChannelService>(loggerFactory),
                 _randomNumberGenerator.Object,
                 _keyDerivation,
                 _candidateRepository,
                 _peerRepository,
                 new ChainConfigProvider(),
                 new LynImplementedBoltFeatures(parsingFeatures),
-                parsingFeatures,
-                new SecretStore());
+                new SecretStore(),
+                walletLookup.Object);
 
             _acceptChannelMessageService = new AcceptChannelMessageService(
                 new Logger<AcceptChannelMessageService>(loggerFactory),
@@ -89,24 +99,25 @@ namespace Lyn.Protocol.Tests.Bolt2.ChannelEstablishment
                 _candidateRepository,
                 new ChainConfigProvider(),
                 new SecretStore(),
-                _peerRepository, new LynImplementedBoltFeatures(parsingFeatures));
+                _peerRepository, 
+                new LynImplementedBoltFeatures(parsingFeatures),
+                walletLookup.Object);
 
             _fundingSignedMessageService = new FundingSignedMessageService(
                 new Logger<FundingSignedMessageService>(loggerFactory),
                 lightningTransactions,
-                hashCalculator,
                 _lightningScripts,
                 _keyDerivation,
                 _candidateRepository,
                 new ChainConfigProvider(),
-                new SecretStore(),
                 _peerRepository,
-                new LynImplementedBoltFeatures(parsingFeatures));
+                new LynImplementedBoltFeatures(parsingFeatures),
+                walletLookup.Object);
 
 
             _peerRepository.AddNewPeerAsync(new Peer
             {
-                Featurs = Features.InitialRoutingSync | Features.VarOnionOptin | Features.GossipQueriesEx |
+                Features = Features.InitialRoutingSync | Features.VarOnionOptin | Features.GossipQueriesEx |
                           Features.PaymentSecret | (Features)2,
                 Id = 0,
                 GlobalFeatures = Features.OptionDataLossProtect,
@@ -184,9 +195,30 @@ namespace Lyn.Protocol.Tests.Bolt2.ChannelEstablishment
                 "0x7dda8bb401b0236edb0e97de360626ba64c8eebffc1399ca4ce17831c196d8b3232c4eea5db33d60811c1f6d131b4f4cd9a330d0f50dcb063daaf648e40a9b30")
         };
 
+        private void WithTheTransactionReturnedFromTheWallet()
+        {
+            var expectedTransaction = new Transaction
+            {
+                Outputs = new TransactionOutput[]
+                {
+                    new()
+                    {
+                        PublicKeyScript = _lightningScripts.FundingWitnessScript(_expectedOpenChannel.FundingPubkey,
+                            _acceptChannel.FundingPubkey),
+                        Value = _expectedOpenChannel.FundingSatoshis
+                    }
+                }
+            };
+
+            walletLookup.Setup(_ => _.GenerateTransactionForOutputAsync(It.IsAny<TransactionOutput>()))
+                .Returns(Task.FromResult(expectedTransaction));
+        }
+        
         [Fact]
         public async Task FullChannelEstablishmentScenarioCompletesSuccessfully()
         {
+            WithTheTransactionReturnedFromTheWallet();
+
             var openChannelResponse = await _openChannelService.CreateOpenChannelAsync(new CreateOpenChannelIn(_nodeId,
                 _chainHash, 16000000, 0, 1000, false));
 

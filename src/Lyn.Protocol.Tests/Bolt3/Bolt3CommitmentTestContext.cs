@@ -1,9 +1,11 @@
 using System;
 using System.Buffers;
 using System.Linq;
+using FluentAssertions;
 using Lyn.Protocol.Bolt3;
 using Lyn.Protocol.Bolt3.Types;
 using Lyn.Protocol.Common;
+using Lyn.Protocol.Common.Hashing;
 using Lyn.Protocol.Common.Messages;
 using Lyn.Types;
 using Lyn.Types.Bitcoin;
@@ -135,7 +137,7 @@ namespace Lyn.Protocol.Tests.Bolt3
 
             // dotnet has no uint48 types so we use ulong instead, however ulong (which is uint64) has two
             // more bytes in the array then just drop the last to bytes form the array to compute the hex
-            Assert.Equal("0x2bb038521914", Hex.ToString(BitConverter.GetBytes(CnObscurer).Reverse().ToArray().AsSpan().Slice(2)));
+            Assert.Equal("0x2bb038521914", $"0x{Hex.ToString(BitConverter.GetBytes(CnObscurer).Reverse().ToArray().AsSpan().Slice(2))}");
 
             Keyset = new Keyset(RemoteRevocationKey, LocalHtlckey, RemoteHtlckey, LocalDelayedkey, Remotekey);
         }
