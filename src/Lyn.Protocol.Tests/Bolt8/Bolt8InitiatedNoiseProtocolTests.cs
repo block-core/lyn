@@ -1,4 +1,5 @@
 using Lyn.Protocol.Bolt8;
+using Lyn.Protocol.Common.Crypto;
 using Microsoft.Extensions.Logging;
 using Moq;
 

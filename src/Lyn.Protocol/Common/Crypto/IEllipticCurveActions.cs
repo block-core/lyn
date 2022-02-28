@@ -1,6 +1,6 @@
 using System;
 
-namespace Lyn.Protocol.Bolt8
+namespace Lyn.Protocol.Common.Crypto
 {
     public interface IEllipticCurveActions
     {
