@@ -26,14 +26,11 @@ namespace Lyn.Protocol.Bolt4.Messages
             var onionKeyBytes = reader.ReadBytes(33);
             onionMessage.OnionPacket.EphemeralKey = new PublicKey(onionKeyBytes.ToArray());
 
-            // The payloadLength is computed by taking the total size of the packet and
-            // subtracting the length of the Sphinx header. The header fields are:
-            //     - version - 1 byte
-            //     - public key - 33 bytes
-            //     - hmac - 32 bytes
-            // This value is cast to an integer, as the overall packet size should be 
-            // Less than 32kb
-            int payloadLength = Convert.ToInt32(reader.Length - 66);
+            // does this even belong here?
+            if(!reader.TryPeek(out var peekedLength))
+            {
+                // puke
+            }
 
             var payloadData = reader.ReadBytes(payloadLength);
             onionMessage.OnionPacket.PayloadData = payloadData.ToArray();
