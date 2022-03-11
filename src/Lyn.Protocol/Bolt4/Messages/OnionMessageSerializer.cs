@@ -1,4 +1,5 @@
-﻿using Lyn.Types.Fundamental;
+﻿using Lyn.Protocol.Bolt4.Entities;
+using Lyn.Types.Fundamental;
 using Lyn.Types.Serialization;
 using System;
 using System.Buffers;
@@ -9,8 +10,15 @@ using System.Threading.Tasks;
 
 namespace Lyn.Protocol.Bolt4.Messages
 {
-    internal class OnionMessageSerializer : IProtocolTypeSerializer<OnionMessage>
+    public class OnionMessageSerializer : IProtocolTypeSerializer<OnionMessage>
     {
+        private readonly IProtocolTypeSerializer<OnionRoutingPacket> packetSerializer;
+
+        public OnionMessageSerializer(IProtocolTypeSerializer<OnionRoutingPacket> _packetSerializer)
+        {
+            this.packetSerializer = _packetSerializer;
+        }
+
         public OnionMessage Deserialize(ref SequenceReader<byte> reader, ProtocolTypeSerializerOptions? options = null)
         {
             var onionMessage = new OnionMessage();
@@ -19,31 +27,19 @@ namespace Lyn.Protocol.Bolt4.Messages
             onionMessage.BlindingKey = new PublicKey(blindingKeyBytes.ToArray());
 
             // read the onion packet data from the message
-
-            var verByte = reader.ReadByte();
-            onionMessage.OnionPacket.Version = verByte;
-
-            var onionKeyBytes = reader.ReadBytes(33);
-            onionMessage.OnionPacket.EphemeralKey = new PublicKey(onionKeyBytes.ToArray());
-
-            // does this even belong here?
-            if(!reader.TryPeek(out var peekedLength))
-            {
-                // puke
-            }
-
-            var payloadData = reader.ReadBytes(payloadLength);
-            onionMessage.OnionPacket.PayloadData = payloadData.ToArray();
-
-            var hmacBytes = reader.ReadBytes(32);
-            onionMessage.OnionPacket.Hmac = hmacBytes.ToArray();
+            onionMessage.OnionPacket = packetSerializer.Deserialize(ref reader, options);
 
             return onionMessage;
         }
 
-        public int Serialize(OnionMessage onionMessage, IBufferWriter<byte> writer, ProtocolTypeSerializerOptions? options = null)
+        public int Serialize(OnionMessage typeInstance, IBufferWriter<byte> writer, ProtocolTypeSerializerOptions? options = null)
         {
-            throw new NotImplementedException();
+            int bytesWritten = 0;
+
+            bytesWritten += writer.WriteBytes(typeInstance.BlindingKey);
+            bytesWritten += packetSerializer.Serialize(typeInstance.OnionPacket, writer, options);    
+
+            return bytesWritten;
         }
     }
 }
