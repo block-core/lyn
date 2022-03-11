@@ -1,8 +1,11 @@
-﻿using Lyn.Protocol.Common.Crypto;
+﻿using Lyn.Protocol.Bolt4.Entities;
+using Lyn.Protocol.Common.Crypto;
 using Lyn.Types.Fundamental;
+using Lyn.Types.Serialization;
 using NaCl.Core;
 using NBitcoin.Secp256k1;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,6 +15,9 @@ namespace Lyn.Protocol.Bolt4
 {
     public class Sphinx : ISphinx
     {
+        //todo: move somewhere better
+        private const int MAC_LENGTH = 32;
+
         private readonly IEllipticCurveActions _ellipticCurveActions;
 
         public Sphinx(IEllipticCurveActions ellipticCurveActions)
@@ -133,6 +139,71 @@ namespace Lyn.Protocol.Bolt4
             }
         }
 
+        // TODO: return DecryptedOnionPacket?
+        public DecryptedOnionPacket PeelOnion(PrivateKey privateKey, byte[]? associatedData, OnionRoutingPacket packet)
+        {
+
+            var sharedSecret = ComputeSharedSecret(packet.EphemeralKey, privateKey);
+            var mu = GenerateSphinxKey("mu", sharedSecret);
+            var payloadToSign = associatedData != null ? packet.PayloadData.Concat(associatedData).ToArray() : packet.PayloadData;
+            var computedHmac = HashGenerator.HmacSha256(mu.ToArray(), payloadToSign);
+
+            if (computedHmac == packet.Hmac)
+            {
+                var rho = GenerateSphinxKey("rho", sharedSecret);
+                var cipherStream = GenerateStream(rho.ToArray(), 2 * packet.PayloadData.Length);
+                // todo: better variable name here
+                var paddedPayload = packet.PayloadData.Concat(Enumerable.Range(0, packet.PayloadData.Length).Select<int, byte>(x => 0x00)).ToArray();
+                var binData = ExclusiveOR(paddedPayload, cipherStream).ToArray();
+
+                var sequence = new ReadOnlySequence<byte>(new ReadOnlyMemory<byte>(binData));
+                var binReader = new SequenceReader<byte>(sequence);
+
+                // todo: peek payload length
+                if (binReader.TryPeek(out var payloadLength))
+                {
+                    int perHopPayloadLength = 0;
+
+                    if (payloadLength == 0x00)
+                    {
+                        // todo: this might be deprecated? do we need to support legacy payloads in Lyn?
+                        perHopPayloadLength = 65;
+                    }
+                    else
+                    {
+                        // safe to truncate because a packet will never be larger than 64KB
+                        perHopPayloadLength = (int)binReader.ReadVarInt();
+                    }
+
+                    // todo: extract payload bytes from xor'd byte stream using payload length and hmac
+                    var perHopPayload = binReader.ReadBytes(perHopPayloadLength);
+                    var hopHMAC = binReader.ReadBytes(MAC_LENGTH);
+
+                    // truncated'd again but its safe?
+                    var nextOnionPayload = binReader.ReadBytes((int)binReader.Remaining);
+                    var nextPublicKey = BlindKey(packet.EphemeralKey, ComputeBlindingFactor(packet.EphemeralKey, sharedSecret));
+
+                    return new DecryptedOnionPacket()
+                    {
+                        Payload = perHopPayload.ToArray(),
+                        NextPacket = new OnionRoutingPacket()
+                        {
+                            Version = 0x01,
+                            EphemeralKey = nextPublicKey,
+                            PayloadData = nextOnionPayload.ToArray(),
+                            Hmac = hopHMAC.ToArray()
+                        },
+                        SharedSecret = sharedSecret.ToArray(),
+                    };
+                }
+            }
+            else
+            {
+                throw new Exception("bad hmac");
+            }
+
+            throw new Exception("Bah! Humbug!");
+        }
 
     }
 }

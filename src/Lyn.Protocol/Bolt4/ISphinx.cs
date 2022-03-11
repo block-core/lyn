@@ -1,4 +1,5 @@
-﻿using Lyn.Types.Fundamental;
+﻿using Lyn.Protocol.Bolt4.Entities;
+using Lyn.Types.Fundamental;
 using System;
 using System.Collections.Generic;
 
@@ -17,5 +18,6 @@ namespace Lyn.Protocol.Bolt4
         ReadOnlySpan<byte> GenerateSphinxKey(byte[] keyType, ReadOnlySpan<byte> secret);
         ReadOnlySpan<byte> GenerateSphinxKey(string keyType, ReadOnlySpan<byte> secret);
         ReadOnlySpan<byte> GenerateStream(ReadOnlyMemory<byte> keyData, int streamLength);
+        DecryptedOnionPacket PeelOnion(PrivateKey privateKey, byte[]? associatedData, OnionRoutingPacket packet);
     }
 }
