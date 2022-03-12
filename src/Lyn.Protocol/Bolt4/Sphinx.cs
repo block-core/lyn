@@ -6,6 +6,7 @@ using NaCl.Core;
 using NBitcoin.Secp256k1;
 using System;
 using System.Buffers;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -66,9 +67,9 @@ namespace Lyn.Protocol.Bolt4
             return result;
         }
 
-        public ReadOnlySpan<byte> GenerateStream(ReadOnlyMemory<byte> keyData, int streamLength)
+        public ReadOnlySpan<byte> GenerateStream(ReadOnlySpan<byte> keyData, int streamLength)
         {
-            var cipher = new ChaCha20(keyData, 0);
+            var cipher = new ChaCha20(new ReadOnlyMemory<byte>(keyData.ToArray()), 0);
             var emptyPlainText = Enumerable.Range(0, streamLength).Select<int, byte>(x => 0x00).ToArray();
             var nonce = Enumerable.Range(0, 12).Select<int, byte>(x => 0x00).ToArray();
             return cipher.Encrypt(emptyPlainText, nonce);
@@ -91,7 +92,7 @@ namespace Lyn.Protocol.Bolt4
             return blindingFactors.Aggregate(pubKey, (key, blindingFactor) => BlindKey(key, blindingFactor));
         }
 
-        public (IEnumerable<PublicKey>, IEnumerable<byte[]>) ComputeEphemeralPublicKeysAndSharedSecrets(PrivateKey sessionKey,
+        public (IList<PublicKey>, IList<byte[]>) ComputeEphemeralPublicKeysAndSharedSecrets(PrivateKey sessionKey,
                                                                                                         ICollection<PublicKey> publicKeys)
         {
             // this seems inelegant as fuck?
@@ -111,7 +112,7 @@ namespace Lyn.Protocol.Bolt4
                                                               sharedSecrets);
         }
 
-        public (IEnumerable<PublicKey>, IEnumerable<byte[]>) ComputeEphemeralPublicKeysAndSharedSecrets(PrivateKey sessionKey,
+        public (IList<PublicKey>, IList<byte[]>) ComputeEphemeralPublicKeysAndSharedSecrets(PrivateKey sessionKey,
                                                                                                         ICollection<PublicKey> publicKeys,
                                                                                                         IList<PublicKey> ephemeralPublicKeys,
                                                                                                         IList<byte[]> blindingFactors,
@@ -139,6 +140,60 @@ namespace Lyn.Protocol.Bolt4
             }
         }
 
+        public int PeekPayloadLength(byte[] payloadData)
+        {
+            var sequence = new ReadOnlySequence<byte>(new ReadOnlyMemory<byte>(payloadData));
+            var binReader = new SequenceReader<byte>(sequence);
+            int perHopPayloadLength = 0;
+
+            if (binReader.TryPeek(out var firstByte))
+            {
+                if (firstByte == 0x00)
+                {
+                    // todo: this might be deprecated? do we need to support legacy payloads in Lyn?
+                    perHopPayloadLength = 65;
+                }
+                else
+                {
+                    // safe to truncate because a packet will never be larger than 64KB?
+                    perHopPayloadLength = (int)binReader.ReadBigSize();
+                    perHopPayloadLength += (int)binReader.Consumed; //offset the length by the number of bytes consoomed
+                    perHopPayloadLength += MAC_LENGTH;
+                }
+            }
+
+            return perHopPayloadLength;
+        }
+
+        public ReadOnlySpan<byte> GenerateFiller(string keyType, int packetPayloadLength, IEnumerable<byte[]> sharedSecrets, IEnumerable<byte[]> payloads)
+        {
+            // todo: asserts
+            var secretsAndPayloads = sharedSecrets.Zip(payloads);
+            var padding = new List<byte>();
+            var filler = secretsAndPayloads.Aggregate(padding, (padding, secretAndPayload) =>
+            {
+                var (secret, perHopPayload) = secretAndPayload;
+
+                // todo: decide how the hmac comes into play...
+                var perHopPayloadLength = PeekPayloadLength(perHopPayload);
+
+                if (perHopPayloadLength != perHopPayload.Length + MAC_LENGTH)
+                {
+                    throw new Exception("invalid length");
+                }
+
+                // assert payload length
+                var fillerKey = GenerateSphinxKey(Encoding.ASCII.GetBytes(keyType), secret);
+                // todo: byte array matching payload length
+                padding.AddRange(Enumerable.Range(0, perHopPayloadLength).Select<int, byte>(x => 0x00));
+                var stream = GenerateStream(fillerKey, packetPayloadLength + perHopPayloadLength).ToArray().TakeLast(padding.Count).ToArray();
+                var filler = ExclusiveOR(padding.ToArray(), stream).ToArray();
+                return filler.ToList();
+            });
+
+            return filler.ToArray();
+        }
+
         // TODO: return DecryptedOnionPacket?
         public DecryptedOnionPacket PeelOnion(PrivateKey privateKey, byte[]? associatedData, OnionRoutingPacket packet)
         {
@@ -156,46 +211,32 @@ namespace Lyn.Protocol.Bolt4
                 var paddedPayload = packet.PayloadData.Concat(Enumerable.Range(0, packet.PayloadData.Length).Select<int, byte>(x => 0x00)).ToArray();
                 var binData = ExclusiveOR(paddedPayload, cipherStream).ToArray();
 
+                var perHopPayloadLength = PeekPayloadLength(binData);
+
                 var sequence = new ReadOnlySequence<byte>(new ReadOnlyMemory<byte>(binData));
                 var binReader = new SequenceReader<byte>(sequence);
 
-                // todo: peek payload length
-                if (binReader.TryPeek(out var payloadLength))
+                // todo: extract payload bytes from xor'd byte stream using payload length and hmac
+                var perHopPayload = binReader.ReadBytes(perHopPayloadLength);
+                var hopHMAC = binReader.ReadBytes(MAC_LENGTH);
+
+                // truncated'd again but its safe?
+                var nextOnionPayload = binReader.ReadBytes((int)binReader.Remaining);
+                var nextPublicKey = BlindKey(packet.EphemeralKey, ComputeBlindingFactor(packet.EphemeralKey, sharedSecret));
+
+                return new DecryptedOnionPacket()
                 {
-                    int perHopPayloadLength = 0;
-
-                    if (payloadLength == 0x00)
+                    Payload = perHopPayload.ToArray(),
+                    NextPacket = new OnionRoutingPacket()
                     {
-                        // todo: this might be deprecated? do we need to support legacy payloads in Lyn?
-                        perHopPayloadLength = 65;
-                    }
-                    else
-                    {
-                        // safe to truncate because a packet will never be larger than 64KB
-                        perHopPayloadLength = (int)binReader.ReadVarInt();
-                    }
+                        Version = 0x01,
+                        EphemeralKey = nextPublicKey,
+                        PayloadData = nextOnionPayload.ToArray(),
+                        Hmac = hopHMAC.ToArray()
+                    },
+                    SharedSecret = sharedSecret.ToArray(),
+                };
 
-                    // todo: extract payload bytes from xor'd byte stream using payload length and hmac
-                    var perHopPayload = binReader.ReadBytes(perHopPayloadLength);
-                    var hopHMAC = binReader.ReadBytes(MAC_LENGTH);
-
-                    // truncated'd again but its safe?
-                    var nextOnionPayload = binReader.ReadBytes((int)binReader.Remaining);
-                    var nextPublicKey = BlindKey(packet.EphemeralKey, ComputeBlindingFactor(packet.EphemeralKey, sharedSecret));
-
-                    return new DecryptedOnionPacket()
-                    {
-                        Payload = perHopPayload.ToArray(),
-                        NextPacket = new OnionRoutingPacket()
-                        {
-                            Version = 0x01,
-                            EphemeralKey = nextPublicKey,
-                            PayloadData = nextOnionPayload.ToArray(),
-                            Hmac = hopHMAC.ToArray()
-                        },
-                        SharedSecret = sharedSecret.ToArray(),
-                    };
-                }
             }
             else
             {
@@ -205,5 +246,14 @@ namespace Lyn.Protocol.Bolt4
             throw new Exception("Bah! Humbug!");
         }
 
+        public PacketAndSecrets CreateOnion(PrivateKey sessionKey, int packetPayloadLength, IEnumerable<PublicKey> publicKeys, IEnumerable<byte[]> payloads, byte[]? associatedData)
+        {
+            // todo: verify size
+
+            return new PacketAndSecrets()
+            {
+
+            };
+        }
     }
 }

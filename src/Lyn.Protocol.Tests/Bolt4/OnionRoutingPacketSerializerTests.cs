@@ -18,9 +18,9 @@ namespace Lyn.Protocol.Tests.Bolt4
         {
             var onionToSerialize = new OnionRoutingPacket();
             onionToSerialize.Version = 1;
-            onionToSerialize.EphemeralKey = ByteStringHelper.StringToByteArray("032c0b7cf95324a07d05398b240174dc0c2be444d96b159aa6c7f7b1e668680991");
-            onionToSerialize.PayloadData = ByteStringHelper.StringToByteArray("0012345679abcdef");
-            onionToSerialize.Hmac = ByteStringHelper.StringToByteArray("0000111122223333444455556666777788889999aaaabbbbccccddddeeee0000");
+            onionToSerialize.EphemeralKey = ByteArray.FromHex("032c0b7cf95324a07d05398b240174dc0c2be444d96b159aa6c7f7b1e668680991");
+            onionToSerialize.PayloadData = ByteArray.FromHex("0012345679abcdef");
+            onionToSerialize.Hmac = ByteArray.FromHex("0000111122223333444455556666777788889999aaaabbbbccccddddeeee0000");
 
             var bufferWriter = new ArrayBufferWriter<byte>(256);
 
@@ -30,7 +30,7 @@ namespace Lyn.Protocol.Tests.Bolt4
 
             Assert.Equal(bytesWritten, onionBytes.Length);
             // todo: figure out what to do about varint length here??
-            Assert.Equal(ByteStringHelper.StringToByteArray("01032c0b7cf95324a07d05398b240174dc0c2be444d96b159aa6c7f7b1e6686809910012345679abcdef0000111122223333444455556666777788889999aaaabbbbccccddddeeee0000"), onionBytes);
+            Assert.Equal(ByteArray.FromHex("004a01032c0b7cf95324a07d05398b240174dc0c2be444d96b159aa6c7f7b1e6686809910012345679abcdef0000111122223333444455556666777788889999aaaabbbbccccddddeeee0000"), onionBytes);
         }
 
     }

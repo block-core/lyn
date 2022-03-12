@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 
 namespace Lyn.Protocol.Tests.Bolt4
 {
-    public static class ByteStringHelper
+    public static class ByteArray
     {
 
-        public static byte[] StringToByteArray(string hex)
+        public static byte[] FromHex(string hex)
         {
             return Enumerable.Range(0, hex.Length)
                              .Where(x => x % 2 == 0)
