@@ -57,9 +57,9 @@ namespace Lyn.Protocol.Common.Crypto
             return new UInt256(result.Slice(0, 32));
         }
 
-        public static ReadOnlySpan<byte> HmacSha256(byte[] key, ReadOnlySpan<byte> data)
+        public static ReadOnlySpan<byte> HmacSha256(ReadOnlySpan<byte> key, ReadOnlySpan<byte> data)
         {
-            using var hmac = new HMACSHA256(key);
+            using var hmac = new HMACSHA256(key.ToArray());
             Span<byte> result = new byte[32];
             if (!hmac.TryComputeHash(data, result, out _)) throw new HashGeneratorException($"Failed to perform {nameof(HmacSha256)}");
             return result;

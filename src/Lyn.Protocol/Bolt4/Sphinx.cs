@@ -8,6 +8,7 @@ using System;
 using System.Buffers;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,6 +18,7 @@ namespace Lyn.Protocol.Bolt4
     public class Sphinx : ISphinx
     {
         //todo: move somewhere better
+        private const int SPHINX_VERSION = 0;
         private const int MAC_LENGTH = 32;
 
         private readonly IEllipticCurveActions _ellipticCurveActions;
@@ -93,7 +95,7 @@ namespace Lyn.Protocol.Bolt4
         }
 
         public (IList<PublicKey>, IList<byte[]>) ComputeEphemeralPublicKeysAndSharedSecrets(PrivateKey sessionKey,
-                                                                                                        ICollection<PublicKey> publicKeys)
+                                                                                            IEnumerable<PublicKey> publicKeys)
         {
             // this seems inelegant as fuck?
             var key = new ECPubKey(EC.G, null);
@@ -113,12 +115,12 @@ namespace Lyn.Protocol.Bolt4
         }
 
         public (IList<PublicKey>, IList<byte[]>) ComputeEphemeralPublicKeysAndSharedSecrets(PrivateKey sessionKey,
-                                                                                                        ICollection<PublicKey> publicKeys,
-                                                                                                        IList<PublicKey> ephemeralPublicKeys,
-                                                                                                        IList<byte[]> blindingFactors,
-                                                                                                        IList<byte[]> sharedSecrets)
+                                                                                            IEnumerable<PublicKey> publicKeys,
+                                                                                            IList<PublicKey> ephemeralPublicKeys,
+                                                                                            IList<byte[]> blindingFactors,
+                                                                                            IList<byte[]> sharedSecrets)
         {
-            if (publicKeys.Count == 0)
+            if (!publicKeys.Any())
             {
                 return (ephemeralPublicKeys, sharedSecrets);
             }
@@ -165,7 +167,10 @@ namespace Lyn.Protocol.Bolt4
             return perHopPayloadLength;
         }
 
-        public ReadOnlySpan<byte> GenerateFiller(string keyType, int packetPayloadLength, IEnumerable<byte[]> sharedSecrets, IEnumerable<byte[]> payloads)
+        public ReadOnlySpan<byte> GenerateFiller(string keyType,
+                                                 int packetPayloadLength,
+                                                 IEnumerable<byte[]> sharedSecrets,
+                                                 IEnumerable<byte[]> payloads)
         {
             // todo: asserts
             var secretsAndPayloads = sharedSecrets.Zip(payloads);
@@ -202,8 +207,9 @@ namespace Lyn.Protocol.Bolt4
             var mu = GenerateSphinxKey("mu", sharedSecret);
             var payloadToSign = associatedData != null ? packet.PayloadData.Concat(associatedData).ToArray() : packet.PayloadData;
             var computedHmac = HashGenerator.HmacSha256(mu.ToArray(), payloadToSign);
-
-            if (computedHmac == packet.Hmac)
+            Debug.WriteLine($"computedHmac: {Convert.ToHexString(computedHmac)}");
+            Debug.WriteLine($"packet.Hmac: {Convert.ToHexString(packet.Hmac)}");
+            if (computedHmac.SequenceEqual(packet.Hmac))
             {
                 var rho = GenerateSphinxKey("rho", sharedSecret);
                 var cipherStream = GenerateStream(rho.ToArray(), 2 * packet.PayloadData.Length);
@@ -217,11 +223,11 @@ namespace Lyn.Protocol.Bolt4
                 var binReader = new SequenceReader<byte>(sequence);
 
                 // todo: extract payload bytes from xor'd byte stream using payload length and hmac
-                var perHopPayload = binReader.ReadBytes(perHopPayloadLength);
+                var perHopPayload = binReader.ReadBytes(perHopPayloadLength - MAC_LENGTH);
                 var hopHMAC = binReader.ReadBytes(MAC_LENGTH);
 
                 // truncated'd again but its safe?
-                var nextOnionPayload = binReader.ReadBytes((int)binReader.Remaining);
+                var nextOnionPayload = binReader.ReadBytes((int)packet.PayloadData.Length);
                 var nextPublicKey = BlindKey(packet.EphemeralKey, ComputeBlindingFactor(packet.EphemeralKey, sharedSecret));
 
                 return new DecryptedOnionPacket()
@@ -246,13 +252,102 @@ namespace Lyn.Protocol.Bolt4
             throw new Exception("Bah! Humbug!");
         }
 
-        public PacketAndSecrets CreateOnion(PrivateKey sessionKey, int packetPayloadLength, IEnumerable<PublicKey> publicKeys, IEnumerable<byte[]> payloads, byte[]? associatedData)
+        private OnionRoutingPacket WrapOnion<T>(ReadOnlySpan<byte> payload,
+                                             PublicKey ephemeralPublicKey,
+                                             ReadOnlySpan<byte> sharedSecret,
+                                             T packet,
+                                             byte[]? associatedData,
+                                             byte[]? filler = null)
         {
             // todo: verify size
+            int packetPayloadLength = 0;
+            byte[] currentHmac = null;
+            byte[] currentPayload = null;
+            if (packet is OnionRoutingPacket onionPacket)
+            {
+                packetPayloadLength = onionPacket.PayloadData.Length;
+                currentPayload = onionPacket.PayloadData;
+                currentHmac = onionPacket.Hmac;
+            }
+            else if (packet is byte[] arr)
+            {
+                packetPayloadLength = arr.Length;
+                currentPayload = arr;
+                currentHmac = Enumerable.Range(0, MAC_LENGTH).Select<int, byte>(x => 0x00).ToArray();
+            }
+            else
+            {
+                throw new Exception("unsupported packet type specified for T");
+            }
+
+            // onionPayload1
+            var nextOnionPayload = payload.ToArray().Concat(currentHmac).Concat(currentPayload.SkipLast(payload.Length + MAC_LENGTH)).ToArray();
+            var secondPayloadStream = GenerateStream(GenerateSphinxKey("rho", sharedSecret), packetPayloadLength);
+            nextOnionPayload = ExclusiveOR(nextOnionPayload, secondPayloadStream).ToArray();
+
+            if (filler != null)
+            {
+                nextOnionPayload = nextOnionPayload.SkipLast(filler.Length).Concat(filler).ToArray();
+            }
+
+            var hmacBytes = nextOnionPayload;
+            if(associatedData != null)
+            {
+                hmacBytes = nextOnionPayload.Concat(associatedData).ToArray();
+            }
+
+            var nextHmac = HashGenerator.HmacSha256(GenerateSphinxKey("mu", sharedSecret).ToArray(), hmacBytes);
+            Debug.WriteLine($"Computed HMAC: {Convert.ToHexString(nextHmac)}");
+            var nextPacket = new OnionRoutingPacket()
+            {
+                Version = SPHINX_VERSION,
+                EphemeralKey = ephemeralPublicKey,
+                PayloadData = nextOnionPayload,
+                Hmac = nextHmac.ToArray()
+            };
+            return nextPacket;
+        }
+
+        private OnionRoutingPacket RecursivelyCreateOnion(IEnumerable<byte[]> payloads,
+                                                          IEnumerable<PublicKey> publicKeys,
+                                                          IEnumerable<byte[]> sharedSecrets,
+                                                          OnionRoutingPacket packet,
+                                                          byte[]? associatedData)
+        {
+            if (!payloads.Any())
+            {
+                return packet;
+            }
+            else
+            {
+                var nextPacket = WrapOnion(payloads.Last(), publicKeys.Last(), sharedSecrets.Last(), packet, associatedData);
+                return RecursivelyCreateOnion(payloads.SkipLast(1), publicKeys.SkipLast(1), sharedSecrets.SkipLast(1), nextPacket, associatedData);
+            }
+        }
+
+        public PacketAndSecrets CreateOnion(PrivateKey sessionKey,
+                                            int packetPayloadLength,
+                                            IEnumerable<PublicKey> publicKeys,
+                                            IEnumerable<byte[]> payloads,
+                                            byte[]? associatedData)
+        {
+            // todo: verify size of inputs to make sure nothing is too long
+            var (ephemeralPublicKeys, sharedSecrets) = ComputeEphemeralPublicKeysAndSharedSecrets(sessionKey, publicKeys);
+            var filler = GenerateFiller("rho",
+                                        packetPayloadLength,
+                                        sharedSecrets.SkipLast(1),
+                                        payloads.SkipLast(1)).ToArray();
+
+            // generate the last packet of the route
+            var startingBytes = GenerateStream(GenerateSphinxKey("pad", sessionKey), packetPayloadLength).ToArray();
+            var lastPacket = WrapOnion(payloads.Last(), ephemeralPublicKeys.Last(), sharedSecrets.Last(), startingBytes, associatedData, filler);
+
+            var onionPacket = RecursivelyCreateOnion(payloads.SkipLast(1), ephemeralPublicKeys.SkipLast(1), sharedSecrets.SkipLast(1), lastPacket, associatedData);
 
             return new PacketAndSecrets()
             {
-
+                Packet = onionPacket,
+                SharedSecrets = sharedSecrets.Zip(ephemeralPublicKeys)
             };
         }
     }

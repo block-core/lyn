@@ -10,8 +10,8 @@ namespace Lyn.Protocol.Bolt4
         PublicKey BlindKey(PublicKey pubKey, IEnumerable<byte[]> blindingFactors);
         PublicKey BlindKey(PublicKey pubKey, ReadOnlySpan<byte> blindingFactor);
         ReadOnlySpan<byte> ComputeBlindingFactor(PublicKey pubKey, ReadOnlySpan<byte> secret);
-        (IList<PublicKey>, IList<byte[]>) ComputeEphemeralPublicKeysAndSharedSecrets(PrivateKey sessionKey, ICollection<PublicKey> publicKeys);
-        (IList<PublicKey>, IList<byte[]>) ComputeEphemeralPublicKeysAndSharedSecrets(PrivateKey sessionKey, ICollection<PublicKey> publicKeys, IList<PublicKey> ephemeralPublicKeys, IList<byte[]> blindingFactors, IList<byte[]> sharedSecrets);
+        (IList<PublicKey>, IList<byte[]>) ComputeEphemeralPublicKeysAndSharedSecrets(PrivateKey sessionKey, IEnumerable<PublicKey> publicKeys);
+        (IList<PublicKey>, IList<byte[]>) ComputeEphemeralPublicKeysAndSharedSecrets(PrivateKey sessionKey, IEnumerable<PublicKey> publicKeys, IList<PublicKey> ephemeralPublicKeys, IList<byte[]> blindingFactors, IList<byte[]> sharedSecrets);
         ReadOnlySpan<byte> ComputeSharedSecret(PublicKey publicKey, PrivateKey secret);
         PrivateKey DeriveBlindedPrivateKey(PrivateKey privateKey, PublicKey blindingEphemeralKey);
         ReadOnlySpan<byte> ExclusiveOR(ReadOnlySpan<byte> left, ReadOnlySpan<byte> right);
