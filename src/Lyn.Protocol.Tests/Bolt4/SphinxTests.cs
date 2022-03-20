@@ -144,7 +144,7 @@ namespace Lyn.Protocol.Tests.Bolt4
         }
 
         [Fact]
-        public void CreateOnion_ReferenceTestVector_FixedSizePayload()
+        public void CreateOnion_ReferenceTestVector_FixedLengthPayloads()
         {
             var curveActions = new EllipticCurveActions();
             var sphinx = new Sphinx(curveActions);
@@ -204,6 +204,134 @@ namespace Lyn.Protocol.Tests.Bolt4
             var decrypted4 = sphinx.PeelOnion(privateKeys[4], associatedData, decrypted3.NextPacket);
             var (secret4, _) = sharedSecrets[4];
             Assert.Equal(referenceFixedSizePaymentPayloads[4], decrypted4.Payload);
+            Assert.Equal(secret4, decrypted4.SharedSecret);
+        }
+
+        [Fact]
+        public void CreateOnion_ReferenceTestVector_VariableLengthPayloads()
+        {
+            var curveActions = new EllipticCurveActions();
+            var sphinx = new Sphinx(curveActions);
+
+            var sessionKey = new PrivateKey(Convert.FromHexString("4141414141414141414141414141414141414141414141414141414141414141"));
+            var publicKeys = new List<PublicKey>()
+            {
+                new PublicKey(Convert.FromHexString("02eec7245d6b7d2ccb30380bfbe2a3648cd7a942653f5aa340edcea1f283686619")),
+                new PublicKey(Convert.FromHexString("0324653eac434488002cc06bbfb7f10fe18991e35f9fe4302dbea6d2353dc0ab1c")),
+                new PublicKey(Convert.FromHexString("027f31ebc5462c1fdce1b737ecff52d37d75dea43ce11c74d25aa297165faa2007")),
+                new PublicKey(Convert.FromHexString("032c0b7cf95324a07d05398b240174dc0c2be444d96b159aa6c7f7b1e668680991")),
+                new PublicKey(Convert.FromHexString("02edabbd16b41c8371b92ef2f04c1185b4f03b6dcd52ba9b78d9d7c89c8f221145"))
+            };
+
+            var privateKeys = new List<PrivateKey>()
+            {
+                new PrivateKey(Convert.FromHexString("4141414141414141414141414141414141414141414141414141414141414141")),
+                new PrivateKey(Convert.FromHexString("4242424242424242424242424242424242424242424242424242424242424242")),
+                new PrivateKey(Convert.FromHexString("4343434343434343434343434343434343434343434343434343434343434343")),
+                new PrivateKey(Convert.FromHexString("4444444444444444444444444444444444444444444444444444444444444444")),
+                new PrivateKey(Convert.FromHexString("4545454545454545454545454545454545454545454545454545454545454545"))
+            };
+
+            var referenceVariableSizePaymentPayloads = new List<byte[]>() {
+                Convert.FromHexString("000000000000000000000000000000000000000000000000000000000000000000"),
+                Convert.FromHexString("140101010101010101000000000000000100000001"),
+                Convert.FromHexString("fd0100000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff"),
+                Convert.FromHexString("140303030303030303000000000000000300000003"),
+                Convert.FromHexString("000404040404040404000000000000000400000004000000000000000000000000")
+            };
+
+            var associatedData = Convert.FromHexString("4242424242424242424242424242424242424242424242424242424242424242");
+
+            var encryptedOnion = sphinx.CreateOnion(sessionKey, 1300, publicKeys, referenceVariableSizePaymentPayloads, associatedData);
+            var sharedSecrets = encryptedOnion.SharedSecrets.ToArray();
+
+            var decrypted0 = sphinx.PeelOnion(privateKeys[0], associatedData, encryptedOnion.Packet);
+            var (secret0, _) = sharedSecrets[0];
+            Assert.Equal(referenceVariableSizePaymentPayloads[0], decrypted0.Payload);
+            Assert.Equal(secret0, decrypted0.SharedSecret);
+
+            var decrypted1 = sphinx.PeelOnion(privateKeys[1], associatedData, decrypted0.NextPacket);
+            var (secret1, _) = sharedSecrets[1];
+            Assert.Equal(referenceVariableSizePaymentPayloads[1], decrypted1.Payload);
+            Assert.Equal(secret1, decrypted1.SharedSecret);
+
+            var decrypted2 = sphinx.PeelOnion(privateKeys[2], associatedData, decrypted1.NextPacket);
+            var (secret2, _) = sharedSecrets[2];
+            Assert.Equal(referenceVariableSizePaymentPayloads[2], decrypted2.Payload);
+            Assert.Equal(secret2, decrypted2.SharedSecret);
+
+            var decrypted3 = sphinx.PeelOnion(privateKeys[3], associatedData, decrypted2.NextPacket);
+            var (secret3, _) = sharedSecrets[3];
+            Assert.Equal(referenceVariableSizePaymentPayloads[3], decrypted3.Payload);
+            Assert.Equal(secret3, decrypted3.SharedSecret);
+
+            var decrypted4 = sphinx.PeelOnion(privateKeys[4], associatedData, decrypted3.NextPacket);
+            var (secret4, _) = sharedSecrets[4];
+            Assert.Equal(referenceVariableSizePaymentPayloads[4], decrypted4.Payload);
+            Assert.Equal(secret4, decrypted4.SharedSecret);
+        }
+
+        [Fact]
+        public void CreateOnion_ReferenceTestVector_VariableLengthFullPayloads()
+        {
+            var curveActions = new EllipticCurveActions();
+            var sphinx = new Sphinx(curveActions);
+
+            var sessionKey = new PrivateKey(Convert.FromHexString("4141414141414141414141414141414141414141414141414141414141414141"));
+            var publicKeys = new List<PublicKey>()
+            {
+                new PublicKey(Convert.FromHexString("02eec7245d6b7d2ccb30380bfbe2a3648cd7a942653f5aa340edcea1f283686619")),
+                new PublicKey(Convert.FromHexString("0324653eac434488002cc06bbfb7f10fe18991e35f9fe4302dbea6d2353dc0ab1c")),
+                new PublicKey(Convert.FromHexString("027f31ebc5462c1fdce1b737ecff52d37d75dea43ce11c74d25aa297165faa2007")),
+                new PublicKey(Convert.FromHexString("032c0b7cf95324a07d05398b240174dc0c2be444d96b159aa6c7f7b1e668680991")),
+                new PublicKey(Convert.FromHexString("02edabbd16b41c8371b92ef2f04c1185b4f03b6dcd52ba9b78d9d7c89c8f221145"))
+            };
+
+            var privateKeys = new List<PrivateKey>()
+            {
+                new PrivateKey(Convert.FromHexString("4141414141414141414141414141414141414141414141414141414141414141")),
+                new PrivateKey(Convert.FromHexString("4242424242424242424242424242424242424242424242424242424242424242")),
+                new PrivateKey(Convert.FromHexString("4343434343434343434343434343434343434343434343434343434343434343")),
+                new PrivateKey(Convert.FromHexString("4444444444444444444444444444444444444444444444444444444444444444")),
+                new PrivateKey(Convert.FromHexString("4545454545454545454545454545454545454545454545454545454545454545"))
+            };
+
+            var referenceVariableSizePaymentPayloadsFull = new List<byte[]>() {
+                Convert.FromHexString("8b09000000000000000030000000000000000000000000000000000000000000000000000000000025000000000000000000000000000000000000000000000000250000000000000000000000000000000000000000000000002500000000000000000000000000000000000000000000000025000000000000000000000000000000000000000000000000"),
+                Convert.FromHexString("fd012a08000000000000009000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000200000000000000000000000000000000000000020000000000000000000000000000000000000002000000000000000000000000000000000000000200000000000000000000000000000000000000020000000000000000000000000000000000000002000000000000000000000000000000000000000200000000000000000000000000000000000000020000000000000000000000000000000000000002000000000000000000000000000000000000000"),
+                Convert.FromHexString("620800000000000000900000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"),
+                Convert.FromHexString("fc120000000000000000000000240000000000000000000000000000000000000000000000240000000000000000000000000000000000000000000000240000000000000000000000000000000000000000000000240000000000000000000000000000000000000000000000240000000000000000000000000000000000000000000000240000000000000000000000000000000000000000000000240000000000000000000000000000000000000000000000240000000000000000000000000000000000000000000000240000000000000000000000000000000000000000000000240000000000000000000000000000000000000000000000"),
+                Convert.FromHexString("fd01582200000000000000000000000000000000000000000022000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000")
+            };
+
+            var associatedData = Convert.FromHexString("4242424242424242424242424242424242424242424242424242424242424242");
+
+            var encryptedOnion = sphinx.CreateOnion(sessionKey, 1300, publicKeys, referenceVariableSizePaymentPayloadsFull, associatedData);
+            var sharedSecrets = encryptedOnion.SharedSecrets.ToArray();
+
+            var decrypted0 = sphinx.PeelOnion(privateKeys[0], associatedData, encryptedOnion.Packet);
+            var (secret0, _) = sharedSecrets[0];
+            Assert.Equal(referenceVariableSizePaymentPayloadsFull[0], decrypted0.Payload);
+            Assert.Equal(secret0, decrypted0.SharedSecret);
+
+            var decrypted1 = sphinx.PeelOnion(privateKeys[1], associatedData, decrypted0.NextPacket);
+            var (secret1, _) = sharedSecrets[1];
+            Assert.Equal(referenceVariableSizePaymentPayloadsFull[1], decrypted1.Payload);
+            Assert.Equal(secret1, decrypted1.SharedSecret);
+
+            var decrypted2 = sphinx.PeelOnion(privateKeys[2], associatedData, decrypted1.NextPacket);
+            var (secret2, _) = sharedSecrets[2];
+            Assert.Equal(referenceVariableSizePaymentPayloadsFull[2], decrypted2.Payload);
+            Assert.Equal(secret2, decrypted2.SharedSecret);
+
+            var decrypted3 = sphinx.PeelOnion(privateKeys[3], associatedData, decrypted2.NextPacket);
+            var (secret3, _) = sharedSecrets[3];
+            Assert.Equal(referenceVariableSizePaymentPayloadsFull[3], decrypted3.Payload);
+            Assert.Equal(secret3, decrypted3.SharedSecret);
+
+            var decrypted4 = sphinx.PeelOnion(privateKeys[4], associatedData, decrypted3.NextPacket);
+            var (secret4, _) = sharedSecrets[4];
+            Assert.Equal(referenceVariableSizePaymentPayloadsFull[4], decrypted4.Payload);
             Assert.Equal(secret4, decrypted4.SharedSecret);
         }
 
