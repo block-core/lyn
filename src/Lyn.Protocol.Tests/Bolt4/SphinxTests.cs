@@ -5,12 +5,12 @@ using System.Linq;
 using Xunit;
 
 using Lyn.Protocol.Tests.Bolt4.Data;
+using Lyn.Protocol.Bolt4.Entities;
 
 namespace Lyn.Protocol.Tests.Bolt4
 {
     public class SphinxTests
     {
-
 
         [Fact]
         public void ReferenceTestVector_GeneratesEphemeralKeysAndSecrets()
@@ -90,38 +90,24 @@ namespace Lyn.Protocol.Tests.Bolt4
             var curveActions = new EllipticCurveActions();
             var sphinx = new Sphinx(curveActions);
 
-            var encryptedOnion = sphinx.CreateOnion(SphinxReferenceVectors.SessionKey, 
+            PacketAndSecrets encryptedOnion = sphinx.CreateOnion(SphinxReferenceVectors.SessionKey, 
                                                     1300, 
                                                     SphinxReferenceVectors.PublicKeys, 
                                                     SphinxReferenceVectors.FixedSizePaymentPayloads, 
                                                     SphinxReferenceVectors.AssociatedData);
             
             var sharedSecrets = encryptedOnion.SharedSecrets.ToArray();
+            Assert.Equal(5, sharedSecrets.Length);
 
-            var decrypted0 = sphinx.PeelOnion(SphinxReferenceVectors.PrivateKeys[0], SphinxReferenceVectors.AssociatedData, encryptedOnion.Packet);
-            Assert.Equal(SphinxReferenceVectors.FixedSizePaymentPayloads[0], decrypted0.Payload);
-            var (secret0, _) = sharedSecrets[0];
-            Assert.Equal(secret0, decrypted0.SharedSecret);
-
-            var decrypted1 = sphinx.PeelOnion(SphinxReferenceVectors.PrivateKeys[1], SphinxReferenceVectors.AssociatedData, decrypted0.NextPacket);
-            var (secret1, _) = sharedSecrets[1];
-            Assert.Equal(SphinxReferenceVectors.FixedSizePaymentPayloads[1], decrypted1.Payload);
-            Assert.Equal(secret1, decrypted1.SharedSecret);
-
-            var decrypted2 = sphinx.PeelOnion(SphinxReferenceVectors.PrivateKeys[2], SphinxReferenceVectors.AssociatedData, decrypted1.NextPacket);
-            var (secret2, _) = sharedSecrets[2];
-            Assert.Equal(SphinxReferenceVectors.FixedSizePaymentPayloads[2], decrypted2.Payload);
-            Assert.Equal(secret2, decrypted2.SharedSecret);
-
-            var decrypted3 = sphinx.PeelOnion(SphinxReferenceVectors.PrivateKeys[3], SphinxReferenceVectors.AssociatedData, decrypted2.NextPacket);
-            var (secret3, _) = sharedSecrets[3];
-            Assert.Equal(SphinxReferenceVectors.FixedSizePaymentPayloads[3], decrypted3.Payload);
-            Assert.Equal(secret3, decrypted3.SharedSecret);
-
-            var decrypted4 = sphinx.PeelOnion(SphinxReferenceVectors.PrivateKeys[4], SphinxReferenceVectors.AssociatedData, decrypted3.NextPacket);
-            var (secret4, _) = sharedSecrets[4];
-            Assert.Equal(SphinxReferenceVectors.FixedSizePaymentPayloads[4], decrypted4.Payload);
-            Assert.Equal(secret4, decrypted4.SharedSecret);
+            OnionRoutingPacket currentPacket = encryptedOnion.Packet;            
+            for (var i = 0; i < sharedSecrets.Length; i++)
+            {
+                var decrypted = sphinx.PeelOnion(SphinxReferenceVectors.PrivateKeys[i], SphinxReferenceVectors.AssociatedData, currentPacket);
+                Assert.Equal(SphinxReferenceVectors.FixedSizePaymentPayloads[i], decrypted.Payload);
+                var (secret, _) = sharedSecrets[i];
+                Assert.Equal(secret, decrypted.SharedSecret);
+                currentPacket = decrypted.NextPacket;
+            }
         }
 
         [Fact]
@@ -133,30 +119,15 @@ namespace Lyn.Protocol.Tests.Bolt4
             var encryptedOnion = sphinx.CreateOnion(SphinxReferenceVectors.SessionKey, 1300, SphinxReferenceVectors.PublicKeys, SphinxReferenceVectors.VariableSizePaymentPayloads, SphinxReferenceVectors.AssociatedData);
             var sharedSecrets = encryptedOnion.SharedSecrets.ToArray();
 
-            var decrypted0 = sphinx.PeelOnion(SphinxReferenceVectors.PrivateKeys[0], SphinxReferenceVectors.AssociatedData, encryptedOnion.Packet);
-            var (secret0, _) = sharedSecrets[0];
-            Assert.Equal(SphinxReferenceVectors.VariableSizePaymentPayloads[0], decrypted0.Payload);
-            Assert.Equal(secret0, decrypted0.SharedSecret);
-
-            var decrypted1 = sphinx.PeelOnion(SphinxReferenceVectors.PrivateKeys[1], SphinxReferenceVectors.AssociatedData, decrypted0.NextPacket);
-            var (secret1, _) = sharedSecrets[1];
-            Assert.Equal(SphinxReferenceVectors.VariableSizePaymentPayloads[1], decrypted1.Payload);
-            Assert.Equal(secret1, decrypted1.SharedSecret);
-
-            var decrypted2 = sphinx.PeelOnion(SphinxReferenceVectors.PrivateKeys[2], SphinxReferenceVectors.AssociatedData, decrypted1.NextPacket);
-            var (secret2, _) = sharedSecrets[2];
-            Assert.Equal(SphinxReferenceVectors.VariableSizePaymentPayloads[2], decrypted2.Payload);
-            Assert.Equal(secret2, decrypted2.SharedSecret);
-
-            var decrypted3 = sphinx.PeelOnion(SphinxReferenceVectors.PrivateKeys[3], SphinxReferenceVectors.AssociatedData, decrypted2.NextPacket);
-            var (secret3, _) = sharedSecrets[3];
-            Assert.Equal(SphinxReferenceVectors.VariableSizePaymentPayloads[3], decrypted3.Payload);
-            Assert.Equal(secret3, decrypted3.SharedSecret);
-
-            var decrypted4 = sphinx.PeelOnion(SphinxReferenceVectors.PrivateKeys[4], SphinxReferenceVectors.AssociatedData, decrypted3.NextPacket);
-            var (secret4, _) = sharedSecrets[4];
-            Assert.Equal(SphinxReferenceVectors.VariableSizePaymentPayloads[4], decrypted4.Payload);
-            Assert.Equal(secret4, decrypted4.SharedSecret);
+            OnionRoutingPacket currentPacket = encryptedOnion.Packet;
+            for (var i = 0; i < sharedSecrets.Length; i++)
+            {
+                var decrypted = sphinx.PeelOnion(SphinxReferenceVectors.PrivateKeys[i], SphinxReferenceVectors.AssociatedData, currentPacket);
+                Assert.Equal(SphinxReferenceVectors.VariableSizePaymentPayloads[i], decrypted.Payload);
+                var (secret, _) = sharedSecrets[i];
+                Assert.Equal(secret, decrypted.SharedSecret);
+                currentPacket = decrypted.NextPacket;
+            }
         }
 
         [Fact]
@@ -168,30 +139,15 @@ namespace Lyn.Protocol.Tests.Bolt4
             var encryptedOnion = sphinx.CreateOnion(SphinxReferenceVectors.SessionKey, 1300, SphinxReferenceVectors.PublicKeys, SphinxReferenceVectors.VariableSizePaymentPayloadsFull, SphinxReferenceVectors.AssociatedData);
             var sharedSecrets = encryptedOnion.SharedSecrets.ToArray();
 
-            var decrypted0 = sphinx.PeelOnion(SphinxReferenceVectors.PrivateKeys[0], SphinxReferenceVectors.AssociatedData, encryptedOnion.Packet);
-            var (secret0, _) = sharedSecrets[0];
-            Assert.Equal(SphinxReferenceVectors.VariableSizePaymentPayloadsFull[0], decrypted0.Payload);
-            Assert.Equal(secret0, decrypted0.SharedSecret);
-
-            var decrypted1 = sphinx.PeelOnion(SphinxReferenceVectors.PrivateKeys[1], SphinxReferenceVectors.AssociatedData, decrypted0.NextPacket);
-            var (secret1, _) = sharedSecrets[1];
-            Assert.Equal(SphinxReferenceVectors.VariableSizePaymentPayloadsFull[1], decrypted1.Payload);
-            Assert.Equal(secret1, decrypted1.SharedSecret);
-
-            var decrypted2 = sphinx.PeelOnion(SphinxReferenceVectors.PrivateKeys[2], SphinxReferenceVectors.AssociatedData, decrypted1.NextPacket);
-            var (secret2, _) = sharedSecrets[2];
-            Assert.Equal(SphinxReferenceVectors.VariableSizePaymentPayloadsFull[2], decrypted2.Payload);
-            Assert.Equal(secret2, decrypted2.SharedSecret);
-
-            var decrypted3 = sphinx.PeelOnion(SphinxReferenceVectors.PrivateKeys[3], SphinxReferenceVectors.AssociatedData, decrypted2.NextPacket);
-            var (secret3, _) = sharedSecrets[3];
-            Assert.Equal(SphinxReferenceVectors.VariableSizePaymentPayloadsFull[3], decrypted3.Payload);
-            Assert.Equal(secret3, decrypted3.SharedSecret);
-
-            var decrypted4 = sphinx.PeelOnion(SphinxReferenceVectors.PrivateKeys[4], SphinxReferenceVectors.AssociatedData, decrypted3.NextPacket);
-            var (secret4, _) = sharedSecrets[4];
-            Assert.Equal(SphinxReferenceVectors.VariableSizePaymentPayloadsFull[4], decrypted4.Payload);
-            Assert.Equal(secret4, decrypted4.SharedSecret);
+            OnionRoutingPacket currentPacket = encryptedOnion.Packet;
+            for (var i = 0; i < sharedSecrets.Length; i++)
+            {
+                var decrypted = sphinx.PeelOnion(SphinxReferenceVectors.PrivateKeys[i], SphinxReferenceVectors.AssociatedData, currentPacket);
+                Assert.Equal(SphinxReferenceVectors.VariableSizePaymentPayloadsFull[i], decrypted.Payload);
+                var (secret, _) = sharedSecrets[i];
+                Assert.Equal(secret, decrypted.SharedSecret);
+                currentPacket = decrypted.NextPacket;
+            }
         }
 
     }
