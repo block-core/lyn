@@ -10,6 +10,22 @@ namespace Lyn.Protocol.Tests.Bolt4.Data
 {
     public static class SphinxReferenceVectors
     {
+        public static List<byte[]> ExpectedEphemeralKeys = new List<byte[]>() {
+            Convert.FromHexString("02eec7245d6b7d2ccb30380bfbe2a3648cd7a942653f5aa340edcea1f283686619"),
+            Convert.FromHexString("028f9438bfbf7feac2e108d677e3a82da596be706cc1cf342b75c7b7e22bf4e6e2"),
+            Convert.FromHexString("03bfd8225241ea71cd0843db7709f4c222f62ff2d4516fd38b39914ab6b83e0da0"),
+            Convert.FromHexString("031dde6926381289671300239ea8e57ffaf9bebd05b9a5b95beaf07af05cd43595"),
+            Convert.FromHexString("03a214ebd875aab6ddfd77f22c5e7311d7f77f17a169e599f157bbcdae8bf071f4")
+        };
+
+        public static List<byte[]> ExpectedEphemeralSecrets = new List<byte[]>() {
+            Convert.FromHexString("53eb63ea8a3fec3b3cd433b85cd62a4b145e1dda09391b348c4e1cd36a03ea66"),
+            Convert.FromHexString("a6519e98832a0b179f62123b3567c106db99ee37bef036e783263602f3488fae"),
+            Convert.FromHexString("3a6b412548762f0dbccce5c7ae7bb8147d1caf9b5471c34120b30bc9c04891cc"),
+            Convert.FromHexString("21e13c2d7cfe7e18836df50872466117a295783ab8aab0e7ecc8c725503ad02d"),
+            Convert.FromHexString("b5756b9b542727dbafc6765a49488b023a725d631af688fc031217e90770c328")
+        };
+
         public static (byte[], int)[] PaylodLengths = new (byte[], int)[] {
             (Convert.FromHexString("01"), 34),
             (Convert.FromHexString("08"), 41),
