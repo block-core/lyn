@@ -10,6 +10,15 @@ namespace Lyn.Protocol.Tests.Bolt4.Data
 {
     public static class SphinxReferenceVectors
     {
+        public static (byte[], int)[] PaylodLengths = new (byte[], int)[] {
+            (Convert.FromHexString("01"), 34),
+            (Convert.FromHexString("08"), 41),
+            (Convert.FromHexString("00"), 65),
+            (Convert.FromHexString("fc"), 285),
+            (Convert.FromHexString("fd00fd"), 288),
+            (Convert.FromHexString("fdffff"), 65570)
+        };
+
         public static PrivateKey SessionKey = new PrivateKey(Convert.FromHexString("4141414141414141414141414141414141414141414141414141414141414141"));
 
         public static List<PrivateKey> PrivateKeys = new List<PrivateKey>() {

@@ -77,17 +77,7 @@ namespace Lyn.Protocol.Tests.Bolt4
             var curveActions = new EllipticCurveActions();
             var sphinx = new Sphinx(curveActions);
 
-            var testCases = new[]
-            {
-                (Convert.FromHexString("01"), 34),
-                (Convert.FromHexString("08"), 41),
-                (Convert.FromHexString("00"), 65),
-                (Convert.FromHexString("fc"), 285),
-                (Convert.FromHexString("fd00fd"), 288),
-                (Convert.FromHexString("fdffff"), 65570)
-            };
-
-            foreach(var (payload, expected) in testCases)
+            foreach(var (payload, expected) in SphinxReferenceVectors.PaylodLengths)
             {
                 var actual = sphinx.PeekPayloadLength(payload);
                 Assert.Equal(expected, actual);
