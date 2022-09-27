@@ -1,7 +1,5 @@
-using Lyn.Protocol.Bolt1.Messages;
 using Lyn.Protocol.Common.Messages;
 using Lyn.Types.Bitcoin;
-using Lyn.Types.Bolt;
 
 namespace Lyn.Protocol.Bolt2.ChannelClose.Messages
 {

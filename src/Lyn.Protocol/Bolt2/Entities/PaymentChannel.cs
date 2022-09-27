@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Lyn.Protocol.Bolt3.Types;
 using Lyn.Types.Bitcoin;
 using Lyn.Types.Bolt;
@@ -73,11 +74,13 @@ namespace Lyn.Protocol.Bolt2.Entities
         
         public Basepoints LocalBasePoints { get; set; }
         public Basepoints RemoteBasePoints { get; set; }
-        
-        
+
+
+        public bool CloseChannelTriggered { get; set; }
+
         // public Keyset Keyset { get; set; }
         // public MiliSatoshis SelfPayMsat { get; set; }
         // public MiliSatoshis OtherPayMsat { get; set; }
-        // public List<Htlc> Htlcs { get; set; }
+         public List<Htlc> Htlcs { get; set; }
     }
 }

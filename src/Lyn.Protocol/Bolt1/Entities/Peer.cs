@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using Lyn.Protocol.Bolt1.Messages;
+using Lyn.Types.Bitcoin;
 using Lyn.Types.Fundamental;
 
 namespace Lyn.Protocol.Bolt1.Entities
@@ -15,6 +17,8 @@ namespace Lyn.Protocol.Bolt1.Entities
 
         public Features MutuallySupportedFeatures { get; set; }
 
+        public List<UInt256> PaymentChannelIds { get; set; }
+        
         public bool SupportsFeature(Features feature)
         {
             return (Features & Features.OptionUpfrontShutdownScript) != 0;
