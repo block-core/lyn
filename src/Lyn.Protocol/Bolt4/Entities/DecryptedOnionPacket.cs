@@ -15,7 +15,7 @@ namespace Lyn.Protocol.Bolt4.Entities
 
         public byte[] SharedSecret { get; set; }
 
-        public bool IsLastPacket => (NextPacket?.Hmac == null || NextPacket?.Hmac.Length == 0);
+        public bool IsLastPacket => (NextPacket?.Hmac == null || NextPacket?.Hmac.Length == 0 || NextPacket?.Hmac.SequenceEqual(new byte[32]) == true);
 
     }
 }
