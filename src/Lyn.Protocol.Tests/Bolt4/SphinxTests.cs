@@ -39,7 +39,7 @@ namespace Lyn.Protocol.Tests.Bolt4
         }
 
         [Fact]
-        public void GenerateFiller_ReferenceTestVector_FixedSizePayloads()
+        public void GenerateFiller()
         {
             var curveActions = new EllipticCurveActions();
             var sphinx = new Sphinx(curveActions);
@@ -49,25 +49,9 @@ namespace Lyn.Protocol.Tests.Bolt4
             var filler = sphinx.GenerateFiller("rho",
                                                 1300,
                                                 sharedSecrets.SkipLast(1),
-                                                SphinxReferenceVectors.FixedSizePaymentPayloads.SkipLast(1)).ToArray();
+                                                SphinxReferenceVectors.ReferencePaymentPayloads.SkipLast(1)).ToArray();
 
-            Assert.Equal(SphinxReferenceVectors.FixedSizePayload_ExpectedFiller, filler);
-        }
-
-        [Fact]
-        public void GenerateFiller_ReferenceTestVector_VariableSizePayloads()
-        {
-            var curveActions = new EllipticCurveActions();
-            var sphinx = new Sphinx(curveActions);
-
-            var (_, sharedSecrets) = sphinx.ComputeEphemeralPublicKeysAndSharedSecrets(SphinxReferenceVectors.SessionKey,
-                                                                                       SphinxReferenceVectors.PublicKeys);
-            var filler = sphinx.GenerateFiller("rho",
-                                                1300,
-                                                sharedSecrets.SkipLast(1),
-                                                SphinxReferenceVectors.VariableSizePaymentPayloads.SkipLast(1)).ToArray();
-
-            Assert.Equal(SphinxReferenceVectors.VariableSizePayload_ExpectedFiller, filler);
+            Assert.Equal(SphinxReferenceVectors.GenerateFiller_ExpectedFiller, filler);
         }
 
         [Fact]
@@ -83,72 +67,6 @@ namespace Lyn.Protocol.Tests.Bolt4
             }
 
             Assert.Throws<InvalidOnionVersionException>(() => sphinx.PeekPayloadLength(SphinxReferenceVectors.InvalidVersionPayload));
-        }
-
-        [Fact]
-        public void CreateOnion_ReferenceTestVector_FixedLengthPayloads()
-        {
-            var curveActions = new EllipticCurveActions();
-            var sphinx = new Sphinx(curveActions);
-
-            PacketAndSecrets encryptedOnion = sphinx.CreateOnion(SphinxReferenceVectors.SessionKey,
-                                                    1300,
-                                                    SphinxReferenceVectors.PublicKeys,
-                                                    SphinxReferenceVectors.FixedSizePaymentPayloads,
-                                                    SphinxReferenceVectors.AssociatedData);
-
-            var sharedSecrets = encryptedOnion.SharedSecrets.ToArray();
-            Assert.Equal(5, sharedSecrets.Length);
-
-            OnionRoutingPacket currentPacket = encryptedOnion.Packet;
-            for (var i = 0; i < sharedSecrets.Length; i++)
-            {
-                var decrypted = sphinx.PeelOnion(SphinxReferenceVectors.PrivateKeys[i], SphinxReferenceVectors.AssociatedData, currentPacket);
-                Assert.Equal(SphinxReferenceVectors.FixedSizePaymentPayloads[i], decrypted.Payload);
-                var (secret, _) = sharedSecrets[i];
-                Assert.Equal(secret, decrypted.SharedSecret);
-                currentPacket = decrypted.NextPacket;
-            }
-        }
-
-        [Fact]
-        public void CreateOnion_ReferenceTestVector_VariableLengthPayloads()
-        {
-            var curveActions = new EllipticCurveActions();
-            var sphinx = new Sphinx(curveActions);
-
-            var encryptedOnion = sphinx.CreateOnion(SphinxReferenceVectors.SessionKey, 1300, SphinxReferenceVectors.PublicKeys, SphinxReferenceVectors.VariableSizePaymentPayloads, SphinxReferenceVectors.AssociatedData);
-            var sharedSecrets = encryptedOnion.SharedSecrets.ToArray();
-
-            OnionRoutingPacket currentPacket = encryptedOnion.Packet;
-            for (var i = 0; i < sharedSecrets.Length; i++)
-            {
-                var decrypted = sphinx.PeelOnion(SphinxReferenceVectors.PrivateKeys[i], SphinxReferenceVectors.AssociatedData, currentPacket);
-                Assert.Equal(SphinxReferenceVectors.VariableSizePaymentPayloads[i], decrypted.Payload);
-                var (secret, _) = sharedSecrets[i];
-                Assert.Equal(secret, decrypted.SharedSecret);
-                currentPacket = decrypted.NextPacket;
-            }
-        }
-
-        [Fact]
-        public void CreateOnion_ReferenceTestVector_VariableLengthFullPayloads()
-        {
-            var curveActions = new EllipticCurveActions();
-            var sphinx = new Sphinx(curveActions);
-
-            var encryptedOnion = sphinx.CreateOnion(SphinxReferenceVectors.SessionKey, 1300, SphinxReferenceVectors.PublicKeys, SphinxReferenceVectors.VariableSizePaymentPayloadsFull, SphinxReferenceVectors.AssociatedData);
-            var sharedSecrets = encryptedOnion.SharedSecrets.ToArray();
-
-            OnionRoutingPacket currentPacket = encryptedOnion.Packet;
-            for (var i = 0; i < sharedSecrets.Length; i++)
-            {
-                var decrypted = sphinx.PeelOnion(SphinxReferenceVectors.PrivateKeys[i], SphinxReferenceVectors.AssociatedData, currentPacket);
-                Assert.Equal(SphinxReferenceVectors.VariableSizePaymentPayloadsFull[i], decrypted.Payload);
-                var (secret, _) = sharedSecrets[i];
-                Assert.Equal(secret, decrypted.SharedSecret);
-                currentPacket = decrypted.NextPacket;
-            }
         }
 
         [Fact]
@@ -222,6 +140,80 @@ namespace Lyn.Protocol.Tests.Bolt4
             };
 
             Assert.Throws<InvalidOnionVersionException>(() => sphinx.PeelOnion(SphinxReferenceVectors.PrivateKeys[0], SphinxReferenceVectors.AssociatedData, packet));
+        }
+
+        [Fact]
+        public void Peel_BadOnion_InvalidPublicKey_Throws()
+        {
+            var curveActions = new EllipticCurveActions();
+            var sphinx = new Sphinx(curveActions);
+
+            var packet = new OnionRoutingPacket()
+            {
+                Version = 0,
+                EphemeralKey = new byte[33],
+                PayloadData = ByteVector.Fill(65, 0x01),
+                Hmac = Convert.FromHexString("C908EE9582217D3B58D75FAC05CD5DBBEF91C1841A5B59D521283F9F4C43B643")
+            };
+
+            Assert.Throws<FormatException>(() => sphinx.PeelOnion(SphinxReferenceVectors.PrivateKeys[0], SphinxReferenceVectors.AssociatedData, packet));
+        }
+        
+        [Fact]
+        public void Peel_BadOnion_InvalidHmac_Throws()
+        {
+            var curveActions = new EllipticCurveActions();
+            var sphinx = new Sphinx(curveActions);
+
+            var packet = new OnionRoutingPacket()
+            {
+                Version = 0,
+                EphemeralKey = SphinxReferenceVectors.PublicKeys[0],
+                PayloadData = ByteVector.Fill(65, 0x01),
+                Hmac = Convert.FromHexString("2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a")
+            };
+
+            Assert.Throws<InvalidOnionHmacException>(() => sphinx.PeelOnion(SphinxReferenceVectors.PrivateKeys[0], SphinxReferenceVectors.AssociatedData, packet));
+        }
+
+        [Fact]
+        public void CreatePaymentPacket_ReferenceTestVector()
+        {
+            var curveActions = new EllipticCurveActions();
+            var sphinx = new Sphinx(curveActions);
+
+            var encryptedOnion = sphinx.CreateOnion(SphinxReferenceVectors.SessionKey, 1300, SphinxReferenceVectors.PublicKeys, SphinxReferenceVectors.ReferencePaymentPayloads, SphinxReferenceVectors.AssociatedData);
+            var sharedSecrets = encryptedOnion.SharedSecrets.ToArray();
+
+            OnionRoutingPacket currentPacket = encryptedOnion.Packet;
+            for (var i = 0; i < sharedSecrets.Length; i++)
+            {
+                var decrypted = sphinx.PeelOnion(SphinxReferenceVectors.PrivateKeys[i], SphinxReferenceVectors.AssociatedData, currentPacket);
+                Assert.Equal(SphinxReferenceVectors.ReferencePaymentPayloads[i], decrypted.Payload);
+                var (secret, _) = sharedSecrets[i];
+                Assert.Equal(secret, decrypted.SharedSecret);
+                currentPacket = decrypted.NextPacket;
+            }
+        }
+
+        [Fact]
+        public void CreatePaymentPacket_FullPayloads()
+        {
+            var curveActions = new EllipticCurveActions();
+            var sphinx = new Sphinx(curveActions);
+
+            var encryptedOnion = sphinx.CreateOnion(SphinxReferenceVectors.SessionKey, 1300, SphinxReferenceVectors.PublicKeys, SphinxReferenceVectors.PaymentPayloadsFull, SphinxReferenceVectors.AssociatedData);
+            var sharedSecrets = encryptedOnion.SharedSecrets.ToArray();
+
+            OnionRoutingPacket currentPacket = encryptedOnion.Packet;
+            for (var i = 0; i < sharedSecrets.Length; i++)
+            {
+                var decrypted = sphinx.PeelOnion(SphinxReferenceVectors.PrivateKeys[i], SphinxReferenceVectors.AssociatedData, currentPacket);
+                Assert.Equal(SphinxReferenceVectors.PaymentPayloadsFull[i], decrypted.Payload);
+                var (secret, _) = sharedSecrets[i];
+                Assert.Equal(secret, decrypted.SharedSecret);
+                currentPacket = decrypted.NextPacket;
+            }
         }
 
     }

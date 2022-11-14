@@ -241,7 +241,7 @@ namespace Lyn.Protocol.Bolt4
                     Payload = perHopPayload.ToArray(),
                     NextPacket = new OnionRoutingPacket()
                     {
-                        Version = 0x01,
+                        Version = SPHINX_VERSION,
                         EphemeralKey = nextPublicKey,
                         PayloadData = nextOnionPayload.ToArray(),
                         Hmac = hopHMAC.ToArray()
@@ -252,10 +252,8 @@ namespace Lyn.Protocol.Bolt4
             }
             else
             {
-                throw new Exception("bad hmac");
+                throw new InvalidOnionHmacException();
             }
-
-            throw new Exception("Bah! Humbug!");
         }
 
         private OnionRoutingPacket WrapOnion<T>(ReadOnlySpan<byte> payload,
