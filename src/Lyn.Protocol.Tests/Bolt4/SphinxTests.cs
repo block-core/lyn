@@ -216,6 +216,24 @@ namespace Lyn.Protocol.Tests.Bolt4
             }
         }
 
+        [Fact]
+        public void CreatePaymentPacket_SinglePayloadFillsOnion()
+        {
+            var curveActions = new EllipticCurveActions();
+            var sphinx = new Sphinx(curveActions);
+
+            var encryptedOnion = sphinx.CreateOnion(SphinxReferenceVectors.SessionKey, 1300, SphinxReferenceVectors.PublicKeys.Take(1), SphinxReferenceVectors.OneHopPaymentPayload, SphinxReferenceVectors.AssociatedData);
+
+            OnionRoutingPacket currentPacket = encryptedOnion.Packet;
+            var decrypted = sphinx.PeelOnion(SphinxReferenceVectors.PrivateKeys[0], SphinxReferenceVectors.AssociatedData, currentPacket);
+
+            var payload = decrypted.Payload;
+            var nextPacket = decrypted.NextPacket;
+
+            Assert.Equal(payload, SphinxReferenceVectors.OneHopPaymentPayload[0]);
+            Assert.Equal(nextPacket.Hmac, new byte[32]);
+        }
+
     }
 
     public static class ByteVector32
