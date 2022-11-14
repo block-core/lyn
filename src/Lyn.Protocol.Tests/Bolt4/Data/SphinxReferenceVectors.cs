@@ -10,6 +10,7 @@ namespace Lyn.Protocol.Tests.Bolt4.Data
 {
     public static class SphinxReferenceVectors
     {
+        public static byte[] InvalidVersionPayload => new[] {(byte)0x00};
         public static List<byte[]> ExpectedEphemeralKeys = new List<byte[]>() {
             Convert.FromHexString("02eec7245d6b7d2ccb30380bfbe2a3648cd7a942653f5aa340edcea1f283686619"),
             Convert.FromHexString("028f9438bfbf7feac2e108d677e3a82da596be706cc1cf342b75c7b7e22bf4e6e2"),
@@ -29,7 +30,6 @@ namespace Lyn.Protocol.Tests.Bolt4.Data
         public static (byte[], int)[] PaylodLengths = new (byte[], int)[] {
             (Convert.FromHexString("01"), 34),
             (Convert.FromHexString("08"), 41),
-            (Convert.FromHexString("00"), 65),
             (Convert.FromHexString("fc"), 285),
             (Convert.FromHexString("fd00fd"), 288),
             (Convert.FromHexString("fdffff"), 65570)

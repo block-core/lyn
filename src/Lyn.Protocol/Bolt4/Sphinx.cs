@@ -1,6 +1,7 @@
 ﻿using Lyn.Protocol.Bolt4.Entities;
 using Lyn.Protocol.Common.Crypto;
 using Lyn.Types.Fundamental;
+using Lyn.Types.Onion;
 using Lyn.Types.Serialization;
 using NaCl.Core;
 using NBitcoin.Secp256k1;
@@ -146,25 +147,25 @@ namespace Lyn.Protocol.Bolt4
         {
             var sequence = new ReadOnlySequence<byte>(new ReadOnlyMemory<byte>(payloadData));
             var binReader = new SequenceReader<byte>(sequence);
-            int perHopPayloadLength = 0;
 
             if (binReader.TryPeek(out var firstByte))
             {
                 if (firstByte == 0x00)
                 {
-                    // todo: this might be deprecated? do we need to support legacy payloads in Lyn?
-                    perHopPayloadLength = 65;
+                    // todo: consider re-throwing in Peel?
+                    throw new InvalidOnionVersionException();
                 }
-                else
-                {
-                    // safe to truncate because a packet will never be larger than 64KB?
-                    perHopPayloadLength = (int)binReader.ReadBigSize();
-                    perHopPayloadLength += (int)binReader.Consumed; //offset the length by the number of bytes consoomed
-                    perHopPayloadLength += MAC_LENGTH;
-                }
-            }
 
-            return perHopPayloadLength;
+                // safe to truncate because a packet will never be larger than 64KB?
+                int perHopPayloadLength = (int)binReader.ReadBigSize();
+                perHopPayloadLength += (int)binReader.Consumed; //offset the length by the number of bytes consoomed
+                perHopPayloadLength += MAC_LENGTH;
+                return perHopPayloadLength;
+            }
+            else
+            {
+                throw new ArgumentException("payloadData is empty");
+            }
         }
 
         public ReadOnlySpan<byte> GenerateFiller(string keyType,
@@ -202,6 +203,11 @@ namespace Lyn.Protocol.Bolt4
         // TODO: return DecryptedOnionPacket?
         public DecryptedOnionPacket PeelOnion(PrivateKey privateKey, byte[]? associatedData, OnionRoutingPacket packet)
         {
+            if (packet.Version != 0)
+            {
+                // todo: this needs to contain the hash of the packet
+                throw new InvalidOnionVersionException();
+            }
 
             var sharedSecret = ComputeSharedSecret(packet.EphemeralKey, privateKey);
             var mu = GenerateSphinxKey("mu", sharedSecret);
@@ -214,7 +220,7 @@ namespace Lyn.Protocol.Bolt4
                 var rho = GenerateSphinxKey("rho", sharedSecret);
                 var cipherStream = GenerateStream(rho.ToArray(), 2 * packet.PayloadData.Length);
                 // todo: better variable name here
-                var paddedPayload = packet.PayloadData.Concat(Enumerable.Range(0, packet.PayloadData.Length).Select<int, byte>(x => 0x00)).ToArray();
+                var paddedPayload = packet.PayloadData.Concat(new byte[packet.PayloadData.Length]).ToArray();
                 var binData = ExclusiveOR(paddedPayload, cipherStream).ToArray();
 
                 var perHopPayloadLength = PeekPayloadLength(binData);
@@ -291,7 +297,7 @@ namespace Lyn.Protocol.Bolt4
             }
 
             var hmacBytes = nextOnionPayload;
-            if(associatedData != null)
+            if (associatedData != null)
             {
                 hmacBytes = nextOnionPayload.Concat(associatedData).ToArray();
             }

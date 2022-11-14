@@ -7,6 +7,8 @@ using Xunit;
 using Lyn.Protocol.Tests.Bolt4.Data;
 using Lyn.Protocol.Bolt4.Entities;
 using System.Collections.Generic;
+using Lyn.Types.Fundamental;
+using Lyn.Types.Onion;
 
 namespace Lyn.Protocol.Tests.Bolt4
 {
@@ -79,6 +81,8 @@ namespace Lyn.Protocol.Tests.Bolt4
                 var actual = sphinx.PeekPayloadLength(payload);
                 Assert.Equal(expected, actual);
             }
+
+            Assert.Throws<InvalidOnionVersionException>(() => sphinx.PeekPayloadLength(SphinxReferenceVectors.InvalidVersionPayload));
         }
 
         [Fact]
@@ -155,54 +159,70 @@ namespace Lyn.Protocol.Tests.Bolt4
             {
                 // Bolt 1.0 payloads use the next packet's hmac to signal termination.
                 (true, new DecryptedOnionPacket() { Payload = new [] {(byte)0x00},
-                                                    NextPacket = new OnionRoutingPacket() { Version = 0, 
-                                                                                            EphemeralKey = publicKeys[0], 
-                                                                                            PayloadData = new byte[32], 
-                                                                                            Hmac = ByteVector32.Zeroes }, 
-                                                    SharedSecret = ByteVector32.One 
+                                                    NextPacket = new OnionRoutingPacket() { Version = 0,
+                                                                                            EphemeralKey = publicKeys[0],
+                                                                                            PayloadData = new byte[32],
+                                                                                            Hmac = ByteVector32.Zeroes },
+                                                    SharedSecret = ByteVector32.One
                                                   }
                 ),
                 (false, new DecryptedOnionPacket() { Payload = new [] {(byte)0x00},
-                                                    NextPacket = new OnionRoutingPacket() { Version = 0, 
-                                                                                            EphemeralKey = publicKeys[0], 
-                                                                                            PayloadData = new byte[32], 
-                                                                                            Hmac = ByteVector32.One }, 
-                                                    SharedSecret = ByteVector32.One 
+                                                    NextPacket = new OnionRoutingPacket() { Version = 0,
+                                                                                            EphemeralKey = publicKeys[0],
+                                                                                            PayloadData = new byte[32],
+                                                                                            Hmac = ByteVector32.One },
+                                                    SharedSecret = ByteVector32.One
                                                   }
                 ),
                 // Bolt 1.1 payloads currently also use the next packet's hmac to signal termination.
                 (true, new DecryptedOnionPacket() { Payload = Convert.FromHexString("0101"),
-                                                    NextPacket = new OnionRoutingPacket() { Version = 0, 
-                                                                                            EphemeralKey = publicKeys[0], 
-                                                                                            PayloadData = new byte[32], 
-                                                                                            Hmac = ByteVector32.Zeroes }, 
-                                                    SharedSecret = ByteVector32.One 
+                                                    NextPacket = new OnionRoutingPacket() { Version = 0,
+                                                                                            EphemeralKey = publicKeys[0],
+                                                                                            PayloadData = new byte[32],
+                                                                                            Hmac = ByteVector32.Zeroes },
+                                                    SharedSecret = ByteVector32.One
                                                   }
                 ),
                 (false, new DecryptedOnionPacket() { Payload = Convert.FromHexString("0101"),
-                                                    NextPacket = new OnionRoutingPacket() { Version = 0, 
-                                                                                            EphemeralKey = publicKeys[0], 
-                                                                                            PayloadData = new byte[32], 
-                                                                                            Hmac = ByteVector32.One }, 
-                                                    SharedSecret = ByteVector32.One 
+                                                    NextPacket = new OnionRoutingPacket() { Version = 0,
+                                                                                            EphemeralKey = publicKeys[0],
+                                                                                            PayloadData = new byte[32],
+                                                                                            Hmac = ByteVector32.One },
+                                                    SharedSecret = ByteVector32.One
                                                   }
                 ),
                 (false, new DecryptedOnionPacket() { Payload = Convert.FromHexString("0100"),
-                                                    NextPacket = new OnionRoutingPacket() { Version = 0, 
-                                                                                            EphemeralKey = publicKeys[0], 
-                                                                                            PayloadData = new byte[32], 
-                                                                                            Hmac = ByteVector32.One }, 
-                                                    SharedSecret = ByteVector32.One 
+                                                    NextPacket = new OnionRoutingPacket() { Version = 0,
+                                                                                            EphemeralKey = publicKeys[0],
+                                                                                            PayloadData = new byte[32],
+                                                                                            Hmac = ByteVector32.One },
+                                                    SharedSecret = ByteVector32.One
                                                   }
                 )
             };
 
-            foreach(var (expected, packet) in testCases)
+            foreach (var (expected, packet) in testCases)
             {
                 Assert.Equal(expected, packet.IsLastPacket);
             }
         }
 
+        [Fact]
+        public void Peel_BadOnion_BadVersion_Throws()
+        {
+            var curveActions = new EllipticCurveActions();
+            var sphinx = new Sphinx(curveActions);
+
+            var packet = new OnionRoutingPacket()
+            {
+                Version = 1,
+                EphemeralKey = SphinxReferenceVectors.PublicKeys[0],
+                PayloadData = ByteVector.Fill(65, 0x01),
+                Hmac = Convert.FromHexString("C908EE9582217D3B58D75FAC05CD5DBBEF91C1841A5B59D521283F9F4C43B643")
+            };
+
+            Assert.Throws<InvalidOnionVersionException>(() => sphinx.PeelOnion(SphinxReferenceVectors.PrivateKeys[0], SphinxReferenceVectors.AssociatedData, packet));
+        }
 
     }
 
@@ -210,6 +230,16 @@ namespace Lyn.Protocol.Tests.Bolt4
     {
         public static byte[] Zeroes = Enumerable.Repeat((byte)0, 32).ToArray();
         public static byte[] One = Convert.FromHexString("0000000000000000000000000000000000000000000000000000000000000001");
+
     }
+
+    public static class ByteVector
+    {
+        public static byte[] Fill(int length, byte value)
+        {
+            return Enumerable.Repeat(value, length).ToArray();
+        }
+    }
+
 
 }
