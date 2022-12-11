@@ -72,6 +72,7 @@ namespace Lyn.Protocol.Bolt4
 
         public ReadOnlySpan<byte> GenerateStream(ReadOnlySpan<byte> keyData, int streamLength)
         {
+            // This is an unfortunate allocation, but NaCl seems to require a heap allocation for the key?
             var cipher = new ChaCha20(new ReadOnlyMemory<byte>(keyData.ToArray()), 0);
             var emptyPlainText = Enumerable.Range(0, streamLength).Select<int, byte>(x => 0x00).ToArray();
             var nonce = Enumerable.Range(0, 12).Select<int, byte>(x => 0x00).ToArray();
@@ -80,13 +81,23 @@ namespace Lyn.Protocol.Bolt4
 
         public ReadOnlySpan<byte> ComputeBlindingFactor(PublicKey pubKey, ReadOnlySpan<byte> secret)
         {
-            // welcome to allocation city baby - population: BlindingFactor
-            return HashGenerator.Sha256(pubKey.GetSpan().ToArray().Concat(secret.ToArray()).ToArray());
+            // create an array to hold the concatenated data
+            var concatenatedData = new byte[pubKey.GetSpan().Length + secret.Length];
+
+            // copy the pubKey and secret data into the concatenated data array
+            pubKey.GetSpan().CopyTo(concatenatedData);
+            secret.CopyTo(concatenatedData.AsSpan(pubKey.GetSpan().Length));
+
+            // compute the SHA-256 hash of the concatenated data
+            return HashGenerator.Sha256(concatenatedData);
         }
 
         public PublicKey BlindKey(PublicKey pubKey, ReadOnlySpan<byte> blindingFactor)
         {
-            var blindKeyBytes = _ellipticCurveActions.MultiplyPubKey(new PrivateKey(blindingFactor.ToArray()), pubKey);
+            var blindingFactorArray = new byte[blindingFactor.Length];
+            blindingFactor.CopyTo(blindingFactorArray);
+
+            var blindKeyBytes = _ellipticCurveActions.MultiplyPubKey(new PrivateKey(blindingFactorArray), pubKey);
             return new PublicKey(blindKeyBytes.ToArray());
         }
 
