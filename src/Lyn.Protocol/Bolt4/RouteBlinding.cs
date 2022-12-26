@@ -90,7 +90,7 @@ namespace Lyn.Protocol.Bolt4
                 var hash = HashGenerator.Sha256(keyBytes.Concat(sharedSecretArr).ToArray());
                 Debug.WriteLine($"hash: {Convert.ToHexString(hash.ToArray())}");
                 var newPrivKey = new PrivateKey(hash.ToArray());
-                e = new PrivateKey(_ellipticCureActions.Multiply(newPrivKey, blindingKey).ToArray());
+                e = new PrivateKey(_ellipticCureActions.MultiplyWithPrivateKey(newPrivKey, e).ToArray());
                 Debug.WriteLine($"e*PrivKey(hash): {Convert.ToHexString(e)}");
                 return (blindedHop: new BlindedNode(blindedPublicKey, encryptedPayload.ToArray()), blindingKey: blindingKey);
             }).ToList();
