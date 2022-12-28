@@ -57,8 +57,10 @@ namespace Lyn.Protocol.Bolt4
         // todo: util/helper
         public ReadOnlySpan<byte> ExclusiveOR(ReadOnlySpan<byte> left, ReadOnlySpan<byte> right)
         {
-            if (left.Length != right.Length)
+            if (left.Length != right.Length) 
+            {
                 throw new ArgumentException("inputs must be same length");
+            }
 
             byte[] result = new byte[left.Length];
 
