@@ -53,9 +53,6 @@ namespace Lyn.Protocol.Bolt4
     public class RouteBlinding
     {
 
-
-
-
         private readonly ISphinx _sphinx = null;
         private readonly ILightningKeyDerivation _lightningKeyDerivation = null;
         private readonly IEllipticCurveActions _ellipticCureActions = null;

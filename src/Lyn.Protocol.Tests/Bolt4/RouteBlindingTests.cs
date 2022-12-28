@@ -81,6 +81,11 @@ namespace Lyn.Protocol.Tests.Bolt4
                 Convert.FromHexString("0fa1a72cff3b64a3d6e1e4903cf8c8b0a17144aeb249dcb86561adee1f679ee8db3e561d9e49895fd4bcebf6f58d6f61a6d41a9bf5aa4b0453437856632e8255c351873143ddf2bb2b0832b091e1b4"),
                 Convert.FromHexString("da1c7e5f7881219884beae6ae68971de73bab4c3055d9865b1afb60722a63c688768042ade22f2c22f5724767d171fd221d3e579e43b354cc72e3ef146ada91a892d95fc48662f5b158add0af457da")
             }, blindedRoute.EncryptedPayloads.ToList());
+
+            // After generating the blinded route, Eve is able to derive the private key corresponding to her blinded payload
+            var eveBlindedPrivKey = routeBlinding.DerivePrivateKey(eve, lastBlinding);
+            var eveBlindedPubKey = lightningKeyDerivation.PublicKeyFromPrivateKey(eveBlindedPrivKey);
+            Assert.Equal(eveBlindedPubKey, blindedRoute.BlindedNodeIds.LastOrDefault());
         }
 
     }
