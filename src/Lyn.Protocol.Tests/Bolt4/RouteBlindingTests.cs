@@ -54,6 +54,9 @@ namespace Lyn.Protocol.Tests.Bolt4
             Assert.Equal(new PublicKey(Convert.FromHexString("031b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f")), blindedRouteEnd.BlindingKey);
             Assert.Equal(new PublicKey(Convert.FromHexString("03e09038ee76e50f444b19abf0a555e8697e035f62937168b80adf0931b31ce52a")), lastBlinding);
 
+            // Save a blinding override for later
+            var blindingOverride = blindedRouteEnd.BlindingKey;
+
             // Bob also wants to use route blinding:
             var bobSessionKey = new PrivateKey(Convert.FromHexString("0202020202020202020202020202020202020202020202020202020202020202"));
             var bobCarolHops = new List<(PublicKey PublicKey, byte[] Payload)>() {
@@ -86,6 +89,46 @@ namespace Lyn.Protocol.Tests.Bolt4
             var eveBlindedPrivKey = routeBlinding.DerivePrivateKey(eve, lastBlinding);
             var eveBlindedPubKey = lightningKeyDerivation.PublicKeyFromPrivateKey(eveBlindedPrivKey);
             Assert.Equal(eveBlindedPubKey, blindedRoute.BlindedNodeIds.LastOrDefault());
+
+            // Every node in the route is able to decrypt its payload and extract the blinding point for the next node:
+            {
+                // Bob (the introduction point) is able to decrypt its encrypted payload and obtain the next ephemeral public key
+                var (payload0, ephKey1) = routeBlinding.DecryptPayload(bob, blindedRoute.BlindingKey, blindedRoute.EncryptedPayloads[0]);
+                Assert.Equal(bobPayload, payload0);
+                Assert.Equal(new PublicKey(Convert.FromHexString("034e09f450a80c3d252b258aba0a61215bf60dda3b0dc78ffb0736ea1259dfd8a0")), ephKey1);
+
+                // Carol can derive the private key used to unwrap the onion and decrypt its payload
+                var carolBlindedPrivKey = routeBlinding.DerivePrivateKey(carol, ephKey1);
+                var carolBlindedPubKey = lightningKeyDerivation.PublicKeyFromPrivateKey(carolBlindedPrivKey);
+                Assert.Equal(carolBlindedPubKey, blindedRoute.BlindedNodeIds[1]);
+                var (payload1, ephKey2) = routeBlinding.DecryptPayload(carol, ephKey1, blindedRoute.EncryptedPayloads[1]);
+                Assert.Equal(carolPayload, payload1);
+                Assert.Equal(new PublicKey(Convert.FromHexString("03af5ccc91851cb294e3a364ce63347709a08cdffa58c672e9a5c587ddd1bbca60")), ephKey2);
+                // NB: Carol finds a blinding override and will transmit that instead of ephKey2 to the next node.
+                // HACK: Really ugly way to check if the payload contains the blinding override
+                var payload1Str = Convert.ToHexString(payload1);
+                var blindingOverrideStr = Convert.ToHexString(blindingOverride.GetSpan().ToArray());
+                Assert.True(payload1Str.Contains(blindingOverrideStr));
+
+                // Dave must be given the blinding override to derive the private key used to unwrap the onion and decrypt its payload
+                // TODO: This should probably be a specific exception
+                Assert.ThrowsAny<Exception>(() => routeBlinding.DecryptPayload(dave, ephKey2, blindedRoute.EncryptedPayloads[2]));
+                var overridePrivKey = routeBlinding.DerivePrivateKey(dave, blindingOverride);
+                var overridePubKey = lightningKeyDerivation.PublicKeyFromPrivateKey(overridePrivKey);
+                Assert.Equal(overridePubKey, blindedRoute.BlindedNodeIds[2]);
+                var (payload2, ephKey3) = routeBlinding.DecryptPayload(dave, blindingOverride, blindedRoute.EncryptedPayloads[2]);
+                Assert.Equal(davePayload, payload2);
+                Assert.Equal(new PublicKey(Convert.FromHexString("03e09038ee76e50f444b19abf0a555e8697e035f62937168b80adf0931b31ce52a")), ephKey3);
+                Assert.Equal(lastBlinding, ephKey3);
+
+                // Eve is able to derive the private key used to unwrap the onion and decrypt its payload
+                var eveFinalBlindedPrivKey = routeBlinding.DerivePrivateKey(eve, ephKey3);
+                var eveFinalBlindedPubKey = lightningKeyDerivation.PublicKeyFromPrivateKey(eveFinalBlindedPrivKey);
+                Assert.Equal(eveFinalBlindedPubKey, blindedRoute.BlindedNodeIds[3]);
+                var (payload4, ephKey5) = routeBlinding.DecryptPayload(eve, ephKey3, blindedRoute.EncryptedPayloads[3]);
+                Assert.Equal(evePayload, payload4);
+                Assert.Equal(new PublicKey(Convert.FromHexString("038fc6859a402b96ce4998c537c823d6ab94d1598fca02c788ba5dd79fbae83589")), ephKey5);
+            }
         }
 
     }

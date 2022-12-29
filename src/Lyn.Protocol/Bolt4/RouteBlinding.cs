@@ -23,9 +23,9 @@ namespace Lyn.Protocol.Bolt4
         public PublicKey BlindingKey { get; init; }
 
         public IntroductionNode IntroductionNode { get; init; }
-        public IEnumerable<BlindedNode> SubsequentNodes { get; private set; }
-        public IEnumerable<PublicKey> BlindedNodeIds { get; private set; }
-        public IEnumerable<byte[]> EncryptedPayloads { get; private set; }
+        public BlindedNode[] SubsequentNodes { get; private set; }
+        public PublicKey[] BlindedNodeIds { get; private set; }
+        public byte[][] EncryptedPayloads { get; private set; }
 
 
         public BlindedNode[] BlindedNodes { get; init; }
@@ -42,9 +42,9 @@ namespace Lyn.Protocol.Bolt4
             BlindedNodes = blindedNodes;
 
             IntroductionNode = new IntroductionNode(IntroductionNodeId, BlindedNodes.First().BlindedPublicKey, BlindingKey, BlindedNodes.First().EncryptedPayload);
-            SubsequentNodes = BlindedNodes.Skip(1);
-            BlindedNodeIds = BlindedNodes.Select(x => x.BlindedPublicKey);
-            EncryptedPayloads = BlindedNodes.Select(x => x.EncryptedPayload);
+            SubsequentNodes = BlindedNodes.Skip(1).ToArray();
+            BlindedNodeIds = BlindedNodes.Select(x => x.BlindedPublicKey).ToArray();
+            EncryptedPayloads = BlindedNodes.Select(x => x.EncryptedPayload).ToArray();
         }
     }
 
@@ -72,22 +72,26 @@ namespace Lyn.Protocol.Bolt4
             var blindedHopsAndKeys = hops.Select((hop) =>
             {
                 var (publicKey, payload) = hop;
-                var blindingKey = _lightningKeyDerivation.PublicKeyFromPrivateKey(e);
+
+                // Compute a shared secret, use it to derive ablinding key and rho for the ChaCha20Poly1305 cipher
                 var sharedSecret = _sphinx.ComputeSharedSecret(publicKey, e);
+                var blindingKey = _lightningKeyDerivation.PublicKeyFromPrivateKey(e);
                 var blindedPublicKey = _sphinx.BlindKey(publicKey, _sphinx.GenerateSphinxKey("blinded_node_id", sharedSecret));
                 var rho = _sphinx.GenerateSphinxKey("rho", sharedSecret);
-
-                // is this right? who knows! i hsould ask chatgpt later
-                // note: i didn't use the ChaCha20Poly1305CipherFunction bc the nonce increments by 1 for each call, and this requires a nonce of 0(?)
                 var cipher = new ChaCha20Poly1305(rho.ToArray());
+
+                // Next, allocate some buffers and encrypt the payload for this hop 
+                // note: i didn't use the ChaCha20Poly1305CipherFunction bc the nonce increments by 1 for each call, and this requires a nonce of 0(?)
                 Span<byte> encryptedPayload = stackalloc byte[payload.Length + 16];
                 Span<byte> ciphertext = stackalloc byte[payload.Length];
-                Span<byte> mac = stackalloc byte[16];    
+                Span<byte> mac = stackalloc byte[16];
+
                 cipher.Encrypt(new byte[12], payload.AsSpan(), ciphertext, mac, new byte[0]);
 
                 ciphertext.CopyTo(encryptedPayload);
                 mac.CopyTo(encryptedPayload.Slice(payload.Length));
 
+                // Before we move onto the next hop we need to derive the next hop's e value
                 // todo: is blindingKey length a fixed 32 bytes?
                 Span<byte> bytesToHash = stackalloc byte[blindingKey.GetSpan().Length + sharedSecret.Length];
                 blindingKey.GetSpan().CopyTo(bytesToHash);
@@ -105,9 +109,7 @@ namespace Lyn.Protocol.Bolt4
         }
 
         public PrivateKey DerivePrivateKey(PrivateKey privateKey, PublicKey blindingEphemeralKey)
-        {
-            // todo: i need some test coverage to verify the multiply logic here
-            // note: my guess? way off like in Create ¯\_(ツ)_/¯
+        {           
             var sharedSecret = _sphinx.ComputeSharedSecret(blindingEphemeralKey, privateKey);
             var generatedKey = new PrivateKey(_sphinx.GenerateSphinxKey("blinded_node_id", sharedSecret).ToArray());
             return new PrivateKey(_ellipticCureActions.MultiplyWithPrivateKey(generatedKey, privateKey).ToArray());
@@ -115,12 +117,23 @@ namespace Lyn.Protocol.Bolt4
 
         public (byte[], PublicKey) DecryptPayload(PrivateKey privateKey, PublicKey blindingEphemeralKey, byte[] encryptedPayload)
         {
+            // Derive rho from our shared secret and instantiate a ChaCha20Poly1305 cipher
             var sharedSecret = _sphinx.ComputeSharedSecret(blindingEphemeralKey, privateKey);
             var rho = _sphinx.GenerateSphinxKey("rho", sharedSecret);
             var cipher = new ChaCha20Poly1305(rho.ToArray());
+
+            // Create some buffers to handle the decryption
             Span<byte> decryptedPayload = stackalloc byte[encryptedPayload.Length - 16];
+            Span<byte> ciphertext = stackalloc byte[encryptedPayload.Length - 16];
             Span<byte> mac = stackalloc byte[16];
-            cipher.Decrypt(new byte[12], encryptedPayload.AsSpan(), decryptedPayload, mac, new byte[0]);
+
+            // Split the encrypted payload into the ciphertext and the MAC for decryption
+            encryptedPayload.AsSpan().Slice(0, encryptedPayload.Length - 16).CopyTo(ciphertext);
+            encryptedPayload.AsSpan().Slice(encryptedPayload.Length - 16).CopyTo(mac);
+
+            // Decrypt the payload
+            // Note: Should figure out what the right error handling is here
+            cipher.Decrypt(new byte[12], ciphertext, mac, decryptedPayload, new byte[0]);
             var nextBlindingEphemeralKey = _sphinx.BlindKey(blindingEphemeralKey, _sphinx.ComputeBlindingFactor(blindingEphemeralKey, sharedSecret));
             return (decryptedPayload.ToArray(), nextBlindingEphemeralKey);
         }
