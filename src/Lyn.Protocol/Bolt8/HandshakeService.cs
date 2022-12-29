@@ -1,5 +1,6 @@
 using System;
 using System.Buffers;
+using Lyn.Protocol.Common.Crypto;
 using Microsoft.Extensions.Logging;
 
 namespace Lyn.Protocol.Bolt8

@@ -16,7 +16,7 @@ using Lyn.Protocol.Bolt1;
 using Lyn.Protocol.Bolt1.Messages;
 using Lyn.Protocol.Bolt2.Wallet;
 using Lyn.Protocol.Bolt9;
-using Lyn.Protocol.Common.Hashing;
+using Lyn.Protocol.Common.Crypto;
 using Lyn.Types;
 using Lyn.Types.Fundamental;
 using Microsoft.Extensions.DependencyInjection;

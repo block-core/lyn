@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Linq;
-using Lyn.Protocol.Common.Hashing;
+using Lyn.Protocol.Common.Crypto;
 using Lyn.Types;
 using Lyn.Types.Bitcoin;
 

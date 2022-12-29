@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Lyn.Protocol.Common.Hashing
+namespace Lyn.Protocol.Common.Crypto
 {
     [Serializable]
     public class HashGeneratorException : Exception

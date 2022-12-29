@@ -1,5 +1,6 @@
 using System.Buffers;
 using Lyn.Protocol.Bolt8;
+using Lyn.Protocol.Common.Crypto;
 using Lyn.Types;
 using Microsoft.Extensions.Logging;
 using Moq;

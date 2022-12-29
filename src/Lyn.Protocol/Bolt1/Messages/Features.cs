@@ -29,5 +29,7 @@ namespace Lyn.Protocol.Bolt1.Messages
         OptionAnchorOutputs = 1 << 21,
         OptionAnchorsZeroFeeHtlcTxRequired = 1 << 22,
         OptionAnchorsZeroFeeHtlcTx = 1 << 23,
+        OptionOnionMessagesRequired = 1 << 38,
+        OptionOnionMessages = 1 << 39
     }
 }

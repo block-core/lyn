@@ -5,7 +5,7 @@ using FluentAssertions;
 using Lyn.Protocol.Bolt3;
 using Lyn.Protocol.Bolt3.Types;
 using Lyn.Protocol.Common;
-using Lyn.Protocol.Common.Hashing;
+using Lyn.Protocol.Common.Crypto;
 using Lyn.Protocol.Common.Messages;
 using Lyn.Types;
 using Lyn.Types.Bitcoin;

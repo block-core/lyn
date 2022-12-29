@@ -35,5 +35,8 @@ namespace Lyn.Protocol.Common.Messages
         QueryShortChannelIds = 261,
         QueryChannelRange = 263,
         GossipTimestampFilter = 265,
+
+        // Sphinx/Onion
+        OnionMessage = 513
     }
 }

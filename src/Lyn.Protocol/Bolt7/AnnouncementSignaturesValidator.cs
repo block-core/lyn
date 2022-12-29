@@ -1,11 +1,11 @@
 using Lyn.Protocol.Bolt7.Messages;
 using Lyn.Protocol.Common;
-using Lyn.Protocol.Common.Hashing;
+using Lyn.Protocol.Common.Crypto;
 using Lyn.Protocol.Common.Messages;
 
 namespace Lyn.Protocol.Bolt7
 {
-   public class AnnouncementSignaturesValidator : IMessageValidator<AnnouncementSignatures>
+    public class AnnouncementSignaturesValidator : IMessageValidator<AnnouncementSignatures>
    {
       private readonly ISerializationFactory _serializationFactory;
       private readonly IGossipRepository _repository;
