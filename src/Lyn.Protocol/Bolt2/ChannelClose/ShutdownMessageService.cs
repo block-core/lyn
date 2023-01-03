@@ -44,7 +44,7 @@ namespace Lyn.Protocol.Bolt2.ChannelClose
             var paymentChannel = await _channelRepository.TryGetPaymentChannelAsync(paymentChannelId);
 
             if (paymentChannel is null)
-                throw new ArgumentNullException(nameof(paymentChannel));
+                throw new ArgumentNullException(nameof(paymentChannel)); //TODO David Do we need an exception here?
 
             paymentChannel.CloseChannelTriggered = true;
             //TODO add the full logic (or service call) to shut down a channel
