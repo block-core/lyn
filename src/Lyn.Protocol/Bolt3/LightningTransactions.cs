@@ -589,7 +589,44 @@ namespace Lyn.Protocol.Bolt3
 
         public Transaction ClosingTransaction(ClosingTransactionIn closingTransactionIn)
         {
-            throw new NotImplementedException();
+            var list = new List<byte[]> {closingTransactionIn.LocalPublicKey, closingTransactionIn.RemotePublicKey};
+            
+            list.Sort(new LexicographicByteComparer());
+
+            var input =  new TransactionInput
+            {
+                Sequence = 0xFFFFFFFF,
+                PreviousOutput = closingTransactionIn.FundingCreatedTxout,
+                SignatureScript = new byte[0],
+                ScriptWitness = _lightningScripts
+                    .CreateClosingTransactionWitnessScript(list.First(), list.Last())
+            };
+
+            var outputs = new List<TransactionOutput>();
+
+            if (closingTransactionIn.AmountToPayLocal > 0)
+            {
+                outputs.Add(new TransactionOutput
+                {
+                    Value = closingTransactionIn.ChannelOpenedFromLocalNode
+                        ? closingTransactionIn.AmountToPayLocal - closingTransactionIn.Fee
+                        : closingTransactionIn.AmountToPayLocal,
+                    PublicKeyScript = closingTransactionIn.LocalScriptPublicKey
+                });
+            }
+
+            if (closingTransactionIn.AmountToPayRemote > 0)
+            {
+                outputs.Add(new TransactionOutput
+                {
+                    Value = closingTransactionIn.ChannelOpenedFromLocalNode
+                        ? closingTransactionIn.AmountToPayRemote 
+                        : closingTransactionIn.AmountToPayRemote- closingTransactionIn.Fee,
+                    PublicKeyScript = closingTransactionIn.RemoteScriptPublicKey
+                });
+            }
+            
+            return new Transaction {Version = 2, LockTime = 0, Inputs = new[] {input}, Outputs = outputs.ToArray()};
         }
     }
 }

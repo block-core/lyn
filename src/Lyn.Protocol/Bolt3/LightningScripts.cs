@@ -394,5 +394,16 @@ namespace Lyn.Protocol.Bolt3
                 Components = redeemScript.Pushes.Select(opcode => new TransactionWitnessComponent { RawData = opcode }).ToArray()
             };
         }
+
+        public TransactionWitness CreateClosingTransactionWitnessScript(PublicKey pubkey1, PublicKey pubkey2)
+        {
+            var script = new Script(OpcodeType.OP_0, Op.GetPushOp(pubkey1), Op.GetPushOp(pubkey2))
+                .ToWitScript();
+
+            return new TransactionWitness
+            {
+                Components = script.Pushes.Select(_ => new TransactionWitnessComponent {RawData = _}).ToArray()
+            };
+        }
     }
 }
