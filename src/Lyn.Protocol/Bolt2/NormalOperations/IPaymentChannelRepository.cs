@@ -9,5 +9,6 @@ namespace Lyn.Protocol.Bolt2.NormalOperations
         Task AddNewPaymentChannelAsync(PaymentChannel paymentChannel);
         
         Task<PaymentChannel?> TryGetPaymentChannelAsync(UInt256 channelId);
+        Task UpdatePaymentChannelAsync(PaymentChannel channel);
     }
 }

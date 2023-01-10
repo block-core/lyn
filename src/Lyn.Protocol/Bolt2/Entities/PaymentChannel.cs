@@ -28,7 +28,7 @@ namespace Lyn.Protocol.Bolt2.Entities
             PushMsat = pushMsat;
             LocalBasePoints = localBasePoints;
             RemoteBasePoints = remoteBasePoints;
-            CompressedSignature = compressedSignature;
+            FundingRemoteSignature = compressedSignature;
             PreviousPerCommitmentSecrets = Array.Empty<Secret>();
         }
 
@@ -42,7 +42,7 @@ namespace Lyn.Protocol.Bolt2.Entities
 
         public Secret[] PreviousPerCommitmentSecrets { get; set; }
 
-        public CompressedSignature CompressedSignature { get; set; }
+        public CompressedSignature FundingRemoteSignature { get; set; }
 
         
         
@@ -76,11 +76,14 @@ namespace Lyn.Protocol.Bolt2.Entities
         public Basepoints RemoteBasePoints { get; set; }
 
 
-        public bool CloseChannelTriggered { get; set; }
+        public bool ChannelShutdownTriggered { get; set; }
+        public bool ChannelClosingSignSent  => CloseChannelDetails != null;
 
         // public Keyset Keyset { get; set; }
         // public MiliSatoshis SelfPayMsat { get; set; }
         // public MiliSatoshis OtherPayMsat { get; set; }
          public List<Htlc> Htlcs { get; set; }
+
+         public CloseChannelDetails? CloseChannelDetails { get; set; }
     }
 }

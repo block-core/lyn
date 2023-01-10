@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
 using Lyn.Protocol.Bolt2.Entities;
@@ -32,6 +33,16 @@ namespace Lyn.Protocol.Bolt2.NormalOperations
                 ? Task.FromResult<PaymentChannel?>(_channels[channelId])
                 : Task.FromResult<PaymentChannel?>(null);
             
+        }
+
+        public Task UpdatePaymentChannelAsync(PaymentChannel channel)
+        {
+            if (!_channels.ContainsKey(channel.ChannelId))
+                throw new ArgumentOutOfRangeException(nameof(channel.ChannelId));
+
+            _channels[channel.ChannelId] = channel;
+            
+            return Task.CompletedTask;
         }
     }
 }
