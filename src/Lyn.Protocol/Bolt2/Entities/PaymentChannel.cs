@@ -83,6 +83,7 @@ namespace Lyn.Protocol.Bolt2.Entities
         // public MiliSatoshis SelfPayMsat { get; set; }
         // public MiliSatoshis OtherPayMsat { get; set; }
          public List<Htlc> Htlcs { get; set; }
+         public List<Htlc> PendingHtlcs { get; set; }
 
          public CloseChannelDetails? CloseChannelDetails { get; set; }
     }

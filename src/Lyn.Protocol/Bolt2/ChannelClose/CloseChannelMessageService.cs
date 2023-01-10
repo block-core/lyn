@@ -165,7 +165,7 @@ namespace Lyn.Protocol.Bolt2.ChannelClose
                 AmountToPayLocal = localAmount,
                 AmountToPayRemote = remoteAmount, 
                 LocalScriptPublicKey = channel.LocalFundingKey, //TODO need to verify that this is correct
-                RemoteScriptPublicKey = channel.CloseChannelDetails.RemoteNodeScriptPubKeySignature,
+                RemoteScriptPublicKey = channel.CloseChannelDetails.RemoteScriptPublicKey,
                 SideThatOpenedChannel = channel.WasChannelInitiatedLocally ? ChannelSide.Local : ChannelSide.Remote
             });
             return transaction;

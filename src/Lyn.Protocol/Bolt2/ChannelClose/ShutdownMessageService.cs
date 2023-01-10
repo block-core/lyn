@@ -3,10 +3,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using Lyn.Protocol.Bolt1;
 using Lyn.Protocol.Bolt2.ChannelClose.Messages;
+using Lyn.Protocol.Bolt2.Entities;
 using Lyn.Protocol.Bolt2.NormalOperations;
 using Lyn.Protocol.Common.Messages;
 using Lyn.Protocol.Connection;
-using Lyn.Types.Bitcoin;
 
 namespace Lyn.Protocol.Bolt2.ChannelClose
 {
@@ -23,31 +23,33 @@ namespace Lyn.Protocol.Bolt2.ChannelClose
 
         public async Task<MessageProcessingOutput> ProcessMessageAsync(PeerMessage<Shutdown> message)
         {
-            if (message.MessagePayload.ChannelId != null)
-            {
-                await ClosePaymentChannelAsync(message.MessagePayload.ChannelId);
-            }
-            else
-            {
-                var peer = await _peerRepository.TryGetPeerAsync(message.NodeId);
-                
-                var closeChannelsTasks = peer.PaymentChannelIds.Select(ClosePaymentChannelAsync);
+            if (message.MessagePayload.ChannelId == null)
+                throw new ArgumentNullException(nameof(message.MessagePayload.ChannelId));
 
-                await Task.WhenAll(closeChannelsTasks);
-            }
-
-            return new EmptySuccessResponse(); //TODO
-        }
-
-        private async Task ClosePaymentChannelAsync(UInt256 paymentChannelId)
-        {
-            var paymentChannel = await _channelRepository.TryGetPaymentChannelAsync(paymentChannelId);
+            var paymentChannel = await _channelRepository.TryGetPaymentChannelAsync(message.MessagePayload.ChannelId);
 
             if (paymentChannel is null)
                 throw new ArgumentNullException(nameof(paymentChannel)); //TODO David Do we need an exception here?
 
-            paymentChannel.CloseChannelTriggered = true;
-            //TODO add the full logic (or service call) to shut down a channel
+            //TODO validate the script pub key received in the message
+            
+            paymentChannel.ChannelShutdownTriggered = true;
+            paymentChannel.CloseChannelDetails = new CloseChannelDetails
+            {
+                RemoteScriptPublicKey = message.MessagePayload.ScriptPubkey
+            };
+
+            if (paymentChannel.PendingHtlcs.Any())
+                return new EmptySuccessResponse();
+            
+            return new SuccessWithOutputResponse(new BoltMessage
+            {
+                Payload = new Shutdown
+                {
+                    ChannelId = message.MessagePayload.ChannelId,
+                    ScriptPubkey = paymentChannel.LocalFundingKey
+                }
+            });
         }
     }
 }

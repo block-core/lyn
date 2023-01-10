@@ -7,6 +7,7 @@ namespace Lyn.Protocol.Bolt2.Entities
         public Satoshis? FeeSatoshis { get; set; }
         public ulong MinFeeRange { get; set; }
         public ulong MaxFeeRange { get; set; }
+        public PublicKey RemoteScriptPublicKey { get; set; }
         public CompressedSignature RemoteNodeScriptPubKeySignature { get; set; }
     }
 }
