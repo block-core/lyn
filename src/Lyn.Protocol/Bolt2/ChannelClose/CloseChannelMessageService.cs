@@ -8,9 +8,11 @@ using Lyn.Protocol.Bolt2.NormalOperations;
 using Lyn.Protocol.Bolt2.Wallet;
 using Lyn.Protocol.Bolt3;
 using Lyn.Protocol.Bolt3.Types;
+using Lyn.Protocol.Common;
 using Lyn.Protocol.Common.Messages;
 using Lyn.Protocol.Connection;
 using Lyn.Types.Bitcoin;
+using Lyn.Types.Fundamental;
 
 namespace Lyn.Protocol.Bolt2.ChannelClose
 {
@@ -22,9 +24,10 @@ namespace Lyn.Protocol.Bolt2.ChannelClose
         private readonly ISecretStore _secretStore;
         private readonly ILightningKeyDerivation _keyDerivation;
         private readonly ILightningScripts _lightningScripts;
+        private readonly IValidationHelper _validationHelper;
 
         public CloseChannelMessageService(IPaymentChannelRepository channelRepository,
-            ILightningTransactions lightningTransactions, IWalletTransactions walletTransactions, ISecretStore secretStore, ILightningKeyDerivation keyDerivation, ILightningScripts lightningScripts)
+            ILightningTransactions lightningTransactions, IWalletTransactions walletTransactions, ISecretStore secretStore, ILightningKeyDerivation keyDerivation, ILightningScripts lightningScripts, IValidationHelper validationHelper)
         {
             _channelRepository = channelRepository;
             _lightningTransactions = lightningTransactions;
@@ -32,6 +35,7 @@ namespace Lyn.Protocol.Bolt2.ChannelClose
             _secretStore = secretStore;
             _keyDerivation = keyDerivation;
             _lightningScripts = lightningScripts;
+            _validationHelper = validationHelper;
         }
 
         public async Task<MessageProcessingOutput> ProcessMessageAsync(PeerMessage<ClosingSigned> message)
@@ -45,6 +49,9 @@ namespace Lyn.Protocol.Bolt2.ChannelClose
                 return new ErrorCloseChannelResponse(message.MessagePayload.ChannelId,
                     "Shutdown message was not received");
 
+            if (!ValidateSignature(channel, message.MessagePayload.Signature))
+                return new WarningResponse(message.MessagePayload.ChannelId, nameof(message.MessagePayload.Signature));
+            
             if (channel.ChannelClosingSignSent)
             {
                 channel.CloseChannelDetails.RemoteNodeScriptPubKeySignature = message.MessagePayload.Signature;
@@ -104,6 +111,14 @@ namespace Lyn.Protocol.Bolt2.ChannelClose
             return new EmptySuccessResponse();
         }
 
+        private bool ValidateSignature(PaymentChannel channel, CompressedSignature signature)
+        {
+            var transactio = GetClosingTransaction(channel);
+            
+            return  _validationHelper.VerifySignature(channel.CloseChannelDetails.RemoteScriptPublicKey,
+                signature,transactio.Hash);
+        }
+        
         private static FeeRange GetFeeRange(PeerMessage<ClosingSigned> message)
         {
             if (message.Message.Extension == null)
@@ -140,13 +155,15 @@ namespace Lyn.Protocol.Bolt2.ChannelClose
 
         private Transaction GetClosingTransaction(PaymentChannel channel)
         {
-            uint localRecived = channel.Htlcs
+            var localRecived = channel.Htlcs
                 .Where(_ => _.Side == ChannelSide.Local)
-                .Sum(_ => _.AmountMsat);
+                .Select(_ => (uint)_.AmountMsat)
+                .Sum(_ => _);
 
-            uint remoteRecived = channel.Htlcs
+            var remoteRecived = channel.Htlcs
                 .Where(_ => _.Side == ChannelSide.Remote)
-                .Sum(_ => _.AmountMsat);
+                .Select(_ => (uint)_.AmountMsat)
+                .Sum(_ => _);
 
             var localAmount = channel.WasChannelInitiatedLocally
                 ? channel.FundingSatoshis - localRecived

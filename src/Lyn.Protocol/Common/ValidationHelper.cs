@@ -1,10 +1,10 @@
+using Lyn.Protocol.Bolt7;
 using Lyn.Types.Bitcoin;
-using Lyn.Types.Bolt;
 using Lyn.Types.Fundamental;
 using NBitcoin;
 using NBitcoin.Crypto;
 
-namespace Lyn.Protocol.Bolt7
+namespace Lyn.Protocol.Common
 {
    public class ValidationHelper : IValidationHelper 
    {
@@ -19,6 +19,13 @@ namespace Lyn.Protocol.Bolt7
       public bool VerifyPublicKey(PublicKey publicKey)
       {
          return PubKey.Check(publicKey, true);
+      }
+
+      public bool ValidateScriptPubKeyP2WSHOrP2WPKH(byte[] scriptPubKey)
+      {
+         var s = new NBitcoin.Script(scriptPubKey);
+
+         return s.IsScriptType(ScriptType.P2WSH) || s.IsScriptType(ScriptType.P2WPKH);
       }
    }
 }
