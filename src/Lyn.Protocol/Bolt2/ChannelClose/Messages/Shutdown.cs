@@ -7,7 +7,7 @@ namespace Lyn.Protocol.Bolt2.ChannelClose.Messages
     {
         public override MessageType MessageType => MessageType.Shutdown;
         public UInt256? ChannelId { get; set; }
-        public ushort? Lentgh { get; set; }
+        public ushort? Length { get; set; }
         public byte[]? ScriptPubkey { get; set; }
     }
 }

@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using Lyn.Types.Bitcoin;
+using Lyn.Types.Bolt;
 using Lyn.Types.Fundamental;
 
 namespace Lyn.Protocol.Bolt2.Wallet
@@ -11,5 +12,8 @@ namespace Lyn.Protocol.Bolt2.Wallet
         Task<Transaction> GenerateTransactionForOutputAsync(TransactionOutput transactionOutput);
 
         Task PublishTransactionAsync(Transaction transaction);
+
+        Task<ShortChannelId> LookupShortChannelIdByTransactionHashAsync(UInt256 hash, ushort outputIndex);
+        Task<long> GetMinimumFeeAsync();
     }
 }

@@ -395,7 +395,7 @@ namespace Lyn.Protocol.Bolt3
             };
         }
 
-        public TransactionWitness CreateClosingTransactionWitnessScript(PublicKey pubkey1, PublicKey pubkey2)
+        public TransactionWitness CreateClosingTransactionWitnessScript(BitcoinSignature pubkey1, BitcoinSignature pubkey2)
         {
             var script = new Script(OpcodeType.OP_0, Op.GetPushOp(pubkey1), Op.GetPushOp(pubkey2))
                 .ToWitScript();

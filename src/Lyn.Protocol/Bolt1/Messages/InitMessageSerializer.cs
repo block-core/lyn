@@ -1,4 +1,6 @@
+using System;
 using System.Buffers;
+using System.Collections;
 using Lyn.Types.Serialization;
 
 namespace Lyn.Protocol.Bolt1.Messages

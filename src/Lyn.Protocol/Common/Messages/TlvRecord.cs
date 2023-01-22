@@ -2,9 +2,9 @@
 {
    public class TlvRecord
    {
-      public ulong Type { get; set; }
+      public virtual ulong Type { get; set; }
 
-      public ulong Size { get; set; }
+      public virtual ulong Size { get; set; }
 
       /// <summary>
       /// In cases where the tlv record is unknown

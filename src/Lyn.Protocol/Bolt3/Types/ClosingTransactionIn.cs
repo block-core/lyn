@@ -9,9 +9,9 @@ namespace Lyn.Protocol.Bolt3.Types
 
         public OutPoint FundingCreatedTxout { get; set; }
 
-        public PublicKey LocalPublicKey { get; set; }
+        public BitcoinSignature LocalSpendingSignature { get; set; }
 
-        public PublicKey RemotePublicKey { get; set; }
+        public BitcoinSignature RemoteSpendingSignature { get; set; }
 
 
         public byte[] LocalScriptPublicKey { get; set; }

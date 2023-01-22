@@ -589,7 +589,7 @@ namespace Lyn.Protocol.Bolt3
 
         public Transaction ClosingTransaction(ClosingTransactionIn closingTransactionIn)
         {
-            var list = new List<byte[]> {closingTransactionIn.LocalPublicKey, closingTransactionIn.RemotePublicKey};
+            var list = new List<byte[]> {closingTransactionIn.LocalSpendingSignature, closingTransactionIn.RemoteSpendingSignature};
             
             list.Sort(new LexicographicByteComparer());
 
@@ -599,7 +599,7 @@ namespace Lyn.Protocol.Bolt3
                 PreviousOutput = closingTransactionIn.FundingCreatedTxout,
                 SignatureScript = new byte[0],
                 ScriptWitness = _lightningScripts
-                    .CreateClosingTransactionWitnessScript(list.First(), list.Last())
+                    .CreateClosingTransactionWitnessScript((BitcoinSignature)list.First(), (BitcoinSignature)list.Last())
             };
 
             var outputs = new List<TransactionOutput>();

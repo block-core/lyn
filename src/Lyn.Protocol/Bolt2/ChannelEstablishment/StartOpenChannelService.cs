@@ -119,7 +119,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             openChannel.MaxHtlcValueInFlightMsat = chainParameters.ChannelConfig.MaxHtlcValueInFlight;
             openChannel.MaxAcceptedHtlcs = chainParameters.ChannelConfig.MaxAcceptedHtlcs;
 
-            var upfrontShutdownScript = chainParameters.ChannelConfig.UpfrontShutdownScript;
+            var upfrontShutdownScript = chainParameters.ChannelConfig.UpfrontShutdownScript; //TODO 
             var localSupportUpfrontShutdownScript = _boltFeatures.SupportsFeature(Features.OptionUpfrontShutdownScript);
             var remoteSupportUpfrontShutdownScript = peer.SupportsFeature(Features.OptionUpfrontShutdownScript);
 

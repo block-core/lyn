@@ -39,6 +39,6 @@ namespace Lyn.Protocol.Bolt3
         void SetHtlcSuccessInputWitness(TransactionInput transactionInput, BitcoinSignature localSignature, BitcoinSignature remoteSignature, Preimage preimage, byte[] pubkeyScriptToRedeem);
 
         void SetHtlcTimeoutInputWitness(TransactionInput transactionInput, BitcoinSignature localSignature, BitcoinSignature remoteSignature, byte[] pubkeyScriptToRedeem);
-        TransactionWitness CreateClosingTransactionWitnessScript(PublicKey pubkey1, PublicKey pubkey2);
+        TransactionWitness CreateClosingTransactionWitnessScript(BitcoinSignature pubkey1, BitcoinSignature pubkey2);
     }
 }

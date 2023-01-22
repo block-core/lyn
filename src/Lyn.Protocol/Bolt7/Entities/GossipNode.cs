@@ -13,6 +13,7 @@ namespace Lyn.Protocol.Bolt7.Entities
       public GossipNode(NodeAnnouncement nodeAnnouncement)
       {
          NodeAnnouncement = nodeAnnouncement;
+         Id = nodeAnnouncement.NodeId;
       }
 
       public PublicKey Id { get; set; }

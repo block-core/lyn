@@ -1,9 +1,12 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Lyn.Protocol.Bolt1;
+using Lyn.Protocol.Bolt2.ChannelEstablishment.Entities;
 using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages;
 using Lyn.Protocol.Bolt2.Entities;
 using Lyn.Protocol.Bolt2.NormalOperations;
+using Lyn.Protocol.Bolt2.Wallet;
 using Lyn.Protocol.Bolt3;
 using Lyn.Protocol.Bolt3.Types;
 using Lyn.Protocol.Bolt7;
@@ -15,6 +18,8 @@ using Lyn.Protocol.Common.Messages;
 using Lyn.Protocol.Connection;
 using Lyn.Types;
 using Lyn.Types.Bitcoin;
+using Lyn.Types.Bolt;
+using Lyn.Types.Fundamental;
 using Microsoft.Extensions.Logging;
 
 namespace Lyn.Protocol.Bolt2.ChannelEstablishment
@@ -30,11 +35,12 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
         private readonly IGossipRepository _gossipRepository;
         private readonly IParseFeatureFlags _featureFlags;
         private readonly INodeSettings _nodeSettings;
+        private readonly IWalletTransactions _walletTransactions;
 
         public FundingLockedMessageService(ILogger<FundingLockedMessageService> logger, 
             IChannelCandidateRepository channelCandidateRepository, IPaymentChannelRepository paymentChannelRepository, 
             ISecretStore secretStore, ILightningKeyDerivation lightningKeyDerivation, IGossipRepository gossipRepository, 
-            IPeerRepository peerRepository, IParseFeatureFlags featureFlags, INodeSettings nodeSettings)
+            IPeerRepository peerRepository, IParseFeatureFlags featureFlags, INodeSettings nodeSettings, IWalletTransactions walletTransactions)
         {
             _logger = logger;
             _channelCandidateRepository = channelCandidateRepository;
@@ -45,6 +51,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             _peerRepository = peerRepository;
             _featureFlags = featureFlags;
             _nodeSettings = nodeSettings;
+            _walletTransactions = walletTransactions;
         }
 
         public async Task<MessageProcessingOutput> ProcessMessageAsync(PeerMessage<FundingLocked> message)
@@ -84,31 +91,13 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                 return new EmptySuccessResponse();
             }
 
+            var shortChannelId = await _walletTransactions.LookupShortChannelIdByTransactionHashAsync(
+                channelCandidate.FundingCreated?.FundingTxid,
+                channelCandidate.FundingCreated.FundingOutputIndex.Value);
+            
             //Time to create the payment channel
-            PaymentChannel paymentChannel = new PaymentChannel(
-                channelCandidate.ChannelId ?? throw new InvalidOperationException(),
-                channelCandidate.ShortChannelId ?? throw new InvalidOperationException(),
-                channelCandidate.FundingSignedRemote?.Signature ?? throw new InvalidOperationException(),
-                message.MessagePayload.NextPerCommitmentPoint ?? throw new InvalidOperationException(),
-                new[]
-                {
-                    channelCandidate.AcceptChannel?.FirstPerCommitmentPoint ?? throw new InvalidOperationException()
-                },
-                channelCandidate.OpenChannel?.FundingSatoshis ?? throw new InvalidOperationException(),
-                new OutPoint
-                {
-                    Hash = channelCandidate.FundingCreated?.FundingTxid ?? throw new InvalidOperationException(),
-                    Index = channelCandidate.FundingCreated.FundingOutputIndex ?? throw new InvalidOperationException()
-                },
-                channelCandidate.OpenChannel.DustLimitSatoshis,
-                channelCandidate.AcceptChannel.DustLimitSatoshis ?? throw new InvalidOperationException(),
-                channelCandidate.OpenChannel.FeeratePerKw,
-                channelCandidate.OpenChannel.FundingPubkey,
-                channelCandidate.AcceptChannel.FundingPubkey ?? throw new InvalidOperationException(),
-                channelCandidate.OpenChannel.PushMsat,
-                channelCandidate.OpenChannel.GetBasePoints(),
-                channelCandidate.AcceptChannel.GetBasePoints()
-            );
+            PaymentChannel paymentChannel = BuildPaymentChannel(message.MessagePayload.NextPerCommitmentPoint,
+                channelCandidate, shortChannelId);
 
             await _paymentChannelRepository.AddNewPaymentChannelAsync(paymentChannel);
             
@@ -117,7 +106,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             //TODO update gossip repo with new channel
             await _gossipRepository.AddGossipChannelAsync(new GossipChannel(new ChannelAnnouncement()
             {
-                ShortChannelId = channelCandidate.ShortChannelId,
+                ShortChannelId = shortChannelId,
                 Features = _featureFlags.ParseFeatures(peer.MutuallySupportedFeatures) ,
                 ChainHash = channelCandidate.OpenChannel.ChainHash,
                 NodeId1 = message.NodeId,
@@ -138,6 +127,34 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             _logger.LogDebug("Replaying with funding locked ");
 
             return new SuccessWithOutputResponse(new BoltMessage { Payload = fundingLockedResponse });
+        }
+
+        private static PaymentChannel BuildPaymentChannel(PublicKey nextPerCommitmentPoint, ChannelCandidate channelCandidate, ShortChannelId shortChannelId)
+        {
+            return new PaymentChannel(
+                channelCandidate.ChannelId ?? throw new InvalidOperationException(),
+                shortChannelId ?? throw new InvalidOperationException(),
+                channelCandidate.FundingSignedRemote?.Signature ?? throw new InvalidOperationException(),
+                nextPerCommitmentPoint ?? throw new InvalidOperationException(),
+                new[]
+                {
+                    channelCandidate.AcceptChannel?.FirstPerCommitmentPoint ?? throw new InvalidOperationException()
+                },
+                channelCandidate.OpenChannel?.FundingSatoshis ?? throw new InvalidOperationException(),
+                new OutPoint
+                {
+                    Hash = channelCandidate.FundingCreated?.FundingTxid ?? throw new InvalidOperationException(),
+                    Index = channelCandidate.FundingCreated.FundingOutputIndex ?? throw new InvalidOperationException()
+                },
+                channelCandidate.OpenChannel.DustLimitSatoshis,
+                channelCandidate.AcceptChannel.DustLimitSatoshis ?? throw new InvalidOperationException(),
+                channelCandidate.OpenChannel.FeeratePerKw,
+                channelCandidate.OpenChannel.FundingPubkey,
+                channelCandidate.AcceptChannel.FundingPubkey ?? throw new InvalidOperationException(),
+                channelCandidate.OpenChannel.PushMsat,
+                channelCandidate.OpenChannel.GetBasePoints(),
+                channelCandidate.AcceptChannel.GetBasePoints()
+            );
         }
     }
 }

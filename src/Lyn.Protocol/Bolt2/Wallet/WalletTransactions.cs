@@ -1,9 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
 using Lyn.Protocol.Common.Messages;
 using Lyn.Types;
 using Lyn.Types.Bitcoin;
+using Lyn.Types.Bolt;
 using Lyn.Types.Fundamental;
 using NBitcoin;
 using Newtonsoft.Json.Linq;
@@ -21,7 +23,7 @@ namespace Lyn.Protocol.Bolt2.Wallet
         {
             _serializationFactory = serializationFactory;
         }
-//bcrt1qhn9gawy9vv73tlkaunaunwzea9ula0qj8pe9yn
+
         public async Task<bool> IsAmountAvailableAsync(Satoshis amount)
         {
             var client = GetClient();
@@ -58,6 +60,31 @@ namespace Lyn.Protocol.Bolt2.Wallet
                 throw new InvalidOperationException();
         }
 
+        public async Task<ShortChannelId> LookupShortChannelIdByTransactionHashAsync(UInt256 hash,
+            ushort outputIndex)
+        {
+            var client = GetClient();
+
+            var result = await client.GetRawTransactionInfoAsync(new uint256(hash.GetBytes()));
+
+            var blockDetails = await client.GetBlockAsync(result.BlockHash);
+
+            var blockHeight = blockDetails.GetCoinbaseHeight().Value;
+            var transactionIndex = blockDetails.Transactions.FindIndex(_ => _.GetHash().Equals(result.TransactionId));
+
+            return new ShortChannelId(blockHeight,transactionIndex, outputIndex);
+        }
+
+        public async Task<long> GetMinimumFeeAsync()
+        {
+            var client = GetClient();
+
+            var fee = await client.SendCommandWithNamedArgsAsync("estimatesmartfee",
+                new Dictionary<string, object> { { "conf_target", 6 }, { "estimate_mode", "economical" } });
+
+           return (long)fee.Result["feerate"].ToObject(typeof(long)); //TODO need to check this logic in signet
+        }
+
 
         private NBitcoin.RPC.RPCClient GetClient()
         {
@@ -65,9 +92,9 @@ namespace Lyn.Protocol.Bolt2.Wallet
                 return _client;
             
             var uriBuilder = new UriBuilder(new Uri("http://127.0.0.1"));
-            uriBuilder.Port = 18443;
+            uriBuilder.Port = 18444;
             
-            _client = new NBitcoin.RPC.RPCClient(new NetworkCredential("regtest","regtest"), uriBuilder.Uri,Network.RegTest);
+            _client = new NBitcoin.RPC.RPCClient(new NetworkCredential("bitcoin","bitcoin"), uriBuilder.Uri,Network.RegTest);
 
             return _client;
         }

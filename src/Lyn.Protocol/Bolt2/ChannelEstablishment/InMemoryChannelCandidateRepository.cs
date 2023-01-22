@@ -29,6 +29,8 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             if (!ChannelStates.TryGetValue((UInt256)tempChannelId, out var channelState))
                 return Task.FromResult(default(ChannelCandidate?));
 
+            channelState.ChannelId = channelId;
+            
             ChannelStates.TryAdd(channelId, channelState);
 
             return Task.CompletedTask;

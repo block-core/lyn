@@ -3,7 +3,7 @@ using Lyn.Types.Bitcoin;
 
 namespace Lyn.Protocol.Bolt1.Messages
 {
-    public class WarningMessage: ErrorMessage
+    public class WarningMessage: MessagePayload
     {
         public override MessageType MessageType => MessageType.Warning;
 

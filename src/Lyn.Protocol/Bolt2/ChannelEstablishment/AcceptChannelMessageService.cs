@@ -126,7 +126,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             });
             
             var fundingTransactionHash = _transactionHashCalculator.ComputeHash(channelCandidate.FundingTransaction);
-            var fundingTransactionIndex = GetFundingTransactionOutputIndex(channelCandidate, fundingScript);
+            var fundingTransactionOutputIndex = GetFundingTransactionOutputIndex(channelCandidate, fundingScript);
 
             // David: this params can go in channel candidate
             var optionAnchorOutputs = _boltFeatures.SupportsFeature(Features.OptionAnchorOutputs);
@@ -135,7 +135,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             Secret seed = _secretStore.GetSeed();
             Secrets secrets = _lightningKeyDerivation.DeriveSecrets(seed);
 
-            var fundingOutPoint = new OutPoint { Hash = fundingTransactionHash, Index = fundingTransactionIndex };
+            var fundingOutPoint = new OutPoint { Hash = fundingTransactionHash, Index = fundingTransactionOutputIndex };
 
             var remoteCommitmentTransaction = CommitmentTransactionOut(channelCandidate, fundingOutPoint, optionAnchorOutputs, optionStaticRemoteKey);
 
@@ -165,14 +165,14 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             _logger.LogDebug("Remote Commitment signature = {remoteFundingSign}", remoteFundingSign);
 
-            UInt256 newChannelId = _lightningKeyDerivation.DeriveChannelId(fundingTransactionHash, (ushort)fundingTransactionIndex);
+            UInt256 newChannelId = _lightningKeyDerivation.DeriveChannelId(fundingTransactionHash, (ushort)fundingTransactionOutputIndex);
 
             _logger.LogDebug("New channelid = {newChannelId}", newChannelId);
 
             var fundingCreated = new FundingCreated
             {
                 FundingTxid = fundingTransactionHash,
-                FundingOutputIndex = (ushort)fundingTransactionIndex,
+                FundingOutputIndex = (ushort)fundingTransactionOutputIndex,
                 TemporaryChannelId = acceptChannel.TemporaryChannelId,
                 Signature = _lightningTransactions.ToCompressedSignature(remoteFundingSign)
             };

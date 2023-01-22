@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Lyn.Protocol.Bolt2.ChannelClose.Messages;
 using Lyn.Protocol.Bolt2.ChannelClose.Messages.TlvRecords;
@@ -16,7 +18,7 @@ using Lyn.Types.Fundamental;
 
 namespace Lyn.Protocol.Bolt2.ChannelClose
 {
-    public class CloseChannelMessageService : IBoltMessageService<ClosingSigned>
+    public class CloseChannelMessageService : IBoltMessageService<ClosingSigned>, ICloseSignedAction
     {
         private readonly IPaymentChannelRepository _channelRepository;
         private readonly ILightningTransactions _lightningTransactions;
@@ -155,37 +157,76 @@ namespace Lyn.Protocol.Bolt2.ChannelClose
 
         private Transaction GetClosingTransaction(PaymentChannel channel)
         {
-            var localRecived = channel.Htlcs
+            var localReceived = channel.Htlcs
                 .Where(_ => _.Side == ChannelSide.Local)
                 .Select(_ => (uint)_.AmountMsat)
                 .Sum(_ => _);
 
-            var remoteRecived = channel.Htlcs
+            var remoteReceived = channel.Htlcs
                 .Where(_ => _.Side == ChannelSide.Remote)
                 .Select(_ => (uint)_.AmountMsat)
                 .Sum(_ => _);
 
-            var localAmount = channel.WasChannelInitiatedLocally
-                ? channel.FundingSatoshis - localRecived
-                : localRecived;
+            var localAmount = channel.WasChannelInitiatedLocally //TODO fix the value here
+                ? channel.FundingSatoshis - localReceived
+                : localReceived;
                 
             var remoteAmount = channel.WasChannelInitiatedLocally
-                ? channel.FundingSatoshis - remoteRecived
-                : localRecived;
+                ? channel.FundingSatoshis - remoteReceived
+                : remoteReceived;
 
             var transaction = _lightningTransactions.ClosingTransaction(new ClosingTransactionIn
             {
                 Fee = channel.CloseChannelDetails.FeeSatoshis,
                 FundingCreatedTxout = channel.InPoint,
-                LocalPublicKey = channel.LocalFundingKey,
-                RemotePublicKey = channel.RemoteFundingKey,
+                LocalSpendingSignature = new BitcoinSignature(new byte[]{}),//TODO
+                RemoteSpendingSignature = _lightningTransactions.FromCompressedSignature(channel.CloseChannelDetails.RemoteNodeScriptPubKeySignature),
                 AmountToPayLocal = localAmount,
                 AmountToPayRemote = remoteAmount, 
-                LocalScriptPublicKey = channel.LocalFundingKey, //TODO need to verify that this is correct
+                LocalScriptPublicKey = channel.CloseChannelDetails.LocalScriptPublicKey, //TODO need to verify that this is correct
                 RemoteScriptPublicKey = channel.CloseChannelDetails.RemoteScriptPublicKey,
                 SideThatOpenedChannel = channel.WasChannelInitiatedLocally ? ChannelSide.Local : ChannelSide.Remote
             });
             return transaction;
+        }
+
+        public async Task<MessageProcessingOutput> GenerateClosingSignedAsync(PublicKey nodeId, UInt256 channelId, CancellationToken token)
+        {
+            var paymentChannel = await _channelRepository.TryGetPaymentChannelAsync(channelId); //TODO add the node id as part of the payment channel
+
+            if (!paymentChannel.ChannelShutdownTriggered)
+                throw new InvalidOperationException("Payment channel not in the shut down state");
+            
+            if (paymentChannel.ChannelClosingSignSent)
+                throw new InvalidOperationException("closing signed already sent");
+            
+            paymentChannel.CloseChannelDetails.FeeSatoshis = await _walletTransactions.GetMinimumFeeAsync();
+            
+            var response = CloseChannelSignedResponse(paymentChannel);
+
+            return new MessageProcessingOutput
+            {
+                Success = true,
+                CloseChannel = false,
+                ResponseMessages = new[]
+                {
+                    new BoltMessage
+                    {
+                        Payload = response,
+                        Extension = new TlVStream
+                        {
+                            Records = new List<TlvRecord>
+                            {
+                                new FeeRange
+                                {
+                                    MaxFeeRange = 2000, //TODO set actual values from the wallet
+                                    MinFeeRange = 900
+                                }
+                            }
+                        }
+                    }
+                }
+            };
         }
     }
 }
