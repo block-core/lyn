@@ -45,8 +45,10 @@ namespace Lyn.Protocol.Common
 
             ScanAssemblyAndRegisterTypeSingleton(services, typeof(IProtocolTypeSerializer<>), typeof(InitMessageSerializer).Assembly);
 
-            services.AddTransient<ITlvRecordSerializer, NetworksTlvSerializer>();
-            services.AddTransient<ITlvRecordSerializer, UpfrontShutdownScriptTlvSerializer>();
+            services.AddTransient<ITlvRecordSerializer<InitMessage>, NetworksTlvSerializer>();
+            services.AddTransient<ITlvRecordSerializer<OpenChannel>, UpfrontShutdownScriptTlvSerializer>();
+            services.AddTransient<ITlvRecordSerializer<AcceptChannel>, UpfrontShutdownScriptTlvSerializer>();
+            services.AddTransient<ITlvRecordSerializer<FundingLocked>, ShortChannelIdTlvSerializer>();
 
             return services;
         }
@@ -81,6 +83,7 @@ namespace Lyn.Protocol.Common
             services.AddTransient(typeof(IBoltMessageSender<>), typeof(BoltMessageSender<>));
 
             services.AddSingleton<INodeSettings, NodeSettings>();
+            services.AddTransient<ICommitmentTransactionBuilder, CommitmentTransactionBuilder>();
             
             return services;
         }
@@ -133,7 +136,7 @@ namespace Lyn.Protocol.Common
             services.AddTransient<IPingMessageAction, PingMessageService>();
             services.AddTransient<IInitMessageAction, InitMessageService>();
 
-            services.AddTransient<ITlvStreamSerializer, TlvStreamSerializer>();
+            services.AddTransient(typeof(ITlvStreamSerializer<>), typeof(TlvStreamSerializer<>));
 
             services.AddSingleton<IStartOpenChannelService, StartOpenChannelService>(); //TODO Dan this is not control and setup services
             services.AddSingleton<IChannelCandidateRepository, InMemoryChannelCandidateRepository>();

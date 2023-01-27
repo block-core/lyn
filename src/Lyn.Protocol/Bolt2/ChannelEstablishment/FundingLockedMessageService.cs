@@ -153,8 +153,10 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                 channelCandidate.AcceptChannel.FundingPubkey ?? throw new InvalidOperationException(),
                 channelCandidate.OpenChannel.PushMsat,
                 channelCandidate.OpenChannel.GetBasePoints(),
-                channelCandidate.AcceptChannel.GetBasePoints()
-            );
+                channelCandidate.AcceptChannel.GetBasePoints(),
+                channelCandidate.ChannelOpener,
+                channelCandidate.OpenChannel.ToSelfDelay,
+                channelCandidate.AcceptChannel.ToSelfDelay);
         }
     }
 }

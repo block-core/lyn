@@ -101,7 +101,8 @@ namespace Lyn.Protocol.Tests.Bolt2.ChannelEstablishment
                 new SecretStore(),
                 _peerRepository, 
                 new LynImplementedBoltFeatures(parsingFeatures),
-                walletLookup.Object);
+                walletLookup.Object,
+                new CommitmentTransactionBuilder(_keyDerivation,_lightningScripts,lightningTransactions));
 
             _fundingSignedMessageService = new FundingSignedMessageService(
                 new Logger<FundingSignedMessageService>(loggerFactory),
@@ -112,7 +113,8 @@ namespace Lyn.Protocol.Tests.Bolt2.ChannelEstablishment
                 new ChainConfigProvider(),
                 _peerRepository,
                 new LynImplementedBoltFeatures(parsingFeatures),
-                walletLookup.Object);
+                walletLookup.Object,
+                new CommitmentTransactionBuilder(_keyDerivation,_lightningScripts,lightningTransactions));
 
 
             _peerRepository.AddNewPeerAsync(new Peer

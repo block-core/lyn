@@ -10,11 +10,11 @@ namespace Lyn.Protocol.Common.Messages
         where TMessage : MessagePayload, new()
     {
         private readonly IProtocolTypeSerializer<TMessage> _serializer;
-        private readonly ITlvStreamSerializer _tlvStreamSerializer;
+        private readonly ITlvStreamSerializer<TMessage> _tlvStreamSerializer;
 
         private TMessage _message;
 
-        public NetworkMessageSerializer(IProtocolTypeSerializer<TMessage> serializer, ITlvStreamSerializer tlvStreamSerializer)
+        public NetworkMessageSerializer(IProtocolTypeSerializer<TMessage> serializer, ITlvStreamSerializer<TMessage> tlvStreamSerializer)
         {
             _serializer = serializer;
             _tlvStreamSerializer = tlvStreamSerializer;

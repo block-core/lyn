@@ -8,9 +8,8 @@ namespace Lyn.Protocol.Bolt3.Types
         public ChannelSide SideThatOpenedChannel { get; set; }
 
         public OutPoint FundingCreatedTxout { get; set; }
-
-        public BitcoinSignature LocalSpendingSignature { get; set; }
-
+        
+        public Secret FundingPrivateKey { get; set; }
         public BitcoinSignature RemoteSpendingSignature { get; set; }
 
 

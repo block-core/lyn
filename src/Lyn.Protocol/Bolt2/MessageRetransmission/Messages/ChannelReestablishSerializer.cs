@@ -21,7 +21,7 @@ namespace Lyn.Protocol.Bolt2.MessageRetransmission.Messages
 
         public ChannelReestablish Deserialize(ref SequenceReader<byte> reader, ProtocolTypeSerializerOptions? options = null)
         {
-            return new ChannelReestablish(reader.ReadUint256(),
+            return new ChannelReestablish(reader.ReadUint256(true),
                 reader.ReadULong(true),
                 reader.ReadULong(true),
                 reader.ReadBytes(PublicKey.LENGTH),

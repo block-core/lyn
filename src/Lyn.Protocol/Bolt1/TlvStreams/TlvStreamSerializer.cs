@@ -1,4 +1,5 @@
-﻿using System.Buffers;
+﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 using Lyn.Types.Serialization;
@@ -8,17 +9,18 @@ using Lyn.Protocol.Common.Messages;
 
 namespace Lyn.Protocol.Bolt1.TlvStreams
 {
-    public class TlvStreamSerializer : ITlvStreamSerializer
+    public class TlvStreamSerializer<TMessage> : ITlvStreamSerializer<TMessage> where TMessage : MessagePayload
     {
         private const int MAX_RECORD_SIZE = 65535; // 65KB
-        private readonly Dictionary<ulong, ITlvRecordSerializer> _tlvRecordTypeMappings;
+        private readonly Dictionary<ulong, ITlvRecordSerializer<TMessage>> _tlvRecordTypeMappings;
 
-        public TlvStreamSerializer(IEnumerable<ITlvRecordSerializer> recordSerializers)
+        public TlvStreamSerializer(IEnumerable<ITlvRecordSerializer<TMessage>> recordSerializers)
         {
-            _tlvRecordTypeMappings = recordSerializers.ToDictionary(serializer => serializer.RecordTlvType);
+            _tlvRecordTypeMappings = recordSerializers.ToDictionary(_ => _.RecordTlvType);
         }
 
-        public bool TryGetType(ulong recordType, [MaybeNullWhen(false)] out ITlvRecordSerializer tlvRecordSerializer)
+        public bool TryGetType(ulong recordType,
+            [MaybeNullWhen(false)] out ITlvRecordSerializer<TMessage> tlvRecordSerializer)
         {
             return _tlvRecordTypeMappings.TryGetValue(recordType, out tlvRecordSerializer);
         }
@@ -31,7 +33,7 @@ namespace Lyn.Protocol.Bolt1.TlvStreams
 
             foreach (TlvRecord record in message.Records)
             {
-                if (TryGetType(record.Type, out ITlvRecordSerializer? recordSerializer))
+                if (TryGetType(record.Type, out ITlvRecordSerializer<TMessage>? recordSerializer))
                 {
                     output.WriteBigSize(record.Type);
 
@@ -88,7 +90,7 @@ namespace Lyn.Protocol.Bolt1.TlvStreams
                 }
 
                 // check if known type
-                if (TryGetType(recordType, out ITlvRecordSerializer? recordSerializer))
+                if (TryGetType(recordType, out ITlvRecordSerializer<TMessage>? recordSerializer))
                 {
                     // type known
 

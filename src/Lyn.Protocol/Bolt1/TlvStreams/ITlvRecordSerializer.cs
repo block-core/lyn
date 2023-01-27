@@ -5,10 +5,8 @@ using Lyn.Protocol.Common.Messages;
 
 namespace Lyn.Protocol.Bolt1.TlvStreams
 {
-    public interface ITlvRecordSerializer
+    public interface ITlvRecordSerializer<TMessageContext> where TMessageContext : MessagePayload
     {
-        Type GetRecordType();
-
         ulong RecordTlvType { get; }
 
         void Serialize(TlvRecord message, IBufferWriter<byte> output);

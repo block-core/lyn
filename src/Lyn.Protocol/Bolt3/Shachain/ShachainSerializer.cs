@@ -33,7 +33,7 @@ namespace Lyn.Protocol.Bolt3.Shachain
             for (var i = 0; i < numberOfItems; i++)
             {
                 chainItems.Secrets.Add(reader.ReadInt(), // secrets instantiated already with max size for the protocol 
-                    new ShachainItem(reader.ReadUint256(), reader.ReadULong()));
+                    new ShachainItem(reader.ReadUint256(true), reader.ReadULong()));
             }
 
             return chainItems;

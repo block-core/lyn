@@ -9,10 +9,11 @@ namespace Lyn.Protocol.Bolt2.Entities
 {
     public class PaymentChannel
     {
-        public PaymentChannel(UInt256 channelId, ShortChannelId shortChannelId,CompressedSignature compressedSignature,  PublicKey perCommitmentPoint, 
-            PublicKey[] previousPerCommitmentPoints, Satoshis fundingSatoshis, OutPoint inPoint, Satoshis localDustLimitSatoshis, 
-            Satoshis remoteDustLimitSatoshis, Satoshis feeRatePerKw, PublicKey localFundingKey, PublicKey remoteFundingKey, 
-            MiliSatoshis pushMsat, Basepoints localBasePoints, Basepoints remoteBasePoints)
+        public PaymentChannel(UInt256 channelId, ShortChannelId shortChannelId, CompressedSignature compressedSignature,
+            PublicKey perCommitmentPoint, PublicKey[] previousPerCommitmentPoints, Satoshis fundingSatoshis,
+            OutPoint inPoint, Satoshis localDustLimitSatoshis, Satoshis remoteDustLimitSatoshis, Satoshis feeRatePerKw,
+            PublicKey localFundingKey, PublicKey remoteFundingKey, MiliSatoshis pushMsat, Basepoints localBasePoints,
+            Basepoints remoteBasePoints, ChannelSide channelOpener, ushort localToSelfDelay, ushort remoteToSelfDelay)
         {
             ChannelId = channelId;
             ShortChannelId = shortChannelId;
@@ -30,6 +31,9 @@ namespace Lyn.Protocol.Bolt2.Entities
             RemoteBasePoints = remoteBasePoints;
             FundingRemoteSignature = compressedSignature;
             PreviousPerCommitmentSecrets = Array.Empty<Secret>();
+            ChannelSide = channelOpener;
+            LocalToSelfDelay = localToSelfDelay;
+            RemoteToSelfDelay = remoteToSelfDelay;
         }
 
         public UInt256 ChannelId { get; set; }
@@ -67,23 +71,21 @@ namespace Lyn.Protocol.Bolt2.Entities
         public ushort LocalToSelfDelay { get; set; }
         public ushort RemoteToSelfDelay { get; set; }
 
-        public bool WasChannelInitiatedLocally { get; set; }
+        public ChannelSide ChannelSide { get; set; }
+        public bool WasChannelInitiatedLocally => ChannelSide == ChannelSide.Local;
 
-        public ulong CnObscurer { get; set; }
-
-        
         public Basepoints LocalBasePoints { get; set; }
         public Basepoints RemoteBasePoints { get; set; }
 
 
         public bool ChannelShutdownTriggered { get; set; }
-        public bool ChannelClosingSignSent  => CloseChannelDetails != null;
+        public bool ChannelClosingSignSent  => CloseChannelDetails?.LocalScriptPublicKey != null;
 
         // public Keyset Keyset { get; set; }
         // public MiliSatoshis SelfPayMsat { get; set; }
         // public MiliSatoshis OtherPayMsat { get; set; }
-         public List<Htlc> Htlcs { get; set; }
-         public List<Htlc> PendingHtlcs { get; set; }
+        public List<Htlc> Htlcs { get; set; } = new ();
+         public List<Htlc>? PendingHtlcs { get; set; }
 
          public CloseChannelDetails? CloseChannelDetails { get; set; }
     }

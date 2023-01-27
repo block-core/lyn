@@ -12,7 +12,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment.Messages
         {
             var size = 0;
 
-            size += writer.WriteUint256(typeInstance.ChannelId, false);
+            size += writer.WriteUint256(typeInstance.ChannelId);
             if (typeInstance.Signature != null)
             {
                 size += writer.WriteBytes(typeInstance.Signature);
@@ -25,7 +25,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment.Messages
         {
             return new FundingSigned
             {
-                ChannelId = reader.ReadUint256(false),
+                ChannelId = reader.ReadUint256(),
                 Signature = reader.ReadBytes(CompressedSignature.LENGTH)
             };
         }

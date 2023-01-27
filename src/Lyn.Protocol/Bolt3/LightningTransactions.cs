@@ -589,17 +589,10 @@ namespace Lyn.Protocol.Bolt3
 
         public Transaction ClosingTransaction(ClosingTransactionIn closingTransactionIn)
         {
-            var list = new List<byte[]> {closingTransactionIn.LocalSpendingSignature, closingTransactionIn.RemoteSpendingSignature};
-            
-            list.Sort(new LexicographicByteComparer());
-
             var input =  new TransactionInput
             {
                 Sequence = 0xFFFFFFFF,
-                PreviousOutput = closingTransactionIn.FundingCreatedTxout,
-                SignatureScript = new byte[0],
-                ScriptWitness = _lightningScripts
-                    .CreateClosingTransactionWitnessScript((BitcoinSignature)list.First(), (BitcoinSignature)list.Last())
+                PreviousOutput = closingTransactionIn.FundingCreatedTxout
             };
 
             var outputs = new List<TransactionOutput>();
@@ -627,6 +620,30 @@ namespace Lyn.Protocol.Bolt3
             }
             
             return new Transaction {Version = 2, LockTime = 0, Inputs = new[] {input}, Outputs = outputs.ToArray()};
+            
+            //var key = new NBitcoin.Key(closingTransactionIn.FundingPrivateKey);
+            //
+            // byte[] transactionbytes = _serializationFactory.Serialize(transaction);
+            // NBitcoin.Transaction? trx = NBitcoin.Network.Main.CreateTransaction();
+            // trx.FromBytes(transactionbytes);
+            //
+            // // Create the P2WSH redeem script
+            // var wscript = new Script(closingTransactionIn.LocalScriptPublicKey);
+            // var utxo = new NBitcoin.TxOut(Money.Satoshis(transaction.Outputs.First().Value), wscript.WitHash);
+            // var outpoint = new NBitcoin.OutPoint(trx.Inputs[0].PrevOut);
+            // ScriptCoin witnessCoin = new ScriptCoin(new Coin(outpoint, utxo), wscript);
+            //
+            // uint256? hashToSign = trx.GetSignatureHash(witnessCoin.GetScriptCode(), (int)0, SigHash.Single, utxo, HashVersion.WitnessV0);
+            // TransactionSignature? sig = key.Sign(hashToSign, SigHash.All, useLowR: false);
+            //
+            // var localSignature = new BitcoinSignature(sig.ToBytes());
+            //
+            // var list = new List<byte[]> {localSignature, closingTransactionIn.RemoteSpendingSignature};
+            //
+            // list.Sort(new LexicographicByteComparer());
+            //
+            // transaction.Inputs.Single().ScriptWitness = _lightningScripts
+            //     .CreateClosingTransactionWitnessScript((BitcoinSignature)list.First(), (BitcoinSignature)list.Last());
         }
     }
 }

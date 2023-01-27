@@ -112,84 +112,7 @@ namespace Lyn.Protocol.Bolt2.ChannelClose
 
             return new EmptySuccessResponse();
         }
-
-        private bool ValidateSignature(PaymentChannel channel, CompressedSignature signature)
-        {
-            var transactio = GetClosingTransaction(channel);
-            
-            return  _validationHelper.VerifySignature(channel.CloseChannelDetails.RemoteScriptPublicKey,
-                signature,transactio.Hash);
-        }
         
-        private static FeeRange GetFeeRange(PeerMessage<ClosingSigned> message)
-        {
-            if (message.Message.Extension == null)
-                throw new ArgumentNullException(nameof(message.Message.Extension)); //TODO should we just force close the channel?
-            
-            return message.Message.Extension.Records.Single(_ => _.Type == 1) as FeeRange; //TODO add type for the record
-        }
-
-        private ClosingSigned CloseChannelSignedResponse(PaymentChannel channel)
-        {
-            var transaction = GetClosingTransaction(channel);
-            
-            var seed = _secretStore.GetSeed();
-            var secrets = _keyDerivation.DeriveSecrets(seed);
-
-            var redeemScript = _lightningScripts.FundingRedeemScript(channel.LocalFundingKey, channel.RemoteFundingKey);
-            var signedInput = _lightningTransactions.SignInput(transaction, secrets.FundingPrivkey, channel.InPoint.Index, redeemScript,
-                channel.FundingSatoshis);
-
-            return  new ClosingSigned
-                {
-                    ChannelId = channel.ChannelId,
-                    FeeSatoshis = channel.CloseChannelDetails.FeeSatoshis,
-                    Signature = _lightningTransactions.ToCompressedSignature(signedInput)
-                };
-        }
-        
-        private async Task CloseChannelBroadcastAsync(PaymentChannel channel)
-        {
-            var transaction = GetClosingTransaction(channel);
-
-            await _walletTransactions.PublishTransactionAsync(transaction);
-        }
-
-        private Transaction GetClosingTransaction(PaymentChannel channel)
-        {
-            var localReceived = channel.Htlcs
-                .Where(_ => _.Side == ChannelSide.Local)
-                .Select(_ => (uint)_.AmountMsat)
-                .Sum(_ => _);
-
-            var remoteReceived = channel.Htlcs
-                .Where(_ => _.Side == ChannelSide.Remote)
-                .Select(_ => (uint)_.AmountMsat)
-                .Sum(_ => _);
-
-            var localAmount = channel.WasChannelInitiatedLocally //TODO fix the value here
-                ? channel.FundingSatoshis - localReceived
-                : localReceived;
-                
-            var remoteAmount = channel.WasChannelInitiatedLocally
-                ? channel.FundingSatoshis - remoteReceived
-                : remoteReceived;
-
-            var transaction = _lightningTransactions.ClosingTransaction(new ClosingTransactionIn
-            {
-                Fee = channel.CloseChannelDetails.FeeSatoshis,
-                FundingCreatedTxout = channel.InPoint,
-                LocalSpendingSignature = new BitcoinSignature(new byte[]{}),//TODO
-                RemoteSpendingSignature = _lightningTransactions.FromCompressedSignature(channel.CloseChannelDetails.RemoteNodeScriptPubKeySignature),
-                AmountToPayLocal = localAmount,
-                AmountToPayRemote = remoteAmount, 
-                LocalScriptPublicKey = channel.CloseChannelDetails.LocalScriptPublicKey, //TODO need to verify that this is correct
-                RemoteScriptPublicKey = channel.CloseChannelDetails.RemoteScriptPublicKey,
-                SideThatOpenedChannel = channel.WasChannelInitiatedLocally ? ChannelSide.Local : ChannelSide.Remote
-            });
-            return transaction;
-        }
-
         public async Task<MessageProcessingOutput> GenerateClosingSignedAsync(PublicKey nodeId, UInt256 channelId, CancellationToken token)
         {
             var paymentChannel = await _channelRepository.TryGetPaymentChannelAsync(channelId); //TODO add the node id as part of the payment channel
@@ -219,14 +142,147 @@ namespace Lyn.Protocol.Bolt2.ChannelClose
                             {
                                 new FeeRange
                                 {
-                                    MaxFeeRange = 2000, //TODO set actual values from the wallet
-                                    MinFeeRange = 900
+                                    MaxFeeRange = paymentChannel.CloseChannelDetails.FeeSatoshis + (ulong)1000, //TODO set actual values from the wallet
+                                    MinFeeRange = paymentChannel.CloseChannelDetails.FeeSatoshis
                                 }
                             }
                         }
                     }
                 }
             };
+        }
+
+        private bool ValidateSignature(PaymentChannel channel, CompressedSignature signature)
+        {
+            var transactionOut = GetClosingTransaction(channel);
+            
+            return  _validationHelper.VerifySignature(channel.CloseChannelDetails.RemoteScriptPublicKey,
+                signature,transactionOut.Hash);
+        }
+        
+        private static FeeRange GetFeeRange(PeerMessage<ClosingSigned> message)
+        {
+            if (message.Message.Extension == null)
+                throw new ArgumentNullException(nameof(message.Message.Extension)); //TODO should we just force close the channel?
+            
+            return message.Message.Extension.Records.Single(_ => _.Type == 1) as FeeRange; //TODO add type for the record
+        }
+
+        private ClosingSigned CloseChannelSignedResponse(PaymentChannel channel)
+        {
+            var transaction = GetClosingTransaction(channel);
+
+            var seed = _secretStore.GetSeed();
+            var secrets = _keyDerivation.DeriveSecrets(seed);
+
+            var redeemScript = _lightningScripts.FundingRedeemScript(channel.LocalFundingKey, channel.RemoteFundingKey);
+            var signedInput = _lightningTransactions.SignInput(transaction, secrets.FundingPrivkey, 0, redeemScript,
+                channel.FundingSatoshis);
+
+            return new ClosingSigned
+            {
+                ChannelId = channel.ChannelId,
+                //FeeSatoshis = channel.CloseChannelDetails.FeeSatoshis,
+                Signature = _lightningTransactions.ToCompressedSignature(signedInput)
+            };
+        }
+
+        private async Task CloseChannelBroadcastAsync(PaymentChannel channel)
+        {
+            var transaction = GetClosingTransaction(channel);
+
+            await _walletTransactions.PublishTransactionAsync(transaction);
+        }
+
+        private Transaction GetClosingTransaction(PaymentChannel channel)
+        {
+            var localReceived = channel.Htlcs?
+                .Where(_ => _.Side == ChannelSide.Local)
+                .Select(_ => (uint)_.AmountMsat)
+                .Sum(_ => _) ?? 0;
+
+            var remoteReceived = channel.Htlcs?
+                .Where(_ => _.Side == ChannelSide.Remote)
+                .Select(_ => (uint)_.AmountMsat)
+                .Sum(_ => _) ?? 0;
+
+            var localAmount = channel.WasChannelInitiatedLocally //TODO fix the value here
+                ? channel.FundingSatoshis - localReceived
+                : localReceived;
+                
+            var remoteAmount = channel.WasChannelInitiatedLocally
+                ? channel.FundingSatoshis - remoteReceived
+                : remoteReceived;
+
+            Secret seed = _secretStore.GetSeed();
+            Secrets secrets = _keyDerivation.DeriveSecrets(seed);
+            
+            var transaction = _lightningTransactions.ClosingTransaction(new ClosingTransactionIn
+            {
+                Fee = channel.CloseChannelDetails.FeeSatoshis,
+                FundingCreatedTxout = channel.InPoint,
+                FundingPrivateKey = secrets.FundingPrivkey,
+                //RemoteSpendingSignature = _lightningTransactions.FromCompressedSignature(channel.CloseChannelDetails.RemoteNodeScriptPubKeySignature),
+                AmountToPayLocal = localAmount,
+                AmountToPayRemote = remoteAmount, 
+                LocalScriptPublicKey = channel.CloseChannelDetails.LocalScriptPublicKey,
+                RemoteScriptPublicKey = channel.CloseChannelDetails.RemoteScriptPublicKey,
+                SideThatOpenedChannel = channel.WasChannelInitiatedLocally ? ChannelSide.Local : ChannelSide.Remote
+            });
+            return transaction;
+        }
+
+        private CommitmenTransactionOut LocalCommitmentTransactionOut(PaymentChannel channel, bool optionAnchorOutputs = false, bool optionStaticRemoteKey = false)
+        {
+            // generate the commitment transaction how it will look like for the other side
+
+            var commitmentTransactionIn = new CommitmentTransactionIn
+            {
+                Funding = channel.FundingSatoshis,
+                Htlcs = channel.Htlcs,
+                Opener = channel.ChannelSide,
+                Side = ChannelSide.Local,
+                CommitmentNumber = (ulong)channel.Htlcs.Count,
+                FundingTxout = channel.InPoint,
+                DustLimitSatoshis = channel.LocalDustLimitSatoshis,
+                FeeratePerKw = channel.FeeratePerKw,
+                LocalFundingKey = channel.LocalFundingKey,
+                RemoteFundingKey = channel.RemoteFundingKey,
+                OptionAnchorOutputs = optionAnchorOutputs, //TODO
+                OtherPayMsat = channel.PushMsat,
+                SelfPayMsat = ((MiliSatoshis)channel.FundingSatoshis) - channel.PushMsat,
+                ToSelfDelay = channel.LocalToSelfDelay,
+                CnObscurer = _lightningScripts.CommitNumberObscurer(channel.LocalBasePoints.Payment,
+                    channel.RemoteBasePoints.Payment)
+            };
+
+            commitmentTransactionIn.Keyset = SetKeys(channel.LocalBasePoints, channel.RemoteBasePoints, 
+                channel.PerCommitmentPoint, optionStaticRemoteKey); //TODO
+
+            return _lightningTransactions.CommitmentTransaction(commitmentTransactionIn);
+        }
+
+        private Keyset SetKeys(Basepoints localBasePoints, Basepoints remoteBasePoints, PublicKey perCommitmentPoint, bool optionStaticRemoteKey)
+        {
+            var remoteRevocationKey = _keyDerivation.DeriveRevocationPublicKey(remoteBasePoints.Revocation, perCommitmentPoint);
+
+            var localDelayedPublicKey = _keyDerivation.DerivePublickey(localBasePoints.DelayedPayment, perCommitmentPoint);
+            
+            var remotePaymentKey = optionStaticRemoteKey 
+                ? remoteBasePoints.Payment 
+                : _keyDerivation.DerivePublickey(remoteBasePoints.Payment, perCommitmentPoint);
+
+            var remoteHtlckey = _keyDerivation.DerivePublickey(remoteBasePoints.Htlc, perCommitmentPoint);
+            var localHtlckey = _keyDerivation.DerivePublickey(localBasePoints.Htlc, perCommitmentPoint);
+
+            Keyset keyset = new (
+                remoteRevocationKey,
+                localHtlckey,
+                remoteHtlckey,
+                localDelayedPublicKey,
+                remotePaymentKey);
+            
+            return keyset;
         }
     }
 }

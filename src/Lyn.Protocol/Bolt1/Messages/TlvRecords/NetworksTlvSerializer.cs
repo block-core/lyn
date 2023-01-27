@@ -6,10 +6,8 @@ using Lyn.Types.Serialization;
 
 namespace Lyn.Protocol.Bolt1.Messages.TlvRecords
 {
-    public class NetworksTlvSerializer : ITlvRecordSerializer
+    public class NetworksTlvSerializer : ITlvRecordSerializer<InitMessage>
     {
-        public Type GetRecordType() => typeof(NetworksTlvSerializer);
-
         public ulong RecordTlvType
         {
             get { return 1; }

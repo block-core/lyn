@@ -57,7 +57,8 @@ namespace Lyn.Protocol.Tests.Bolt2
             _store.Object,
             inMemoryPeerRepository,
             _features.Object,
-            new Mock<IWalletTransactions>().Object);
+            new Mock<IWalletTransactions>().Object,
+            new Mock<ICommitmentTransactionBuilder>().Object);
         }
     }
 }

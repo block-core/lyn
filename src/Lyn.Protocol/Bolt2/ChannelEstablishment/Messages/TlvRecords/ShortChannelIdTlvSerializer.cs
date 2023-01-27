@@ -6,11 +6,9 @@ using Lyn.Types.Serialization;
 
 namespace Lyn.Protocol.Bolt2.ChannelEstablishment.Messages.TlvRecords
 {
-    public class ShortChannelIdTlvSerializer : ITlvRecordSerializer
+    public class ShortChannelIdTlvSerializer : ITlvRecordSerializer<FundingLocked>
     {
-        public Type GetRecordType() => typeof(ShortChannelIdTlvRecord);
-
-        public ulong RecordTlvType => 1; //TODO need to fix the logic to get the record to have same type on different messages
+        public ulong RecordTlvType => 1;
         public void Serialize(TlvRecord message, IBufferWriter<byte> output)
         {
             output.Write(message.Payload.AsSpan());

@@ -30,6 +30,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
         private readonly IPeerRepository _peerRepository;
         private readonly IBoltFeatures _boltFeatures;
         private readonly IWalletTransactions _walletTransactions;
+        private readonly ICommitmentTransactionBuilder _transactionBuilder;
 
         public FundingSignedMessageService(ILogger<FundingSignedMessageService> logger,
             ILightningTransactions lightningTransactions,
@@ -39,7 +40,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             IChainConfigProvider chainConfigProvider,
             IPeerRepository peerRepository,
             IBoltFeatures boltFeatures, 
-            IWalletTransactions walletTransactions)
+            IWalletTransactions walletTransactions, ICommitmentTransactionBuilder transactionBuilder)
         {
             _logger = logger;
             _lightningTransactions = lightningTransactions;
@@ -50,6 +51,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             _peerRepository = peerRepository;
             _boltFeatures = boltFeatures;
             _walletTransactions = walletTransactions;
+            _transactionBuilder = transactionBuilder;
         }
 
         public async Task<MessageProcessingOutput> ProcessMessageAsync(PeerMessage<FundingSigned> message)
@@ -90,9 +92,16 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                 Hash = channelCandidate.FundingCreated.FundingTxid,
                 Index = (uint)channelCandidate.FundingCreated.FundingOutputIndex
             };
+            
+            _transactionBuilder.WithAcceptChannel(channelCandidate.AcceptChannel)
+                .WithOpenChannel(channelCandidate.OpenChannel)
+                .WithFundingOutpoint(fundingOutPoint)
+                .WithFundingSide(channelCandidate.ChannelOpener);
+            
+            if (optionAnchorOutputs) _transactionBuilder.WithAnchorOutputs();
+            if (optionStaticRemoteKey) _transactionBuilder.WithStaticRemoteKey();
 
-            var localCommitmentTransaction = LocalCommitmentTransactionOut(channelCandidate.OpenChannel, channelCandidate.AcceptChannel,
-                channelCandidate.ChannelOpener, fundingOutPoint, optionAnchorOutputs, optionStaticRemoteKey);
+            var localCommitmentTransaction = _transactionBuilder.BuildLocalCommitmentTransaction();
 
             var fundingWscript = _lightningScripts.FundingRedeemScript(channelCandidate.OpenChannel.FundingPubkey, channelCandidate.AcceptChannel.FundingPubkey);
             
@@ -125,71 +134,6 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             await _walletTransactions.PublishTransactionAsync(channelCandidate.FundingTransaction);
             
             return new EmptySuccessResponse();
-        }
-
-        private CommitmenTransactionOut LocalCommitmentTransactionOut(OpenChannel openChannel, AcceptChannel acceptChannel, 
-            ChannelSide side , OutPoint inPoint, bool optionAnchorOutputs, bool optionStaticRemoteKey)
-        {
-            // generate the commitment transaction how it will look like for the other side
-
-            var commitmentTransactionIn = new CommitmentTransactionIn
-            {
-                Funding = openChannel.FundingSatoshis,
-                Htlcs = new List<Htlc>(),
-                Opener = side,
-                Side = ChannelSide.Local,
-                CommitmentNumber = 0,
-                FundingTxout = inPoint,
-                DustLimitSatoshis = openChannel.DustLimitSatoshis,
-                FeeratePerKw = openChannel.FeeratePerKw,
-                LocalFundingKey = openChannel.FundingPubkey,
-                RemoteFundingKey = acceptChannel.FundingPubkey,
-                OptionAnchorOutputs = optionAnchorOutputs,
-                OtherPayMsat = openChannel.PushMsat,
-                SelfPayMsat = ((MiliSatoshis)openChannel.FundingSatoshis) - openChannel.PushMsat,
-                ToSelfDelay = acceptChannel.ToSelfDelay,
-                CnObscurer = _lightningScripts.CommitNumberObscurer(
-                    openChannel.PaymentBasepoint,
-                    acceptChannel.PaymentBasepoint)
-            };
-
-            var localBasePoints = openChannel.GetBasePoints();
-
-            _logger.LogDebug("{@localBasePoints}", localBasePoints);
-
-            var remoteBasePoints = acceptChannel.GetBasePoints();
-
-            _logger.LogDebug("{@remoteBasePoints}", remoteBasePoints);
-            
-            commitmentTransactionIn.Keyset = SetKeys(localBasePoints, remoteBasePoints, openChannel.FirstPerCommitmentPoint,
-                optionStaticRemoteKey);
-
-            return _lightningTransactions.CommitmentTransaction(commitmentTransactionIn);
-        }
-
-        private Keyset SetKeys(Basepoints localBasepoints, Basepoints remoteBasepoints, PublicKey perCommitmentPoint, bool optionStaticRemotekey)
-        {
-            var remoteRevocationKey = _lightningKeyDerivation.DeriveRevocationPublicKey(remoteBasepoints.Revocation, perCommitmentPoint);
-
-            var localDelayedPublicKey = _lightningKeyDerivation.DerivePublickey(localBasepoints.DelayedPayment, perCommitmentPoint);
-            
-            var remotePaymentKey = optionStaticRemotekey 
-                ? remoteBasepoints.Payment 
-                : _lightningKeyDerivation.DerivePublickey(remoteBasepoints.Payment, perCommitmentPoint);
-
-            var remoteHtlckey = _lightningKeyDerivation.DerivePublickey(remoteBasepoints.Htlc, perCommitmentPoint);
-            var localHtlckey = _lightningKeyDerivation.DerivePublickey(localBasepoints.Htlc, perCommitmentPoint);
-
-            Keyset keyset = new (
-                remoteRevocationKey,
-                localHtlckey,
-                remoteHtlckey,
-                localDelayedPublicKey,
-                remotePaymentKey);
-
-            _logger.LogDebug("{@keyset}", keyset);
-
-            return keyset;
         }
     }
 }
