@@ -75,13 +75,9 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                 return new ErrorCloseChannelResponse(acceptChannel.TemporaryChannelId, "open channel is in an invalid state");
             }
 
-            if (channelCandidate.ChannelOpener == ChannelSide.Local
+            if (!(channelCandidate.ChannelOpener == ChannelSide.Local
                 && channelCandidate.OpenChannel != null
-                && channelCandidate.AcceptChannel == null)
-            {
-                // continue processing
-            }
-            else
+                && channelCandidate.AcceptChannel == null))
             {
                 return new ErrorCloseChannelResponse(acceptChannel.TemporaryChannelId, "open channel is in an invalid state");
             }

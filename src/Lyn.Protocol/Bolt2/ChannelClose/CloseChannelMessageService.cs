@@ -182,7 +182,7 @@ namespace Lyn.Protocol.Bolt2.ChannelClose
             return new ClosingSigned
             {
                 ChannelId = channel.ChannelId,
-                //FeeSatoshis = channel.CloseChannelDetails.FeeSatoshis,
+                FeeSatoshis = channel.CloseChannelDetails.FeeSatoshis,
                 Signature = _lightningTransactions.ToCompressedSignature(signedInput)
             };
         }

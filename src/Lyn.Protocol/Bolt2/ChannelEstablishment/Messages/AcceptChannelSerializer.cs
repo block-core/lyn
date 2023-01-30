@@ -1,6 +1,5 @@
 using Lyn.Types.Serialization;
 using System.Buffers;
-using Lyn.Types.Bitcoin;
 using Lyn.Types.Fundamental;
 
 namespace Lyn.Protocol.Bolt2.ChannelEstablishment.Messages

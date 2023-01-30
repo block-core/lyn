@@ -79,11 +79,6 @@ namespace Lyn.Protocol.Bolt2.ChannelClose
             var redeemPrivateKey = _keyDerivation.PerCommitmentSecret(new UInt256(seed), paymentChannel.LocalCommitmentNumber);
             var redeemPubKey = _keyDerivation.PublicKeyFromPrivateKey(redeemPrivateKey);
 
-            //var script = new Script(OpcodeType.OP_0, Op.GetPushOp(redeemPubKey)).ToBytes();
-
-            // return PayToWitScriptHashTemplate.Instance.GenerateScriptPubKey(new WitScriptId(script))
-            //     .ToBytes();
-
             var pubKey = new PubKey(redeemPubKey.ToString());
             
             return PayToWitPubKeyHashTemplate.Instance.GenerateScriptPubKey(pubKey)
