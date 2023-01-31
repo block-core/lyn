@@ -88,8 +88,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             if (optionStaticRemoteKey) _transactionBuilder.WithStaticRemoteKey();
 
             var localCommitmentTransaction = _transactionBuilder.BuildLocalCommitmentTransaction();
-            var remoteCommitmentTransaction = _transactionBuilder.BuildRemoteCommitmentTransaction();
-            
+
             var fundingWscript = _lightningScripts.FundingRedeemScript(channelCandidate.OpenChannel.FundingPubkey, channelCandidate.AcceptChannel.FundingPubkey);
 
             if (!_lightningTransactions.VerifySignature(localCommitmentTransaction.Transaction,
@@ -107,6 +106,8 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                     "Funding created signature failed validation");
             }
 
+            var remoteCommitmentTransaction = _transactionBuilder.BuildRemoteCommitmentTransaction();
+            
             Secret seed = _secretStore.GetSeed();
             Secrets secrets = _lightningKeyDerivation.DeriveSecrets(seed);
             var localSignature = _lightningTransactions.SignInput(remoteCommitmentTransaction.Transaction,

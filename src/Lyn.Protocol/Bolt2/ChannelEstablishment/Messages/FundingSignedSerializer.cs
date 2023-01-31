@@ -11,10 +11,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment.Messages
             var size = 0;
 
             size += writer.WriteUint256(typeInstance.ChannelId);
-            if (typeInstance.Signature != null)
-            {
-                size += writer.WriteBytes(typeInstance.Signature);
-            }
+            size += writer.WriteBytes(typeInstance.Signature);
 
             return size;
         }

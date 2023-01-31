@@ -80,11 +80,11 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                 DustLimitSatoshis = isFundingNodeRemote ? _openChannel.DustLimitSatoshis : _acceptChannel.DustLimitSatoshis,
                 FeeratePerKw = _openChannel.FeeratePerKw,
                 LocalFundingKey = isFundingNodeRemote ? _openChannel.FundingPubkey :_acceptChannel.FundingPubkey,
-                OptionAnchorOutputs = _anchorOutputs,
-                OtherPayMsat = ((MiliSatoshis)_openChannel.FundingSatoshis) - _openChannel.PushMsat,
                 RemoteFundingKey = isFundingNodeRemote ? _acceptChannel.FundingPubkey : _openChannel.FundingPubkey,
-                SelfPayMsat = _openChannel.PushMsat,
-                ToSelfDelay = isFundingNodeRemote ? _openChannel.ToSelfDelay : _acceptChannel.ToSelfDelay,
+                OptionAnchorOutputs = _anchorOutputs,
+                OtherPayMsat = isFundingNodeRemote ? RemoteNodePays : FundingNodePays,
+                SelfPayMsat = isFundingNodeRemote ? FundingNodePays : RemoteNodePays,
+                ToSelfDelay = isFundingNodeRemote ? _acceptChannel.ToSelfDelay : _openChannel.ToSelfDelay,
                 CnObscurer = _lightningScripts.CommitNumberObscurer(_openChannel.PaymentBasepoint,
                     _acceptChannel.PaymentBasepoint)
             };
@@ -117,8 +117,8 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                 LocalFundingKey = isFundingNodeLocal ? _openChannel.FundingPubkey : _acceptChannel.FundingPubkey,
                 RemoteFundingKey = isFundingNodeLocal ? _acceptChannel.FundingPubkey : _openChannel.FundingPubkey,
                 OptionAnchorOutputs = _anchorOutputs,
-                OtherPayMsat = _openChannel.PushMsat,
-                SelfPayMsat = ((MiliSatoshis)_openChannel.FundingSatoshis) - _openChannel.PushMsat,
+                OtherPayMsat = isFundingNodeLocal ? RemoteNodePays : FundingNodePays ,
+                SelfPayMsat = isFundingNodeLocal ? FundingNodePays : RemoteNodePays,
                 ToSelfDelay = isFundingNodeLocal ? _acceptChannel.ToSelfDelay : _openChannel.ToSelfDelay,
                 CnObscurer = _lightningScripts.CommitNumberObscurer(
                     _openChannel.PaymentBasepoint,
@@ -154,5 +154,8 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             return new Keyset(remoteRevocationKey, localHtlckey, remoteHtlckey, localDelayedPaymentKey, remotePaymentKey);
         }
+
+        private MiliSatoshis FundingNodePays => ((MiliSatoshis)_openChannel.FundingSatoshis) - _openChannel.PushMsat;
+        private MiliSatoshis RemoteNodePays => _openChannel.PushMsat;
     }
 }
