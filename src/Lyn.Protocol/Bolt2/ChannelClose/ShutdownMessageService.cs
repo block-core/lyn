@@ -85,7 +85,7 @@ namespace Lyn.Protocol.Bolt2.ChannelClose
                 .ToBytes();
         }
 
-        public async Task<MessageProcessingOutput> GenerateClosingSignedAsync(PublicKey nodeId, UInt256 channelId, CancellationToken token)
+        public async Task<MessageProcessingOutput> GenerateShutdownAsync(PublicKey nodeId, UInt256 channelId, CancellationToken token)
         {
             var paymentChannel = await _channelRepository.TryGetPaymentChannelAsync(channelId);
             

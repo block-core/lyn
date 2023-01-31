@@ -7,6 +7,7 @@ using Lyn.Protocol.Bolt1.Messages.TlvRecords;
 using Lyn.Protocol.Bolt1.TlvStreams;
 using Lyn.Protocol.Bolt2.ChannelClose;
 using Lyn.Protocol.Bolt2.ChannelClose.Messages;
+using Lyn.Protocol.Bolt2.ChannelClose.Messages.TlvRecords;
 using Lyn.Protocol.Bolt2.ChannelEstablishment;
 using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages;
 using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages.TlvRecords;
@@ -49,6 +50,9 @@ namespace Lyn.Protocol.Common
             services.AddTransient<ITlvRecordSerializer<OpenChannel>, UpfrontShutdownScriptTlvSerializer>();
             services.AddTransient<ITlvRecordSerializer<AcceptChannel>, UpfrontShutdownScriptTlvSerializer>();
             services.AddTransient<ITlvRecordSerializer<FundingLocked>, ShortChannelIdTlvSerializer>();
+            services.AddTransient<ITlvRecordSerializer<ClosingSigned>, FeeRangeSerializer>();
+            services.AddTransient<ITlvRecordSerializer<AcceptChannel>, ChannelTypeSerializer>();
+            services.AddTransient<ITlvRecordSerializer<OpenChannel>, ChannelTypeSerializer>();
 
             return services;
         }

@@ -102,7 +102,8 @@ namespace Lyn.Protocol.Tests.Bolt2.ChannelEstablishment
                 _peerRepository, 
                 new LynImplementedBoltFeatures(parsingFeatures),
                 walletLookup.Object,
-                new CommitmentTransactionBuilder(_keyDerivation,_lightningScripts,lightningTransactions));
+                new CommitmentTransactionBuilder(_keyDerivation,_lightningScripts,lightningTransactions),
+                _serializationFactory);
 
             _fundingSignedMessageService = new FundingSignedMessageService(
                 new Logger<FundingSignedMessageService>(loggerFactory),

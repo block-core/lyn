@@ -27,7 +27,7 @@ namespace Lyn.Protocol.Common.Blockchain
                     LargeChannelAmount = 16000000,
                     MaxToSelfDelay = 12500,
                     MinEffectiveHtlcCapacity = 30,
-                    TooLargeFeeratePerKw = 2000,
+                    TooLargeFeeratePerKw = 12500,
                     TooLowFeeratePerKw = 10
                 }
             };

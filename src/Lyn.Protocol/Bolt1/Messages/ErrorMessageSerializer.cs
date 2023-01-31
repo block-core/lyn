@@ -23,12 +23,12 @@ namespace Lyn.Protocol.Bolt1.Messages
 
         public ErrorMessage Deserialize(ref SequenceReader<byte> reader, ProtocolTypeSerializerOptions? options = null)
         {
-            var channelId = reader.ReadBytes(32).ToArray();
+            var channelId = reader.ReadUint256();
             ushort len = reader.ReadUShort(true);
 
             return new ErrorMessage
             {
-                ChannelId = new UInt256(channelId), 
+                ChannelId = channelId, 
                 Len = len, 
                 Data = reader.ReadBytes(len).ToArray()
             };

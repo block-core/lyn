@@ -20,7 +20,7 @@ namespace Lyn.Protocol.Bolt2.ChannelClose.Messages
         {
             var message = new Shutdown();
             
-            message.ChannelId = new (reader.ReadUint256(true).GetBytes().ToArray());
+            message.ChannelId = reader.ReadUint256();
             
             var length = reader.ReadUShort(true);
             message.Length = length;

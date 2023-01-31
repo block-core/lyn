@@ -62,6 +62,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             if (channelCandidate == null)
             {
+                _logger.LogDebug("open channel is in an invalid state");
                 return new ErrorCloseChannelResponse(fundingSigned.ChannelId, "open channel is in an invalid state");
             }
 
@@ -69,6 +70,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             if (peer == null)
             {
+                _logger.LogDebug("invalid peer"); 
                 return new ErrorCloseChannelResponse(fundingSigned.ChannelId, "invalid peer");
             }
 
@@ -76,6 +78,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
 
             if (chainParameters == null)
             {
+                _logger.LogDebug("chainhash is unknowen");
                 return new ErrorCloseChannelResponse(fundingSigned.ChannelId,  "chainhash is unknowen");
             }
 

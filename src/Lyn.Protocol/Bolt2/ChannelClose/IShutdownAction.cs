@@ -8,6 +8,6 @@ namespace Lyn.Protocol.Bolt2.ChannelClose
 {
     public interface IShutdownAction
     {
-        Task<MessageProcessingOutput> GenerateClosingSignedAsync(PublicKey nodeId,UInt256 channelId, CancellationToken token);
+        Task<MessageProcessingOutput> GenerateShutdownAsync(PublicKey nodeId,UInt256 channelId, CancellationToken token);
     }
 }
