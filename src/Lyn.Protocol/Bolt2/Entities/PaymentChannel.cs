@@ -79,7 +79,7 @@ namespace Lyn.Protocol.Bolt2.Entities
 
 
         public bool ChannelShutdownTriggered { get; set; }
-        public bool ChannelClosingSignSent  => CloseChannelDetails?.LocalScriptPublicKey != null;
+        public bool ChannelClosingSignSent  => CloseChannelDetails?.FeeSatoshis != null;
 
         // public Keyset Keyset { get; set; }
         // public MiliSatoshis SelfPayMsat { get; set; }

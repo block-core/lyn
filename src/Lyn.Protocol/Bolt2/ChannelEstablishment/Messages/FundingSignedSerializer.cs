@@ -1,6 +1,4 @@
 using System.Buffers;
-using Lyn.Types.Bitcoin;
-using Lyn.Types.Bolt;
 using Lyn.Types.Fundamental;
 using Lyn.Types.Serialization;
 

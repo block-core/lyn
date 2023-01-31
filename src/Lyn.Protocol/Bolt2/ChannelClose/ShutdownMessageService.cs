@@ -45,8 +45,16 @@ namespace Lyn.Protocol.Bolt2.ChannelClose
 
             if (!_validationHelper.ValidateScriptPubKeyP2WSHOrP2WPKH(message.MessagePayload.ScriptPubkey))
                 return new WarningResponse(message.MessagePayload.ChannelId,"ScriptPubKey failed validation");
-                  
+
+            if (paymentChannel.ChannelShutdownTriggered)
+            {
+                paymentChannel.CloseChannelDetails.RemoteScriptPublicKey = message.MessagePayload.ScriptPubkey;
+                
+                return new EmptySuccessResponse(); //TODO can we already return closing signed in some cases here?
+            }
+            
             paymentChannel.ChannelShutdownTriggered = true; //TODO check what should be done if we sent one first
+
             paymentChannel.CloseChannelDetails = new CloseChannelDetails
             {
                 RemoteScriptPublicKey = message.MessagePayload.ScriptPubkey
