@@ -10,7 +10,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment.Messages
         {
             var size = 0;
 
-            size += writer.WriteUint256(typeInstance.ChannelId, true); //TODO find what the bug in uint256 is
+            size += writer.WriteUint256(typeInstance.ChannelId); //TODO find what the bug in uint256 is
             size += writer.WriteBytes(typeInstance.NextPerCommitmentPoint);
             
             return size;
@@ -20,7 +20,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment.Messages
         {
             return new FundingLocked
             {
-                ChannelId = reader.ReadUint256(true),
+                ChannelId = reader.ReadUint256(),
                 NextPerCommitmentPoint = reader.ReadBytes(PublicKey.LENGTH)
             };
         }

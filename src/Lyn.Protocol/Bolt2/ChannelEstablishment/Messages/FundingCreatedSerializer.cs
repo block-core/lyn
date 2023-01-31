@@ -11,7 +11,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment.Messages
             var size = 0;
 
             size += writer.WriteUint256(typeInstance.TemporaryChannelId, true);
-            size += writer.WriteUint256(typeInstance.FundingTxid,true);
+            size += writer.WriteUint256(typeInstance.FundingTxid);
             size += writer.WriteUShort((ushort)typeInstance.FundingOutputIndex, true);
 
             if (typeInstance.Signature != null)
@@ -27,7 +27,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment.Messages
             return new FundingCreated
             {
                 TemporaryChannelId = reader.ReadUint256(true),
-                FundingTxid = reader.ReadUint256(true),
+                FundingTxid = reader.ReadUint256(),
                 FundingOutputIndex = reader.ReadUShort(true),
                 Signature = reader.ReadBytes(CompressedSignature.LENGTH)
             };

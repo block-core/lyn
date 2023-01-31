@@ -13,7 +13,7 @@ namespace Lyn.Types.Serialization.Serializers
         {
             return new OutPoint
             {
-                Hash = reader.ReadUint256(), //TODO need to test this 
+                Hash = reader.ReadUint256(),
                 Index = reader.ReadUInt()
             };
         }
