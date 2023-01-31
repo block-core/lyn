@@ -7,6 +7,7 @@ using Lyn.Types;
 using Lyn.Types.Bitcoin;
 using Lyn.Types.Bolt;
 using Lyn.Types.Fundamental;
+using Microsoft.Extensions.Logging;
 using NBitcoin;
 using Newtonsoft.Json.Linq;
 using Transaction = Lyn.Types.Bitcoin.Transaction;
@@ -16,12 +17,14 @@ namespace Lyn.Protocol.Bolt2.Wallet
     public class WalletTransactions : IWalletTransactions
     {
         private readonly ISerializationFactory _serializationFactory;
+        private readonly ILogger<WalletTransactions> _logger;
 
         private NBitcoin.RPC.RPCClient? _client;
 
-        public WalletTransactions(ISerializationFactory serializationFactory)
+        public WalletTransactions(ISerializationFactory serializationFactory, ILogger<WalletTransactions> logger)
         {
             _serializationFactory = serializationFactory;
+            _logger = logger;
         }
 
         public async Task<bool> IsAmountAvailableAsync(Satoshis amount)
@@ -56,6 +59,8 @@ namespace Lyn.Protocol.Bolt2.Wallet
             
             var result = await client.SendCommandAsync("sendrawtransaction", GetTransactionHex(transaction));
 
+            _logger.LogDebug("Trx id of submitted funding trx - " + result.ResultString);
+            
             if (result is null)
                 throw new InvalidOperationException();
         }
@@ -92,7 +97,7 @@ namespace Lyn.Protocol.Bolt2.Wallet
                 return _client;
             
             var uriBuilder = new UriBuilder(new Uri("http://127.0.0.1"));
-            uriBuilder.Port = 18444;
+            uriBuilder.Port = 18444;//38332;//
             
             _client = new NBitcoin.RPC.RPCClient(new NetworkCredential("bitcoin","bitcoin"), uriBuilder.Uri,Network.RegTest);
 
