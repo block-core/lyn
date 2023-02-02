@@ -65,6 +65,15 @@ namespace Lyn.Protocol.Bolt2.Wallet
                 throw new InvalidOperationException();
         }
 
+        public async Task<Transaction?> GetTransactionByIdAsync(UInt256 transactionId)
+        {
+            var client = GetClient();
+
+            var result = await client.GetRawTransactionAsync(new uint256(transactionId.GetBytes()));    
+
+            return result == null ? null : _serializationFactory.Deserialize<Transaction>(result.ToBytes());
+        }
+
         public async Task<ShortChannelId> LookupShortChannelIdByTransactionHashAsync(UInt256 hash,
             ushort outputIndex)
         {

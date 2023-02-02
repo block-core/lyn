@@ -87,8 +87,11 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
                 _logger.LogDebug("Confirmation of funding transaction not received yet");
                 
                 await _channelCandidateRepository.UpdateAsync(channelCandidate); //Waiting for confirmation from our side as well
-                
-                return new EmptySuccessResponse();
+
+                var fundingTransaction = await _walletTransactions.GetTransactionByIdAsync(channelCandidate.FundingCreated.FundingTxid);
+
+                if (fundingTransaction == null) //We still didn't see the transaction on the blockchain
+                    return new EmptySuccessResponse();
             }
 
             var shortChannelId = await _walletTransactions.LookupShortChannelIdByTransactionHashAsync(
@@ -134,7 +137,9 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             return new PaymentChannel(
                 channelCandidate.ChannelId ?? throw new InvalidOperationException(),
                 shortChannelId ?? throw new InvalidOperationException(),
-                channelCandidate.FundingSignedRemote?.Signature ?? throw new InvalidOperationException(),
+                channelCandidate.ChannelOpener == ChannelSide.Local
+                    ? channelCandidate.FundingSignedRemote?.Signature ?? throw new InvalidOperationException()
+                    : channelCandidate.FundingCreated?.Signature ?? throw new InvalidOperationException(),
                 nextPerCommitmentPoint ?? throw new InvalidOperationException(),
                 new[]
                 {

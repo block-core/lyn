@@ -13,6 +13,8 @@ namespace Lyn.Protocol.Bolt2.Wallet
 
         Task PublishTransactionAsync(Transaction transaction);
 
+        Task<Transaction?> GetTransactionByIdAsync(UInt256 transactionId);
+        
         Task<ShortChannelId> LookupShortChannelIdByTransactionHashAsync(UInt256 hash, ushort outputIndex);
         Task<long> GetMinimumFeeAsync();
     }
