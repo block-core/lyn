@@ -23,11 +23,11 @@ namespace Lyn.Protocol.Bolt7
       {
          var message = request.MessagePayload;
          
-         if (!_messageValidator.ValidateMessage(message))
+         if (!_messageValidator.ValidateMessage(message)) //channel was created in the funding locked service and added to gossip repo
             throw new ArgumentException(nameof(message));
          
+         //For channels that are not ours
          //TODO David - need to verify the short channel id with the funding transaction  
-         
          //TODO David - add check for funding transaction announce channel bit, and received funding locked message with 6 confirmations before sending a response
 
          var channel = await _repository.GetGossipChannelAsync(message.ShortChannelId)
@@ -35,7 +35,7 @@ namespace Lyn.Protocol.Bolt7
 
          var reply = new AnnouncementSignatures(message.ChannelId, message.ShortChannelId,null,null);// TODO get the correct signatures not the first ones 
 
-         if (channel.ChannelAnnouncement.NodeSignature1.HasValue)
+         if (!channel.ChannelAnnouncement.NodeSignature1.HasValue)
          {
             channel.ChannelAnnouncement.NodeSignature1 = message.NodeSignature;
             reply.NodeSignature = channel.ChannelAnnouncement.NodeSignature2;
@@ -46,7 +46,7 @@ namespace Lyn.Protocol.Bolt7
             reply.NodeSignature = channel.ChannelAnnouncement.NodeSignature1;
          }
 
-         if (channel.ChannelAnnouncement.BitcoinSignature1.HasValue)
+         if (!channel.ChannelAnnouncement.BitcoinSignature1.HasValue)
          {
             channel.ChannelAnnouncement.BitcoinSignature1 = message.BitcoinSignature;
             reply.BitcoinSignature = channel.ChannelAnnouncement.BitcoinSignature2;

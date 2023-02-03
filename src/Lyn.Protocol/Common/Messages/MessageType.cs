@@ -31,6 +31,7 @@ namespace Lyn.Protocol.Common.Messages
         //Routing
         ChannelAnnouncement = 256,
         NodeAnnouncement = 257,
+        ChannelUpdate = 258,
         AnnouncementSignatures = 259,
         QueryShortChannelIds = 261,
         QueryChannelRange = 263,

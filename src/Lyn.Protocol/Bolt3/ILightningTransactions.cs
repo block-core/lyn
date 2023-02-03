@@ -27,5 +27,6 @@ namespace Lyn.Protocol.Bolt3
         Satoshis GetBaseFee(Satoshis feeratePerKw, bool optionAnchorOutputs, int htlcCount);
 
         Transaction ClosingTransaction(ClosingTransactionIn closingTransactionIn);
+        CompressedSignature SignByteArray(UInt256 hash, PrivateKey privateKey);
     }
 }

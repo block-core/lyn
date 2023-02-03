@@ -12,13 +12,13 @@ namespace Lyn.Protocol.Bolt7
    {
       readonly ConcurrentDictionary<PublicKey, GossipNode> _nodes;
       readonly ConcurrentBag<PublicKey> _blacklistedNodeDictionary;
-      readonly ConcurrentDictionary<ShortChannelId, GossipChannel> _channels;
+      readonly ConcurrentDictionary<byte[], GossipChannel> _channels;
       
       public InMemoryGossipRepository()
       {
          _blacklistedNodeDictionary = new ConcurrentBag<PublicKey>();
          _nodes = new ConcurrentDictionary<PublicKey, GossipNode>();
-         _channels = new ConcurrentDictionary<ShortChannelId, GossipChannel>();
+         _channels = new ConcurrentDictionary<byte[], GossipChannel>();
       }
 
       public Task<GossipNode> AddNodeAsync(GossipNode node)

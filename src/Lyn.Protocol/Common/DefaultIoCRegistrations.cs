@@ -114,6 +114,7 @@ namespace Lyn.Protocol.Common
             services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<ChannelAnnouncement>>();
             services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<GossipTimestampFilter>>();
             services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<NodeAnnouncement>>();
+            services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<ChannelUpdate>>();
 
             // Bolt 1
             services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<InitMessage>>();
@@ -129,6 +130,7 @@ namespace Lyn.Protocol.Common
             services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<FundingLocked>>();
             services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<Shutdown>>();
             services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<ClosingSigned>>();
+            
 
             return services;
         }

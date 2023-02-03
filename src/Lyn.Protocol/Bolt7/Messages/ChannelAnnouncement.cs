@@ -47,5 +47,23 @@ namespace Lyn.Protocol.Bolt7.Messages
         public PublicKey BitcoinKey1 { get; set; }
 
         public PublicKey BitcoinKey2 { get; set; }
+
+        public ChannelAnnouncement GetChannelWithoutSignatures()
+        {
+            return new()
+            {
+                NodeSignature1 = new CompressedSignature(),
+                NodeSignature2 = new CompressedSignature(),
+                BitcoinSignature1 = new CompressedSignature(),
+                BitcoinSignature2 = new CompressedSignature(),
+                Features = Features,
+                ChainHash = ChainHash,
+                ShortChannelId = ShortChannelId,
+                NodeId1 = NodeId1,
+                NodeId2 = NodeId2,
+                BitcoinKey1 = BitcoinKey1,
+                BitcoinKey2 = BitcoinKey2
+            };
+        }
     }
 }

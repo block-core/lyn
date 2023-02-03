@@ -26,10 +26,11 @@ namespace Lyn.Protocol.Bolt7
 
          if (channel?.IsChannelWithLocalNode() != true)
             return false;
-         
-         var channelAnnouncement = _serializationFactory.Serialize(channel.ChannelAnnouncement)[256..]; 
 
-         var doubleHash = HashGenerator.DoubleSha256AsUInt256(channelAnnouncement);
+         var channelAnnouncementWithoutSignatures = _serializationFactory
+            .Serialize(channel.ChannelAnnouncement.GetChannelWithoutSignatures());
+
+         var doubleHash = HashGenerator.DoubleSha256AsUInt256(channelAnnouncementWithoutSignatures);
          
          if (!_validationHelper.VerifySignature(channel.GetRemoteNodeId(), networkMessage.NodeSignature, doubleHash) ||
              !_validationHelper.VerifySignature(channel.GetRemoteBitcoinAddress(), networkMessage.BitcoinSignature, doubleHash))

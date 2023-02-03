@@ -6,7 +6,7 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment.Messages.TlvRecords
     {
         public override ulong Type { get; set; } = 1;
         
-        public byte[]? ShutdownScriptpubkey
+        public byte[]? ShutdownScriptPubKey
         {
             get => Payload;
             set => Payload = value;

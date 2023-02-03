@@ -240,7 +240,7 @@ namespace Lyn.Protocol.Bolt2.ChannelClose
             {
                 Funding = channel.FundingSatoshis,
                 Htlcs = channel.Htlcs,
-                Opener = channel.ChannelSide,
+                Opener = channel.ChannelFundingSide,
                 Side = ChannelSide.Local,
                 CommitmentNumber = (ulong)channel.Htlcs.Count,
                 FundingTxout = channel.InPoint,

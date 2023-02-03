@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Lyn.Protocol.Bolt1;
+using Lyn.Protocol.Bolt1.Entities;
 using Lyn.Protocol.Bolt2.ChannelEstablishment.Entities;
 using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages;
 using Lyn.Protocol.Bolt2.Entities;
@@ -14,9 +16,9 @@ using Lyn.Protocol.Bolt7.Entities;
 using Lyn.Protocol.Bolt7.Messages;
 using Lyn.Protocol.Bolt9;
 using Lyn.Protocol.Common;
+using Lyn.Protocol.Common.Hashing;
 using Lyn.Protocol.Common.Messages;
 using Lyn.Protocol.Connection;
-using Lyn.Types;
 using Lyn.Types.Bitcoin;
 using Lyn.Types.Bolt;
 using Lyn.Types.Fundamental;
@@ -36,11 +38,13 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
         private readonly IParseFeatureFlags _featureFlags;
         private readonly INodeSettings _nodeSettings;
         private readonly IWalletTransactions _walletTransactions;
+        private readonly ILightningTransactions _lightningTransactions;
+        private readonly ISerializationFactory _serializationFactory;
 
         public FundingLockedMessageService(ILogger<FundingLockedMessageService> logger, 
             IChannelCandidateRepository channelCandidateRepository, IPaymentChannelRepository paymentChannelRepository, 
             ISecretStore secretStore, ILightningKeyDerivation lightningKeyDerivation, IGossipRepository gossipRepository, 
-            IPeerRepository peerRepository, IParseFeatureFlags featureFlags, INodeSettings nodeSettings, IWalletTransactions walletTransactions)
+            IPeerRepository peerRepository, IParseFeatureFlags featureFlags, INodeSettings nodeSettings, IWalletTransactions walletTransactions, ILightningTransactions lightningTransactions, ISerializationFactory serializationFactory)
         {
             _logger = logger;
             _channelCandidateRepository = channelCandidateRepository;
@@ -52,6 +56,8 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             _featureFlags = featureFlags;
             _nodeSettings = nodeSettings;
             _walletTransactions = walletTransactions;
+            _lightningTransactions = lightningTransactions;
+            _serializationFactory = serializationFactory;
         }
 
         public async Task<MessageProcessingOutput> ProcessMessageAsync(PeerMessage<FundingLocked> message)
@@ -106,21 +112,12 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             
             _logger.LogDebug("Payment channel created");
             
-            //TODO update gossip repo with new channel
-            await _gossipRepository.AddGossipChannelAsync(new GossipChannel(new ChannelAnnouncement()
-            {
-                ShortChannelId = shortChannelId,
-                Features = _featureFlags.ParseFeatures(peer.MutuallySupportedFeatures) ,
-                ChainHash = channelCandidate.OpenChannel.ChainHash,
-                NodeId1 = message.NodeId,
-                BitcoinKey1 = channelCandidate.AcceptChannel.FundingPubkey,
-                BitcoinKey2 = channelCandidate.OpenChannel.FundingPubkey,
-                NodeId2 = _nodeSettings.GetNodeId()   
-            }));
-
             var seed = _secretStore.GetSeed();
             var secrets = _lightningKeyDerivation.DeriveSecrets(seed);
 
+            await AddChannelToGossipRepository(message.NodeId, paymentChannel, peer,
+                channelCandidate.OpenChannel.ChainHash, secrets);
+            
             var fundingLockedResponse = new FundingLocked
             {
                 ChannelId = channelCandidate.FundingLocked.ChannelId,
@@ -130,6 +127,54 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             _logger.LogDebug("Replaying with funding locked ");
 
             return new SuccessWithOutputResponse(new BoltMessage { Payload = fundingLockedResponse });
+        }
+
+        private async Task AddChannelToGossipRepository(PublicKey remoteNodeId,PaymentChannel paymentChannel, Peer peer,
+            UInt256 chainHash, Secrets secrets)
+        {
+            var nodeIds = new List<byte[]>
+            {
+                _nodeSettings.GetNodeId(),
+                remoteNodeId
+            };
+
+            nodeIds.Sort(new LexicographicByteComparer());
+            
+            var isLocalNode1 = nodeIds.First().SequenceEqual((byte[])_nodeSettings.GetNodeId());
+
+            var gossipChannel = new GossipChannel(
+                new ChannelAnnouncement
+                {
+                    ShortChannelId = paymentChannel.ShortChannelId,
+                    Features = _featureFlags.ParseFeatures(peer.MutuallySupportedFeatures),
+                    ChainHash = chainHash,
+                    NodeId1 = nodeIds.First(),
+                    BitcoinKey1 = isLocalNode1 ? paymentChannel.LocalFundingKey : paymentChannel.RemoteFundingKey,
+                    BitcoinKey2 = isLocalNode1 ? paymentChannel.RemoteFundingKey : paymentChannel.LocalFundingKey,
+                    NodeId2 = nodeIds.Last()
+                },
+                isLocalNode1 ? GossipChannel.LocalNode.Node1 : GossipChannel.LocalNode.Node2);
+
+            var serializedChannelAnnouncement = _serializationFactory.Serialize(gossipChannel.ChannelAnnouncement
+                .GetChannelWithoutSignatures()); 
+            
+            var hash = new UInt256(HashGenerator.DoubleSha256(serializedChannelAnnouncement)); 
+            
+            var localNodeSignature = _lightningTransactions.SignByteArray(hash, secrets.FundingPrivkey);
+            var localBitcoinSignature = _lightningTransactions.SignByteArray(hash, _nodeSettings.GetNodePrivateKey());
+
+            if (isLocalNode1)
+            {
+                gossipChannel.ChannelAnnouncement.NodeSignature1 = localNodeSignature;
+                gossipChannel.ChannelAnnouncement.BitcoinSignature1 = localBitcoinSignature;
+            }
+            else
+            {
+                gossipChannel.ChannelAnnouncement.NodeSignature2 = localNodeSignature;
+                gossipChannel.ChannelAnnouncement.BitcoinSignature2 = localBitcoinSignature;
+            }
+            
+            await _gossipRepository.AddGossipChannelAsync(gossipChannel);
         }
 
         private static PaymentChannel BuildPaymentChannel(PublicKey nextPerCommitmentPoint, ChannelCandidate channelCandidate, ShortChannelId shortChannelId)
