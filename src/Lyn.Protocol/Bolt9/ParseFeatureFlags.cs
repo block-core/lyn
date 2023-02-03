@@ -10,16 +10,33 @@ namespace Lyn.Protocol.Bolt9
     {
         public Features ParseFeatures(byte[] raw)
         {
-            Span<byte> buffer = stackalloc byte[8];
+            Span<byte> buffer = stackalloc byte[raw.Length];
 
             raw.CopyTo(buffer);
             
             var converted = MemoryMarshal.Cast<byte, ulong>(buffer);
 
-            if (converted.Length != 1)
-                throw new InvalidCastException();
+            // if (converted.Length != 1)
+            //     throw new InvalidCastException();
             
-            return (Features) converted[0];
+            var features = Features.GossipQueries;
+            
+            foreach (var data in converted)
+            {
+                features |= (Features)data;
+            }
+
+            var bits = new BitArray(buffer.ToArray());
+
+            for (int i = 0; i < bits.Count; i++)
+            {
+                if (bits[i])
+                {
+                    Console.WriteLine($"{i} for feature {(Features)(ulong)i}");
+                }
+            }
+
+            return features;
         }
         
         public byte[] ParseFeatures(Features features)
