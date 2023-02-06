@@ -3,7 +3,7 @@ using System;
 namespace Lyn.Protocol.Bolt1.Messages
 {
     [Flags]
-    public enum Features : ulong 
+    public enum Features : ulong
     {
         OptionDataLossProtectRequired = 1 << 0,
         OptionDataLossProtect = 1 << 1,
@@ -29,5 +29,18 @@ namespace Lyn.Protocol.Bolt1.Messages
         OptionAnchorOutputs = 1 << 21,
         OptionAnchorsZeroFeeHtlcTxRequired = 1 << 22,
         OptionAnchorsZeroFeeHtlcTx = 1 << 23,
+        
+        optionShutdownAnysegwitRequired = 1 << 26,
+        optionShutdownAnysegwit = 1 << 27,
+        
+        
+        optionChannelTypeRequired = (ulong)1 << 44,
+        optionChannelType = (ulong)1 << 45,
+        optionScidAliasRequired = (ulong)1 << 46,
+        optionScidAlias = (ulong)1 << 47,
+        optionPaymentMetadataRequired = (ulong)1 << 48,
+        optionPaymentMetadata = (ulong)1 << 49,
+        optionZeroconfRequired = (ulong)1 << 50,
+        optionZeroconf = (ulong)1 << 51
     }
 }

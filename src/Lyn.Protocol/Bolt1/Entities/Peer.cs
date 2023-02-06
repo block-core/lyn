@@ -21,12 +21,12 @@ namespace Lyn.Protocol.Bolt1.Entities
         
         public bool SupportsFeature(Features feature)
         {
-            return (Features & Features.OptionUpfrontShutdownScript) != 0;
+            return (Features & feature) != 0;
         }
         
         public bool MutuallySupportedFeature(Features feature)
         {
-            return (MutuallySupportedFeatures & Features.OptionUpfrontShutdownScript) != 0;
+            return (MutuallySupportedFeatures & feature) != 0;
         }
     }
 }

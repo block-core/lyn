@@ -31,7 +31,7 @@ namespace Lyn.Protocol.Bolt2.Entities
             RemoteBasePoints = remoteBasePoints;
             FundingRemoteSignature = compressedSignature;
             PreviousPerCommitmentSecrets = Array.Empty<Secret>();
-            ChannelSide = channelOpener;
+            ChannelFundingSide = channelOpener;
             LocalToSelfDelay = localToSelfDelay;
             RemoteToSelfDelay = remoteToSelfDelay;
         }
@@ -71,8 +71,8 @@ namespace Lyn.Protocol.Bolt2.Entities
         public ushort LocalToSelfDelay { get; set; }
         public ushort RemoteToSelfDelay { get; set; }
 
-        public ChannelSide ChannelSide { get; set; }
-        public bool WasChannelInitiatedLocally => ChannelSide == ChannelSide.Local;
+        public ChannelSide ChannelFundingSide { get; set; }
+        public bool WasChannelInitiatedLocally => ChannelFundingSide == ChannelSide.Local;
 
         public Basepoints LocalBasePoints { get; set; }
         public Basepoints RemoteBasePoints { get; set; }
