@@ -231,58 +231,5 @@ namespace Lyn.Protocol.Bolt2.ChannelClose
             });
             return transaction;
         }
-
-        private CommitmenTransactionOut LocalCommitmentTransactionOut(PaymentChannel channel, bool optionAnchorOutputs = false, bool optionStaticRemoteKey = false)
-        {
-            // generate the commitment transaction how it will look like for the other side
-
-            var commitmentTransactionIn = new CommitmentTransactionIn
-            {
-                Funding = channel.FundingSatoshis,
-                Htlcs = channel.Htlcs,
-                Opener = channel.ChannelFundingSide,
-                Side = ChannelSide.Local,
-                CommitmentNumber = (ulong)channel.Htlcs.Count,
-                FundingTxout = channel.InPoint,
-                DustLimitSatoshis = channel.LocalDustLimitSatoshis,
-                FeeratePerKw = channel.FeeratePerKw,
-                LocalFundingKey = channel.LocalFundingKey,
-                RemoteFundingKey = channel.RemoteFundingKey,
-                OptionAnchorOutputs = optionAnchorOutputs, //TODO
-                OtherPayMsat = channel.PushMsat,
-                SelfPayMsat = ((MiliSatoshis)channel.FundingSatoshis) - channel.PushMsat,
-                ToSelfDelay = channel.LocalToSelfDelay,
-                CnObscurer = _lightningScripts.CommitNumberObscurer(channel.LocalBasePoints.Payment,
-                    channel.RemoteBasePoints.Payment)
-            };
-
-            commitmentTransactionIn.Keyset = SetKeys(channel.LocalBasePoints, channel.RemoteBasePoints, 
-                channel.PerCommitmentPoint, optionStaticRemoteKey); //TODO
-
-            return _lightningTransactions.CommitmentTransaction(commitmentTransactionIn);
-        }
-
-        private Keyset SetKeys(Basepoints localBasePoints, Basepoints remoteBasePoints, PublicKey perCommitmentPoint, bool optionStaticRemoteKey)
-        {
-            var remoteRevocationKey = _keyDerivation.DeriveRevocationPublicKey(remoteBasePoints.Revocation, perCommitmentPoint);
-
-            var localDelayedPublicKey = _keyDerivation.DerivePublickey(localBasePoints.DelayedPayment, perCommitmentPoint);
-            
-            var remotePaymentKey = optionStaticRemoteKey 
-                ? remoteBasePoints.Payment 
-                : _keyDerivation.DerivePublickey(remoteBasePoints.Payment, perCommitmentPoint);
-
-            var remoteHtlckey = _keyDerivation.DerivePublickey(remoteBasePoints.Htlc, perCommitmentPoint);
-            var localHtlckey = _keyDerivation.DerivePublickey(localBasePoints.Htlc, perCommitmentPoint);
-
-            Keyset keyset = new (
-                remoteRevocationKey,
-                localHtlckey,
-                remoteHtlckey,
-                localDelayedPublicKey,
-                remotePaymentKey);
-            
-            return keyset;
-        }
     }
 }

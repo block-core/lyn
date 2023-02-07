@@ -17,7 +17,7 @@ namespace Lyn.Protocol.Bolt2.Entities
         {
             ChannelId = channelId;
             ShortChannelId = shortChannelId;
-            PerCommitmentPoint = perCommitmentPoint;
+            RemotePerCommitmentPoint = perCommitmentPoint;
             PreviousPerCommitmentPoints = previousPerCommitmentPoints;
             FundingSatoshis = fundingSatoshis;
             InPoint = inPoint;
@@ -30,7 +30,7 @@ namespace Lyn.Protocol.Bolt2.Entities
             LocalBasePoints = localBasePoints;
             RemoteBasePoints = remoteBasePoints;
             FundingRemoteSignature = compressedSignature;
-            PreviousPerCommitmentSecrets = Array.Empty<Secret>();
+            PreviousPerCommitmentSecrets = new Secret[]{};
             ChannelFundingSide = channelOpener;
             LocalToSelfDelay = localToSelfDelay;
             RemoteToSelfDelay = remoteToSelfDelay;
@@ -40,7 +40,7 @@ namespace Lyn.Protocol.Bolt2.Entities
 
         public ShortChannelId ShortChannelId { get; set; } //TODO David
 
-        public PublicKey PerCommitmentPoint { get; set; }
+        public PublicKey RemotePerCommitmentPoint { get; set; }
 
         public PublicKey[] PreviousPerCommitmentPoints { get; set; } //TODO David
 
@@ -53,6 +53,7 @@ namespace Lyn.Protocol.Bolt2.Entities
         public Satoshis FundingSatoshis { get; set; }
         
         public ulong LocalCommitmentNumber { get; set; }
+        public ulong GetNextLocalCommitmentNumber => ++LocalCommitmentNumber;
         public ulong RemoteCommitmentNumber { get; set; }
         public OutPoint InPoint { get; set; }
         

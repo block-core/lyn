@@ -11,6 +11,7 @@ using Lyn.Protocol.Bolt2.ChannelClose.Messages.TlvRecords;
 using Lyn.Protocol.Bolt2.ChannelEstablishment;
 using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages;
 using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages.TlvRecords;
+using Lyn.Protocol.Bolt2.MessageRetransmission.Messages;
 using Lyn.Protocol.Bolt2.NormalOperations;
 using Lyn.Protocol.Bolt2.Wallet;
 using Lyn.Protocol.Bolt3;
@@ -130,6 +131,7 @@ namespace Lyn.Protocol.Common
             services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<FundingLocked>>();
             services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<Shutdown>>();
             services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<ClosingSigned>>();
+            services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<ChannelReestablish>>();
             
 
             return services;

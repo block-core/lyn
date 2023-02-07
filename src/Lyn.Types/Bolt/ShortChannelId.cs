@@ -42,8 +42,11 @@ namespace Lyn.Types.Bolt
       {
          _value = new byte[8];
          BlockHeight = blockHeight;
+         BitConverter.GetBytes(blockHeight).AsSpan(0,3).CopyTo(_value.AsSpan(0));
          TransactionIndex = transactionIndex;
+         BitConverter.GetBytes(TransactionIndex).AsSpan(0,3).CopyTo(_value.AsSpan(3));
          OutputIndex = outputIndex;
+         BitConverter.GetBytes(outputIndex).CopyTo(_value.AsSpan(6));
       }
       
       public static implicit operator byte[](ShortChannelId hash) => hash._value;

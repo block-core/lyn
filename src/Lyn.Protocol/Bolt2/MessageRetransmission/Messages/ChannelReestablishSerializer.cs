@@ -13,19 +13,19 @@ namespace Lyn.Protocol.Bolt2.MessageRetransmission.Messages
             size += writer.WriteUint256(typeInstance.ChannelId);
             size += writer.WriteULong(typeInstance.NextCommitmentNumber, true);
             size += writer.WriteULong(typeInstance.NextRevocationNumber, true);
-            size += writer.WriteBytes(typeInstance.MyCurrentPerCommitmentPoint);
             size += writer.WriteBytes(typeInstance.YourLastPerCommitmentSecret);
+            size += writer.WriteBytes(typeInstance.MyCurrentPerCommitmentPoint);
 
             return size;
         }
 
         public ChannelReestablish Deserialize(ref SequenceReader<byte> reader, ProtocolTypeSerializerOptions? options = null)
-        {
-            return new ChannelReestablish(reader.ReadUint256(true),
+            {
+            return new ChannelReestablish(reader.ReadUint256(),
                 reader.ReadULong(true),
                 reader.ReadULong(true),
-                reader.ReadBytes(PublicKey.LENGTH),
-                new Secret(reader.ReadBytes(PrivateKey.LENGTH).ToArray()));
+                new Secret(reader.ReadBytes(PrivateKey.LENGTH).ToArray()),
+                reader.ReadBytes(PublicKey.LENGTH));
         }
     }
 }

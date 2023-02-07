@@ -6,8 +6,10 @@ namespace Lyn.Protocol.Bolt2.MessageRetransmission.Messages
 {
     public class ChannelReestablish : MessagePayload
     {
+        public ChannelReestablish(){ }
+        
         public ChannelReestablish(UInt256 channelId, ulong nextCommitmentNumber, ulong nextRevocationNumber, 
-            PublicKey myCurrentPerCommitmentPoint, Secret yourLastPerCommitmentSecret)
+            Secret yourLastPerCommitmentSecret, PublicKey myCurrentPerCommitmentPoint)
         {
             ChannelId = channelId;
             NextCommitmentNumber = nextCommitmentNumber;

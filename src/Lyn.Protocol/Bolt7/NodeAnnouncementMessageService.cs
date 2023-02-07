@@ -2,7 +2,6 @@ using System;
 using System.Threading.Tasks;
 using Lyn.Protocol.Bolt7.Entities;
 using Lyn.Protocol.Bolt7.Messages;
-using Lyn.Protocol.Common;
 using Lyn.Protocol.Common.Messages;
 using Lyn.Protocol.Connection;
 

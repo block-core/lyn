@@ -8,6 +8,7 @@ using Lyn.Protocol.Bolt2.NormalOperations;
 using Lyn.Protocol.Bolt3;
 using Lyn.Protocol.Common.Messages;
 using Lyn.Protocol.Connection;
+using Lyn.Types.Fundamental;
 using Microsoft.Extensions.Logging;
 
 namespace Lyn.Protocol.Bolt2.MessageRetransmission
@@ -40,20 +41,25 @@ namespace Lyn.Protocol.Bolt2.MessageRetransmission
             }
 
 
-            if (paymentChannel.PerCommitmentPoint.Equals(message.MessagePayload.MyCurrentPerCommitmentPoint))
+            if (paymentChannel.RemotePerCommitmentPoint.Equals(message.MessagePayload.MyCurrentPerCommitmentPoint))
             {
+                _logger.LogDebug("Remote current commitment point has not changed");
             }
 
             var seed = _secretStore.GetSeed();
             var secrets = _lightningKeyDerivation.DeriveSecrets(seed);
 
+            var currentCommitmentNumber = paymentChannel.LocalCommitmentNumber;
             var currentPoint = _lightningKeyDerivation.PerCommitmentPoint(secrets.Shaseed,
-                paymentChannel.LocalCommitmentNumber + 1); //TODO missing anchor outputs and remote static support here
+                paymentChannel.LocalCommitmentNumber); //TODO missing anchor outputs and remote static support here
 
-            var lastKnownSecret = paymentChannel.PreviousPerCommitmentSecrets.Last();
+            var lastKnownSecret = paymentChannel.PreviousPerCommitmentSecrets?.LastOrDefault() ?? new Secret(new byte[32]);
 
-            var responseMessages = new List<MessagePayload> { new ChannelReestablish(paymentChannel.ChannelId, paymentChannel.LocalCommitmentNumber + 1,
-                paymentChannel.RemoteCommitmentNumber,currentPoint, lastKnownSecret)};
+            var responseMessages = new List<MessagePayload>
+            {
+                new ChannelReestablish(paymentChannel.ChannelId, currentCommitmentNumber,
+                    paymentChannel.RemoteCommitmentNumber, lastKnownSecret, currentPoint)
+            };
 
             if (message.MessagePayload.NextCommitmentNumber == 1 && paymentChannel.LocalCommitmentNumber == 0)
             {

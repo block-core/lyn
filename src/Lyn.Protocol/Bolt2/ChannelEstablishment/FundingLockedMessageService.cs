@@ -121,8 +121,11 @@ namespace Lyn.Protocol.Bolt2.ChannelEstablishment
             var fundingLockedResponse = new FundingLocked
             {
                 ChannelId = channelCandidate.FundingLocked.ChannelId,
-                NextPerCommitmentPoint = _lightningKeyDerivation.PerCommitmentPoint(secrets.Shaseed, paymentChannel.LocalCommitmentNumber + 1)
+                NextPerCommitmentPoint = _lightningKeyDerivation.PerCommitmentPoint(secrets.Shaseed, paymentChannel.LocalCommitmentNumber)
             };
+
+            paymentChannel.LocalCommitmentNumber += 1;
+            await _paymentChannelRepository.UpdatePaymentChannelAsync(paymentChannel);
             
             _logger.LogDebug("Replaying with funding locked ");
 
