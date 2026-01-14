@@ -1,4 +1,4 @@
-﻿using Lyn.Types.Bitcoin;
+﻿﻿using Lyn.Types.Bitcoin;
 using Lyn.Types.Fundamental;
 
 namespace Lyn.Protocol.Bolt3.Types
@@ -25,11 +25,21 @@ namespace Lyn.Protocol.Bolt3.Types
 
         /* The preimage which hashes to rhash (if known) */
 
-        public Preimage R;
+        public Preimage Preimage;
+        
+        /// <summary>
+        /// Alias for Preimage for backwards compatibility.
+        /// </summary>
+        public Preimage R { get => Preimage; set => Preimage = value; }
 
-        /* If they fail the HTLC, we store why here. */
-
-        // failed_htlc *failed;
+        /* If they fail the HTLC, we store the failure reason here. */
+        public byte[]? FailureReason;
+        
+        /* If the HTLC fails due to malformed onion, we store the failure code here. */
+        public ushort? FailureCode;
+        
+        /* If the HTLC fails due to malformed onion, we store the SHA256 of onion here. */
+        public UInt256? Sha256OfOnion;
 
         /* Routing information sent with this HTLC (outgoing only). */
         public ushort Routing;

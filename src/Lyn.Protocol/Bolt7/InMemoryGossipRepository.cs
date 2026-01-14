@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Lyn.Protocol.Bolt7.Entities;
@@ -92,6 +93,22 @@ namespace Lyn.Protocol.Bolt7
             _blacklistedNodeDictionary.Add(publicKey);      
          }
          return Task.CompletedTask;
+      }
+
+      public Task<IEnumerable<GossipChannel>> GetChannelsInBlockRangeAsync(uint startBlock, uint endBlock)
+      {
+         // Extract block height from short_channel_id (first 3 bytes = 24 bits = block height)
+         var channels = _channels.Values
+            .Where(c =>
+            {
+               var scidBytes = c.ChannelAnnouncement.ShortChannelId.GetBytes();
+               // Short channel ID format: block height (3 bytes) | tx index (3 bytes) | output index (2 bytes)
+               uint blockHeight = (uint)((scidBytes[0] << 16) | (scidBytes[1] << 8) | scidBytes[2]);
+               return blockHeight >= startBlock && blockHeight <= endBlock;
+            })
+            .ToList();
+
+         return Task.FromResult<IEnumerable<GossipChannel>>(channels);
       }
    }
 }

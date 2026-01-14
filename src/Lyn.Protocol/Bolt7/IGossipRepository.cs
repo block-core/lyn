@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Lyn.Protocol.Bolt7.Entities;
 using Lyn.Types.Bolt;
@@ -23,5 +24,14 @@ namespace Lyn.Protocol.Bolt7
       bool IsNodeInBlacklistedList(PublicKey nodeId);
 
       Task AddNodeToBlacklistAsync(params PublicKey[] publicKeys);
+      
+      /// <summary>
+      /// Gets all channels whose funding transaction is in the specified block range.
+      /// Used for query_channel_range responses.
+      /// </summary>
+      /// <param name="startBlock">The first block height (inclusive).</param>
+      /// <param name="endBlock">The last block height (inclusive).</param>
+      /// <returns>A collection of gossip channels in the specified range.</returns>
+      Task<IEnumerable<GossipChannel>> GetChannelsInBlockRangeAsync(uint startBlock, uint endBlock);
    }
 }

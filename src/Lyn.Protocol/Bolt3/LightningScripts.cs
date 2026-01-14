@@ -348,6 +348,16 @@ namespace Lyn.Protocol.Bolt3
             return script.ToBytes();
         }
 
+        /// <summary>
+        /// Converts a redeem script to a P2WSH script pubkey.
+        /// </summary>
+        public byte[] ToP2WSH(byte[] redeemScript)
+        {
+            var script = new Script(redeemScript);
+            var p2wsh = script.WitHash.ScriptPubKey;
+            return p2wsh.ToBytes();
+        }
+
         public void SetCommitmentInputWitness(TransactionInput transactionInput, BitcoinSignature localSignature, BitcoinSignature remoteSignature, byte[] pubkeyScriptToRedeem)
         {
             var redeemScript = new Script(

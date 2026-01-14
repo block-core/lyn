@@ -1,4 +1,4 @@
-﻿using Lyn.Types.Bitcoin;
+﻿﻿using Lyn.Types.Bitcoin;
 using Lyn.Types.Fundamental;
 
 namespace Lyn.Protocol.Bolt3
@@ -33,6 +33,13 @@ namespace Lyn.Protocol.Bolt3
             PublicKey accepterPaymentBasepoint);
 
         byte[] FundingRedeemScript(PublicKey pubkey1, PublicKey pubkey2);
+
+        /// <summary>
+        /// Converts a redeem script to a P2WSH script pubkey.
+        /// </summary>
+        /// <param name="redeemScript">The redeem script.</param>
+        /// <returns>The P2WSH script pubkey.</returns>
+        byte[] ToP2WSH(byte[] redeemScript);
 
         void SetCommitmentInputWitness(TransactionInput transactionInput, BitcoinSignature localSignature, BitcoinSignature remoteSignature, byte[] pubkeyScriptToRedeem);
 

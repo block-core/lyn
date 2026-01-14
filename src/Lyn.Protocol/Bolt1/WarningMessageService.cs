@@ -24,20 +24,31 @@ namespace Lyn.Protocol.Bolt1
 
         public async Task<MessageProcessingOutput> ProcessMessageAsync(PeerMessage<WarningMessage> message)
         {
-            _logger.LogDebug($"Received warning message from {message.NodeId}");
+            _logger.LogDebug("Received warning message from {NodeId}", message.NodeId);
+
+            var warningText = message.MessagePayload.Data != null 
+                ? Encoding.ASCII.GetString(message.MessagePayload.Data) 
+                : string.Empty;
 
             if (message.MessagePayload.ChannelId != UInt256.Zero)
-                _logger.Log(LogLevel.Information,
-                    $"Warning on channel {Hex.ToString(message.MessagePayload.ChannelId.GetBytes())}");
+            {
+                _logger.LogWarning("Warning on channel {ChannelId}: {WarningText}",
+                    Hex.ToString(message.MessagePayload.ChannelId.GetBytes()), warningText);
+            }
+            else
+            {
+                _logger.LogWarning("General warning from peer {NodeId}: {WarningText}", 
+                    message.NodeId, warningText);
+            }
             
-            if (message.MessagePayload.Data != null)
-                _logger.Log(LogLevel.Warning,$"{Encoding.ASCII.GetString(message.MessagePayload.Data)}");
-            
+            // Store the warning for peer monitoring - warnings don't close channels
+            // but accumulated warnings might indicate a problematic peer
             await _repository.AddErrorMessageToPeerAsync(message.NodeId, new PeerCommunicationIssue
             {
                 ChannelId = message.MessagePayload.ChannelId,
-                MessageText = Encoding.ASCII.GetString(message.MessagePayload.Data ?? ReadOnlySpan<byte>.Empty),
-                MessageType = message.Message.Type
+                MessageText = warningText,
+                MessageType = message.Message.Type,
+                IsWarning = true
             });
             
             return new EmptySuccessResponse();

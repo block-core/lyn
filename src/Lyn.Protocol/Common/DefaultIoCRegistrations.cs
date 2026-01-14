@@ -13,6 +13,7 @@ using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages;
 using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages.TlvRecords;
 using Lyn.Protocol.Bolt2.MessageRetransmission.Messages;
 using Lyn.Protocol.Bolt2.NormalOperations;
+using Lyn.Protocol.Bolt2.NormalOperations.Messages;
 using Lyn.Protocol.Bolt2.Wallet;
 using Lyn.Protocol.Bolt3;
 using Lyn.Protocol.Bolt7;
@@ -116,6 +117,10 @@ namespace Lyn.Protocol.Common
             services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<GossipTimestampFilter>>();
             services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<NodeAnnouncement>>();
             services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<ChannelUpdate>>();
+            services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<QueryShortChannelIds>>();
+            services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<QueryChannelRange>>();
+            services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<ReplyChannelRange>>();
+            services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<ReplyShortChannelIdsEnd>>();
 
             // Bolt 1
             services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<InitMessage>>();
@@ -133,6 +138,14 @@ namespace Lyn.Protocol.Common
             services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<ClosingSigned>>();
             services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<ChannelReestablish>>();
             
+            // Bolt 2 - Commitment and HTLC messages
+            services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<CommitmentSigned>>();
+            services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<RevokeAndAck>>();
+            services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<UpdateAddHtlc>>();
+            services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<UpdateFulfillHtlc>>();
+            services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<UpdateFailHtlc>>();
+            services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<UpdateFailMalformedHtlc>>();
+            services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<UpdateFee>>();
 
             return services;
         }
@@ -141,6 +154,7 @@ namespace Lyn.Protocol.Common
         {
             services.AddSingleton<IPeerRepository, InMemoryPeerRepository>();
             services.AddSingleton<IPingPongMessageRepository, InMemoryPingPongMessageRepository>();
+            services.AddSingleton<IConnectionManager, ConnectionManager>();
             services.AddTransient<IPingMessageAction, PingMessageService>();
             services.AddTransient<IInitMessageAction, InitMessageService>();
 

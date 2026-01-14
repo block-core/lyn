@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Lyn.Protocol.Bolt2.Entities;
 using Lyn.Types.Bitcoin;
+using Lyn.Types.Fundamental;
 
 namespace Lyn.Protocol.Bolt2.NormalOperations
 {
@@ -43,6 +46,15 @@ namespace Lyn.Protocol.Bolt2.NormalOperations
             _channels[channel.ChannelId] = channel;
             
             return Task.CompletedTask;
+        }
+
+        public Task<IEnumerable<PaymentChannel>> GetAllChannelsForPeerAsync(PublicKey nodeId)
+        {
+            var channels = _channels.Values
+                .Where(c => c.RemoteNodeId != null && c.RemoteNodeId.Equals(nodeId))
+                .ToList();
+            
+            return Task.FromResult<IEnumerable<PaymentChannel>>(channels);
         }
     }
 }

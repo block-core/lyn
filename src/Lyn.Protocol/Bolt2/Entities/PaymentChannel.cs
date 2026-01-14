@@ -37,6 +37,11 @@ namespace Lyn.Protocol.Bolt2.Entities
         }
 
         public UInt256 ChannelId { get; set; }
+        
+        /// <summary>
+        /// The node ID of the remote peer for this channel.
+        /// </summary>
+        public PublicKey? RemoteNodeId { get; set; }
 
         public ShortChannelId ShortChannelId { get; set; } //TODO David
 
@@ -81,6 +86,16 @@ namespace Lyn.Protocol.Bolt2.Entities
 
         public bool ChannelShutdownTriggered { get; set; }
         public bool ChannelClosingSignSent  => CloseChannelDetails?.FeeSatoshis != null;
+
+        /// <summary>
+        /// The current commitment signature from the remote peer.
+        /// </summary>
+        public CompressedSignature? CurrentRemoteCommitmentSignature { get; set; }
+        
+        /// <summary>
+        /// The current commitment signature we sent to the remote peer.
+        /// </summary>
+        public CompressedSignature? CurrentLocalCommitmentSignature { get; set; }
 
         // public Keyset Keyset { get; set; }
         // public MiliSatoshis SelfPayMsat { get; set; }

@@ -37,9 +37,9 @@ namespace Lyn.Protocol.Bolt1
         {
             var utcNow = _dateTimeProvider.GetUtcNow();
             
-            if (_lastPingReceivedDateTime > utcNow.AddSeconds(-PING_INTERVAL_SECS))
-                throw new ProtocolViolationException( //TODO David this case requires failing all the channels with the node
-                    $"Ping message can only be received every {PING_INTERVAL_SECS} seconds");
+            // if (_lastPingReceivedDateTime > utcNow.AddSeconds(-PING_INTERVAL_SECS))
+            //     throw new ProtocolViolationException( //TODO David this case requires failing all the channels with the node
+            //         $"Ping message can only be received every {PING_INTERVAL_SECS} seconds");
 
             if (request.MessagePayload.NumPongBytes > PingMessage.MAX_BYTES_LEN)
                 return new MessageProcessingOutput();

@@ -5,8 +5,10 @@ namespace Lyn.Protocol.Bolt9
 {
     public class LynImplementedBoltFeatures : IBoltFeatures
     {
-        private const Features GLOBALFEATURES = Features.OptionUpfrontShutdownScriptRequired | Features.OptionDataLossProtect;
-        private const Features FEATURES = GLOBALFEATURES | Features.InitialRoutingSync;//| Features.OptionStaticRemotekey;| Features.GossipQueries; this will need to be added back when the gossip queries are fully supported
+        private const Features GLOBALFEATURES = Features.OptionDataLossProtectRequired;
+        
+        // Enable GossipQueries now that query_short_channel_ids and query_channel_range are implemented
+        private const Features FEATURES = GLOBALFEATURES | Features.InitialRoutingSync | Features.GossipQueries;
 
         private readonly byte[] _bytes;
         private readonly BitArray _FeaturesBitArray;
@@ -66,11 +68,11 @@ namespace Lyn.Protocol.Bolt9
                     if (shortArray[i] != longArray[i] && i % 2 == 0) //If any has a required flag not supported by other node
                         return false;
                 }
-                else
-                {
-                    // if (longArray[i] && i % 2 == 0) //If the longer array has a required flag not known to the other node
-                    //     return false;
-                }
+                // else
+                // {
+                //     if (longArray[i] && i % 2 == 0) //If the longer array has a required flag not known to the other node
+                //         return false;
+                // }
             }
 
             return true;

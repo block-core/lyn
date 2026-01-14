@@ -34,7 +34,9 @@ namespace Lyn.Protocol.Common.Messages
         ChannelUpdate = 258,
         AnnouncementSignatures = 259,
         QueryShortChannelIds = 261,
+        ReplyShortChannelIdsEnd = 262,
         QueryChannelRange = 263,
+        ReplyChannelRange = 264,
         GossipTimestampFilter = 265,
     }
 }
