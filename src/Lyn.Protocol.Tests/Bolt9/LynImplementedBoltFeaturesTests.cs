@@ -20,25 +20,18 @@ namespace Lyn.Protocol.Tests.Bolt9
         {
             var featuresArray = _sut.GetSupportedFeatures();
 
-            Assert.Equal(new byte[] {8}, featuresArray);
+            // initial_routing_sync(3), option_upfront_shutdown_script(5), gossip_queries(7),
+            // var_onion_optin(9), option_static_remotekey(13), payment_secret(15), basic_mpp(17)
+            Assert.Equal(new byte[] { 0xA8, 0xA2, 0x02 }, featuresArray);
         }
 
         [Fact]
         public void GlobalFeaturesReturnsFirst13Bits()
         {
-            var bytes = _sut.GetSupportedFeatures()
-                .Take(2)
-                .ToArray();
-
-            if (bytes.Length > 1)
-            {
-                bytes[1] &= (byte) (bytes[1] & (~(1 << 6)));
-                bytes[1] &= (byte) (bytes[1] & (~(1 << 7)));
-            }
-
             var globalFeatures = _sut.GetSupportedGlobalFeatures();
 
-            Assert.Equal(bytes, globalFeatures);
+            // Bits up to index 13 are kept (3, 5, 7, 9 and 13 remain set), higher bits cleared.
+            Assert.Equal(new byte[] { 0xA8, 0x22, 0x00 }, globalFeatures);
         }
 
         [Fact]

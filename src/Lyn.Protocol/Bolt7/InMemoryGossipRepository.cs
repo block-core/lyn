@@ -71,6 +71,11 @@ namespace Lyn.Protocol.Bolt7
          return Task.FromResult(channel);
       }
 
+      public Task<GossipChannel[]> GetGossipChannelsAsync()
+      {
+         return Task.FromResult(_channels.Values.ToArray());
+      }
+
       public Task RemoveGossipChannelsAsync(params ShortChannelId[] channelIds)
       {
          foreach (var shortChannelId in channelIds)

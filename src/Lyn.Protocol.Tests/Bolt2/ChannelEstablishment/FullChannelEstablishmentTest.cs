@@ -142,9 +142,9 @@ namespace Lyn.Protocol.Tests.Bolt2.ChannelEstablishment
             FundingPubkey = Hex.FromString("0x02b085ac037bb3b3ab6de81abf620e42df8d2a51ce4de2905b83bcd514e39f290f"),
             FundingSatoshis = 16000000,
             HtlcBasepoint = Hex.FromString("0x033336b311f22a7606122f4e7a6cf05460e008acb044e13f5718a5f32ccaa867a0"),
-            HtlcMinimumMsat = 3000,
+            HtlcMinimumMsat = 30000,
             MaxAcceptedHtlcs = 100,
-            MaxHtlcValueInFlightMsat = 12000,
+            MaxHtlcValueInFlightMsat = 12000000,
             PaymentBasepoint = Hex.FromString("0x020d4cbaa708e6fc9c4b3cb2792a9650724f9832fa018482c15cbfee337ec95fef"),
             PushMsat = 0,
             RevocationBasepoint =

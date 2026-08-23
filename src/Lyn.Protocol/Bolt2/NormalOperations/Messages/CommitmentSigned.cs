@@ -12,6 +12,6 @@ namespace Lyn.Protocol.Bolt2.NormalOperations.Messages
         public UInt256? ChannelId { get; set; }
         public ushort? NumHtlcs { get; set; }
         public CompressedSignature? Signature { get; set; }
-        public byte? HtlcSignature { get; set; }
+        public byte[]? HtlcSignature { get; set; }
     }
 }

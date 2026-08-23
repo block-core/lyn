@@ -9,6 +9,7 @@ namespace Lyn.Protocol.Bolt2.NormalOperations.Messages
     {
         public override MessageType MessageType => MessageType.UpdateFailHtlc;
         public UInt256? ChannelId { get; set; }
+        public ulong? Id { get; set; }
         public ushort? Length { get; set; }
         public byte[]? Reason { get; set; }
     }

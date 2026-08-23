@@ -18,6 +18,8 @@ namespace Lyn.Protocol.Bolt7
 
       Task<GossipChannel?> GetGossipChannelAsync(ShortChannelId shortChannelId);
 
+      Task<GossipChannel[]> GetGossipChannelsAsync();
+
       Task RemoveGossipChannelsAsync(params ShortChannelId[] channelIds);
       
       bool IsNodeInBlacklistedList(PublicKey nodeId);

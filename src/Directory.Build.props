@@ -1,7 +1,7 @@
 <Project>
   <PropertyGroup>
     <Version>0.0.1-alpha</Version>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <IsPackable>true</IsPackable>
     <Authors>Blockcore</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>

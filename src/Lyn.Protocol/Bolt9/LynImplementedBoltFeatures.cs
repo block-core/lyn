@@ -5,7 +5,16 @@ namespace Lyn.Protocol.Bolt9
 {
     public class LynImplementedBoltFeatures : IBoltFeatures
     {
-        private const Features FEATURES = Features.InitialRoutingSync;//| Features.OptionStaticRemotekey;| Features.GossipQueries; this will need to be added back when the gossip queries are fully supported
+        // Advertised per BOLT 9: optional (odd) bits only.
+        // var_onion_optin, option_static_remotekey, payment_secret, gossip_queries,
+        // option_upfront_shutdown_script and basic_mpp are implemented by Lyn.
+        private const Features FEATURES = Features.InitialRoutingSync
+                                          | Features.GossipQueries
+                                          | Features.VarOnionOptin
+                                          | Features.OptionStaticRemotekey
+                                          | Features.PaymentSecret
+                                          | Features.OptionUpfrontShutdownScript
+                                          | Features.BasicMpp;
 
         private readonly byte[] _bytes;
         private readonly BitArray _FeaturesBitArray;

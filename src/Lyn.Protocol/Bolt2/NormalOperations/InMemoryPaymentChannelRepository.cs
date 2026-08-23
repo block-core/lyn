@@ -31,7 +31,14 @@ namespace Lyn.Protocol.Bolt2.NormalOperations
             return _channels.ContainsKey(channelId)
                 ? Task.FromResult<PaymentChannel?>(_channels[channelId])
                 : Task.FromResult<PaymentChannel?>(null);
-            
+
+        }
+
+        public Task UpdatePaymentChannelAsync(PaymentChannel paymentChannel)
+        {
+            _channels[paymentChannel.ChannelId] = paymentChannel;
+
+            return Task.CompletedTask;
         }
     }
 }

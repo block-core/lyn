@@ -1,8 +1,9 @@
 using System;
+using System.Linq;
 
 namespace Lyn.Types.Bolt
 {
-   public class ShortChannelId
+   public class ShortChannelId : IEquatable<ShortChannelId>
    {
       private byte[] _value; //TODO David move this to IProtocolSerializer (?)
 
@@ -11,6 +12,11 @@ namespace Lyn.Types.Bolt
       public ushort OutputIndex { get; set; }
 
       public const ushort LENGTH = 8;
+
+      public ShortChannelId()
+      {
+         _value = new byte[8];
+      }
 
       public ShortChannelId(byte[] value)
       {
@@ -45,6 +51,45 @@ namespace Lyn.Types.Bolt
          TransactionIndex = transactionIndex;
          OutputIndex = outputIndex;
       }
+
+      /// <summary>
+      /// Converts the short channel id to its canonical 64 bit representation as
+      /// used on the wire (block_height &lt;&lt; 40 | transaction_index &lt;&lt; 16 | output_index).
+      /// </summary>
+      public ulong ToUInt64()
+      {
+         return ((ulong)(uint)BlockHeight << 40) | ((ulong)(uint)TransactionIndex << 16) | OutputIndex;
+      }
+
+      /// <summary>
+      /// Creates a short channel id from its canonical 64 bit representation.
+      /// </summary>
+      public static ShortChannelId FromUInt64(ulong value)
+      {
+         return new ShortChannelId((int)((value >> 40) & 0xFF_FF_FF),
+            (int)((value >> 16) & 0xFF_FF_FF),
+            (ushort)(value & 0xFFFF));
+      }
+
+      public bool Equals(ShortChannelId? other)
+      {
+         if (ReferenceEquals(null, other)) return false;
+         if (ReferenceEquals(this, other)) return true;
+
+         return BlockHeight == other.BlockHeight
+                && TransactionIndex == other.TransactionIndex
+                && OutputIndex == other.OutputIndex;
+      }
+
+      public override bool Equals(object? obj) => ReferenceEquals(this, obj) || Equals(obj as ShortChannelId);
+
+      public override int GetHashCode()
+      {
+         // Combine the three components into a stable hash code.
+         return HashCode.Combine(BlockHeight, TransactionIndex, OutputIndex);
+      }
+
+
       
       public static implicit operator byte[](ShortChannelId hash) => hash._value;
 
