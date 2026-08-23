@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using Lyn.Protocol.Bolt2.NormalOperations.Messages;
 using Lyn.Protocol.Bolt3.Types;
 using Lyn.Types.Bitcoin;
 using Lyn.Types.Bolt;
@@ -73,11 +75,27 @@ namespace Lyn.Protocol.Bolt2.Entities
         
         public Basepoints LocalBasePoints { get; set; }
         public Basepoints RemoteBasePoints { get; set; }
-        
-        
-        // public Keyset Keyset { get; set; }
-        // public MiliSatoshis SelfPayMsat { get; set; }
-        // public MiliSatoshis OtherPayMsat { get; set; }
-        // public List<Htlc> Htlcs { get; set; }
+
+        public byte[]? LocalShutdownScriptPubkey { get; set; }
+
+        public byte[]? RemoteShutdownScriptPubkey { get; set; }
+
+        public bool ShutdownInitiatedLocally { get; set; }
+
+        public bool ShutdownReceived { get; set; }
+
+        public Satoshis LocalClosingFeeSatoshis { get; set; }
+
+        public Satoshis RemoteClosingFeeSatoshis { get; set; }
+
+        public CompressedSignature? RemoteClosingSignature { get; set; }
+
+        public ulong NextRemoteHtlcId { get; set; }
+
+        public ulong NextLocalHtlcId { get; set; }
+
+        public List<UpdateAddHtlc> PendingRemoteHtlcs { get; } = new();
+
+        public List<UpdateFulfillHtlc> FulfilledHtlcs { get; } = new();
     }
 }

@@ -289,7 +289,7 @@ namespace Lyn.Protocol.Tests.Bolt3
 
             foreach (Htlc htlc in htlcs)
             {
-                htlc.Rhash = new UInt256(HashGenerator.Sha256(htlc.R));
+                htlc.Rhash = new UInt256(HashGenerator.Sha256((byte[])htlc.R));
             }
 
             List<Htlc>? inverted = InvertHtlcs(htlcs);
@@ -364,7 +364,7 @@ namespace Lyn.Protocol.Tests.Bolt3
 
             foreach (Htlc htlc in htlcs)
             {
-                htlc.Rhash = new UInt256(HashGenerator.Sha256(htlc.R));
+                htlc.Rhash = new UInt256(HashGenerator.Sha256((byte[])htlc.R));
             }
 
             List<Htlc>? inverted = InvertHtlcs(htlcs);

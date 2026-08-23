@@ -17,6 +17,14 @@ namespace Lyn.Protocol.Common.Hashing
             return result;
         }
 
+        public static UInt256 Sha256AsUInt256(ReadOnlySpan<byte> data)
+        {
+            using var sha = new SHA256Managed();
+            Span<byte> result = stackalloc byte[32];
+            if (!sha.TryComputeHash(data, result, out _)) throw new HashGeneratorException($"Failed to perform {nameof(Sha256AsUInt256)}");
+            return new UInt256(result);
+        }
+
         public static ReadOnlySpan<byte> DoubleSha256(ReadOnlySpan<byte> data)
         {
             using var sha = new SHA256Managed();

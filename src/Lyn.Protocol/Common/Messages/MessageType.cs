@@ -33,7 +33,12 @@ namespace Lyn.Protocol.Common.Messages
         NodeAnnouncement = 257,
         AnnouncementSignatures = 259,
         QueryShortChannelIds = 261,
+        ReplyShortChannelIdsEnd = 262,
         QueryChannelRange = 263,
+        ReplyChannelRange = 264,
         GossipTimestampFilter = 265,
+
+        //Onion messages (BOLT 4)
+        OnionMessage = 513,
     }
 }

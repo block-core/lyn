@@ -1,8 +1,10 @@
-﻿namespace Lyn.Types.Fundamental
+﻿using System;
+
+namespace Lyn.Types.Fundamental
 {
-    public class Satoshis
+    public class Satoshis : IEquatable<Satoshis>
     {
-        private ulong _value;
+        private readonly ulong _value;
 
         public Satoshis(ulong value)
         {
@@ -28,5 +30,17 @@
         public static implicit operator MiliSatoshis(Satoshis sats) => new MiliSatoshis(sats._value * 1000);
 
         public override string ToString() => $@"sats={_value}";
+
+        public bool Equals(Satoshis? other)
+        {
+            if (ReferenceEquals(null, other)) return false;
+            if (ReferenceEquals(this, other)) return true;
+
+            return _value == other._value;
+        }
+
+        public override bool Equals(object? obj) => ReferenceEquals(this, obj) || Equals(obj as Satoshis);
+
+        public override int GetHashCode() => _value.GetHashCode();
     }
 }

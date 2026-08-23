@@ -5,16 +5,21 @@ using Lyn.Protocol.Bolt1;
 using Lyn.Protocol.Bolt1.Messages;
 using Lyn.Protocol.Bolt1.Messages.TlvRecords;
 using Lyn.Protocol.Bolt1.TlvStreams;
+using Lyn.Protocol.Bolt2.ChannelClose;
+using Lyn.Protocol.Bolt2.ChannelClose.Messages;
 using Lyn.Protocol.Bolt2.ChannelEstablishment;
 using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages;
 using Lyn.Protocol.Bolt2.ChannelEstablishment.Messages.TlvRecords;
+using Lyn.Protocol.Bolt2.MessageRetransmission.Messages;
 using Lyn.Protocol.Bolt2.NormalOperations;
+using Lyn.Protocol.Bolt2.NormalOperations.Messages;
 using Lyn.Protocol.Bolt2.Wallet;
 using Lyn.Protocol.Bolt3;
 using Lyn.Protocol.Bolt7;
 using Lyn.Protocol.Bolt7.Messages;
 using Lyn.Protocol.Bolt8;
 using Lyn.Protocol.Bolt9;
+using Lyn.Protocol.Bolt10;
 using Lyn.Protocol.Common.Blockchain;
 using Lyn.Protocol.Common.Hashing;
 using Lyn.Protocol.Common.Messages;
@@ -118,7 +123,26 @@ namespace Lyn.Protocol.Common
             services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<FundingCreated>>();
             services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<FundingSigned>>();
             services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<FundingLocked>>();
-            
+
+            // Bolt 2 - channel close
+            services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<Shutdown>>();
+            services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<ClosingSigned>>();
+
+            // Bolt 2 - normal operations
+            services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<UpdateAddHtlc>>();
+            services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<UpdateFulfillHtlc>>();
+            services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<UpdateFailHtlc>>();
+            services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<UpdateFailMalformedHtlc>>();
+            services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<UpdateFee>>();
+            services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<CommitmentSigned>>();
+            services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<RevokeAndAck>>();
+            services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<ChannelReestablish>>();
+
+            // Bolt 7 - gossip queries
+            services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<QueryShortChannelIds>>();
+            services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<QueryChannelRange>>();
+            services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<ReplyChannelRange>>();
+            services.AddSingleton<INetworkMessageSerializer, NetworkMessageSerializer<ReplyShortChannelIdsEnd>>();
 
             return services;
         }
@@ -136,6 +160,10 @@ namespace Lyn.Protocol.Common
             services.AddSingleton<IChannelCandidateRepository, InMemoryChannelCandidateRepository>();
             services.AddSingleton<IWalletTransactions, WalletTransactions>();
             services.AddSingleton<IPaymentChannelRepository,InMemoryPaymentChannelRepository>();
+
+            // Bolt 10 - DNS seed bootstrap
+            services.AddSingleton<IDnsResolver, UdpDnsResolver>();
+            services.AddSingleton<DnsSeedClient>();
 
             return services;
         }
